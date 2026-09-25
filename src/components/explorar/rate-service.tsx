@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Star, ArrowLeft, Save, Check, ShieldX } from "lucide-react";
 import { type Servicio, isSelfRatingCheck, getSessionUserEmail } from "@/lib/mock-services";
+import { dbAddReview } from "@/lib/db";
 
 interface RateServiceProps {
   servicio: Servicio;
@@ -91,12 +92,30 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
     };
     savePrestadorJob(prestadorJob);
 
+    // Save to Supabase in cloud
+    dbAddReview({
+      servicioId: servicio.id,
+      tituloServicio: servicio.titulo,
+      nombreCliente: clienteName,
+      nombrePrestador: servicio.nombrePrestador,
+      emailPrestador: servicio.emailPrestador,
+      calificacion: rating,
+      resena: resena.trim(),
+      fecha: new Date().toISOString(),
+    }).catch((err) => {
+      console.warn("Error enviando reseña a Supabase:", err);
+    });
+
     // Update rating stats on custom service if applicable
     try {
       const customRaw = localStorage.getItem("altoke_provider_services");
       if (customRaw) {
         const customServices = JSON.parse(customRaw);
-        const idx = customServices.findIndex((s: { id: string }) => s.id === servicio.id);
+        const idx = customServices.findIndex(
+          (s: { id: string; titulo?: string; nombrePrestador?: string }) =>
+            s.id === servicio.id ||
+            (s.titulo && servicio.titulo && s.titulo.toLowerCase() === servicio.titulo.toLowerCase() && s.nombrePrestador === servicio.nombrePrestador)
+        );
         if (idx !== -1) {
           const s = customServices[idx];
           const prevResenas = s.resenas || 0;

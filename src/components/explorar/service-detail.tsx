@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Star, MapPin, Phone, Clock, MessageSquare, ChevronLeft, ShieldAlert } from "lucide-react";
 import { type Servicio, isSelfRatingCheck } from "@/lib/mock-services";
+import { dbFetchReviews } from "@/lib/db";
 
 interface ServiceDetailProps {
   servicio: Servicio;
@@ -50,24 +51,42 @@ interface RealReview {
   fecha: string;
 }
 
-function getRealReviews(servicioId: string): RealReview[] {
+function getRealReviews(servicioId: string, titulo?: string, prestador?: string): RealReview[] {
   if (typeof window === "undefined") return [];
   try {
     const jobs: Record<string, unknown>[] = JSON.parse(
       localStorage.getItem("altoke_prestador_jobs") || "[]"
     );
-    return jobs
-      .filter((j) => j.servicioId === servicioId)
+    const history: Record<string, unknown>[] = JSON.parse(
+      localStorage.getItem("altoke_history") || "[]"
+    );
+    const combined = [...jobs, ...history];
+
+    const seen = new Set<string>();
+    const filtered = combined.filter((j) => {
+      const matchId = j.servicioId === servicioId;
+      const matchTitle = titulo && j.tituloServicio && String(j.tituloServicio).toLowerCase() === titulo.toLowerCase();
+      const matchPrestador = prestador && j.nombrePrestador && String(j.nombrePrestador).toLowerCase() === prestador.toLowerCase();
+      if (matchId || (matchTitle && matchPrestador) || (matchTitle && !prestador)) {
+        const key = `${j.nombreCliente}-${j.calificacion}-${j.resena}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }
+      return false;
+    });
+
+    return filtered
       .map((j, idx) => ({
         id: String(idx),
-        nombreCliente: (j.nombreCliente as string) || "Usuario",
+        nombreCliente: (j.nombreCliente as string) || "Cliente",
         calificacion: (j.calificacion as number) || 5,
         resena: (j.resena as string) || "",
         fecha: j.fecha
           ? new Date(j.fecha as string).toLocaleDateString("es-CL")
           : "",
       }))
-      .reverse(); // más recientes primero
+      .reverse();
   } catch {
     return [];
   }
@@ -81,7 +100,39 @@ function ReviewsModal({
   servicio: Servicio;
   onClose: () => void;
 }) {
-  const reviews = getRealReviews(servicio.id);
+  const [reviews, setReviews] = useState<RealReview[]>(() =>
+    getRealReviews(servicio.id, servicio.titulo, servicio.nombrePrestador)
+  );
+
+  useEffect(() => {
+    const local = getRealReviews(servicio.id, servicio.titulo, servicio.nombrePrestador);
+    setReviews(local);
+
+    dbFetchReviews().then((remote) => {
+      const matched = remote.filter(
+        (r) =>
+          r.servicioId === servicio.id ||
+          (r.tituloServicio && servicio.titulo && r.tituloServicio.toLowerCase() === servicio.titulo.toLowerCase())
+      );
+      if (matched.length > 0) {
+        const mappedRemote: RealReview[] = matched.map((r, idx) => ({
+          id: r.id || String(idx),
+          nombreCliente: r.nombreCliente || "Cliente",
+          calificacion: r.calificacion,
+          resena: r.resena,
+          fecha: r.fecha ? new Date(r.fecha).toLocaleDateString("es-CL") : "",
+        }));
+
+        const combined = [...mappedRemote];
+        for (const loc of local) {
+          if (!combined.some((c) => c.resena === loc.resena && c.nombreCliente === loc.nombreCliente)) {
+            combined.push(loc);
+          }
+        }
+        setReviews(combined);
+      }
+    });
+  }, [servicio]);
 
   return (
     <div
@@ -247,16 +298,12 @@ export function ServiceDetail({ servicio, onClose }: ServiceDetailProps) {
                 {renderStars(servicio.rating)}
               </div>
               <span className="text-sm font-semibold text-[#F1F5F9]">{servicio.rating}</span>
-              {servicio.resenas > 0 ? (
-                <button
-                  onClick={() => setReviewsOpen(true)}
-                  className="text-xs text-blue-400 hover:text-blue-300 hover:underline transition-colors cursor-pointer"
-                >
-                  ({servicio.resenas} {servicio.resenas === 1 ? "reseña" : "reseñas"})
-                </button>
-              ) : (
-                <span className="text-xs text-[#64748B]">(sin reseñas)</span>
-              )}
+              <button
+                onClick={() => setReviewsOpen(true)}
+                className="text-xs text-blue-400 hover:text-blue-300 hover:underline transition-colors cursor-pointer"
+              >
+                ({servicio.resenas > 0 ? `${servicio.resenas} ${servicio.resenas === 1 ? "reseña" : "reseñas"}` : "ver reseñas"})
+              </button>
             </div>
 
             {/* Price */}

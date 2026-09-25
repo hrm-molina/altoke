@@ -313,16 +313,26 @@ export async function dbSaveService(service: Servicio, prestadorId?: string): Pr
 export async function dbAddReview(review: DbReview): Promise<boolean> {
   const reviewId = crypto.randomUUID();
 
-  // Guardar en Supabase
   if (supabase && isSupabaseConfigured) {
     try {
-      const validServicioId = review.servicio_id || review.servicioId;
-      const validClienteId = review.cliente_id || review.clienteId;
+      let targetServiceId = review.servicio_id || review.servicioId;
+
+      // Si el ID tiene prefijo provider- o no es UUID válido en servicios, buscar el servicio por título o prestador
+      if (!targetServiceId || !targetServiceId.includes("-") || targetServiceId.startsWith("provider-")) {
+        const { data: svcFound } = await supabase
+          .from("servicios")
+          .select("id")
+          .eq("titulo", review.titulo_servicio || review.tituloServicio || "")
+          .limit(1);
+        if (svcFound && svcFound.length > 0) {
+          targetServiceId = svcFound[0].id;
+        }
+      }
 
       await supabase.from("calificaciones").insert({
         id: reviewId,
-        servicio_id: validServicioId && validServicioId.includes("-") ? validServicioId : null,
-        cliente_id: validClienteId && validClienteId.includes("-") ? validClienteId : null,
+        servicio_id: targetServiceId && targetServiceId.includes("-") ? targetServiceId : null,
+        cliente_id: review.cliente_id || review.clienteId || null,
         titulo_servicio: review.titulo_servicio || review.tituloServicio || "",
         nombre_cliente: review.nombre_cliente || review.nombreCliente || "Cliente",
         email_cliente: review.email_cliente || review.emailCliente || null,
@@ -332,12 +342,56 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
         resena: review.resena,
         fecha: review.fecha || new Date().toISOString(),
       });
+
+      // Asegurar que el rating y resenas del servicio se actualicen en Supabase
+      if (targetServiceId && targetServiceId.includes("-")) {
+        const { data: allReviews } = await supabase
+          .from("calificaciones")
+          .select("calificacion")
+          .eq("servicio_id", targetServiceId);
+
+        if (allReviews && allReviews.length > 0) {
+          const total = allReviews.length;
+          const avg = Number((allReviews.reduce((acc, curr) => acc + curr.calificacion, 0) / total).toFixed(1));
+          await supabase.from("servicios").update({ rating: avg, resenas: total }).eq("id", targetServiceId);
+        }
+      }
     } catch (e) {
       console.warn("Error guardando calificación en Supabase:", e);
     }
   }
 
   return true;
+}
+
+export async function dbFetchReviews(servicioId?: string): Promise<DbReview[]> {
+  if (supabase && isSupabaseConfigured) {
+    try {
+      let query = supabase.from("calificaciones").select("*").order("fecha", { ascending: false });
+      if (servicioId && servicioId.includes("-") && !servicioId.startsWith("provider-")) {
+        query = query.eq("servicio_id", servicioId);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        return data.map((r) => ({
+          id: r.id,
+          servicioId: r.servicio_id,
+          clienteId: r.cliente_id,
+          tituloServicio: r.titulo_servicio,
+          nombreCliente: r.nombre_cliente,
+          emailCliente: r.email_cliente,
+          nombrePrestador: r.nombre_prestador,
+          emailPrestador: r.email_prestador,
+          calificacion: r.calificacion,
+          resena: r.resena,
+          fecha: r.fecha,
+        }));
+      }
+    } catch (e) {
+      console.warn("Error consultando calificaciones en Supabase:", e);
+    }
+  }
+  return [];
 }
 
 // ==========================================
