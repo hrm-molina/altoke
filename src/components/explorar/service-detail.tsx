@@ -105,9 +105,6 @@ function ReviewsModal({
   );
 
   useEffect(() => {
-    const local = getRealReviews(servicio.id, servicio.titulo, servicio.nombrePrestador);
-    setReviews(local);
-
     dbFetchReviews().then((remote) => {
       const matched = remote.filter(
         (r) =>
@@ -122,14 +119,10 @@ function ReviewsModal({
           resena: r.resena,
           fecha: r.fecha ? new Date(r.fecha).toLocaleDateString("es-CL") : "",
         }));
-
-        const combined = [...mappedRemote];
-        for (const loc of local) {
-          if (!combined.some((c) => c.resena === loc.resena && c.nombreCliente === loc.nombreCliente)) {
-            combined.push(loc);
-          }
-        }
-        setReviews(combined);
+        setReviews(mappedRemote);
+      } else {
+        const local = getRealReviews(servicio.id, servicio.titulo, servicio.nombrePrestador);
+        setReviews(local);
       }
     });
   }, [servicio]);
@@ -155,9 +148,13 @@ function ReviewsModal({
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-0.5">{renderStars(servicio.rating, 14)}</div>
-            <span className="text-sm font-bold text-[#F1F5F9]">{servicio.rating}</span>
-            <span className="text-xs text-[#64748B]">({servicio.resenas})</span>
+            <div className="flex items-center gap-0.5">
+              {renderStars(reviews.length > 0 ? Number((reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length).toFixed(1)) : servicio.rating, 14)}
+            </div>
+            <span className="text-sm font-bold text-[#F1F5F9]">
+              {reviews.length > 0 ? Number((reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length).toFixed(1)) : servicio.rating}
+            </span>
+            <span className="text-xs text-[#64748B]">({reviews.length})</span>
           </div>
         </div>
 
@@ -202,7 +199,7 @@ function ReviewsModal({
         {/* Footer */}
         <div className="px-6 py-3 border-t border-[#1E293B] bg-[#0A0F1A]">
           <p className="text-xs text-center text-[#475569]">
-            Mostrando {reviews.length} de {servicio.resenas} reseñas
+            {reviews.length === 1 ? "1 reseña registrada" : `${reviews.length} reseñas registradas`}
           </p>
         </div>
       </div>
