@@ -1,0 +1,110 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: #06080F;
+  --color-foreground: #F1F5F9;
+  --font-sans: var(--font-inter);
+  --radius-lg: 0.75rem;
+}
+
+body {
+  background-color: #06080F;
+  color: #F1F5F9;
+  -webkit-font-smoothing: antialiased;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Glow Effects */
+.glow-blue {
+  box-shadow: 0 0 60px rgba(59, 130, 246, 0.15), 0 0 120px rgba(59, 130, 246, 0.05);
+}
+
+.glow-blue-sm {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.1);
+}
+
+/* Gradient Backgrounds */
+.hero-gradient {
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+}
+
+.section-gradient {
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
+}
+
+/* Card Styles */
+.card-surface {
+  background-color: #0F1420;
+  border: 1px solid #1E293B;
+  border-radius: 1rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.card-surface:hover {
+  border-color: #334155;
+  background-color: #131A2A;
+}
+
+/* Button Glow */
+.btn-glow {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-glow:hover {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.4), 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+
+/* Modal Scrollbar */
+.register-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.register-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.register-modal::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 3px;
+}
+
+.register-modal::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Select styling */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+
+select option {
+  background-color: #0A0F1A;
+  color: #F1F5F9;
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  accent-color: #2563EB;
+}
+
+/* Date input */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
+}
