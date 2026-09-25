@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { SearchX } from "lucide-react";
 import { getAllServices, type Servicio } from "@/lib/mock-services";
+import { dbFetchServices } from "@/lib/db";
 import type { SortOption } from "./sort-bar";
 import { ServiceCard } from "./service-card";
 
@@ -33,6 +34,11 @@ export function ResultsGrid({
 
   useEffect(() => {
     setServices(getAllServices());
+    dbFetchServices().then((remote) => {
+      if (remote && remote.length > 0) {
+        setServices(remote);
+      }
+    });
     const handleStorage = () => {
       setServices(getAllServices());
     };

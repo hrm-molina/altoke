@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { saveCustomService, categorias } from "@/lib/mock-services";
 import { validateRut, formatRut, validateChileanPhone, compressImage } from "@/lib/validators";
+import { dbRegisterUser, dbSaveService, type DbUser } from "@/lib/db";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -201,7 +202,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!validateStep3()) return;
 
     // Regla de oro: Bloqueo estricto e infranqueable de menores de 18 años
@@ -233,13 +234,13 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
         (u.email as string).toLowerCase() === form.email.toLowerCase() &&
         u.tipo === userType
     );
-    const userId = existing ? (existing.id as string) : crypto.randomUUID();
+    const userId = existing && String(existing.id).includes("-") ? (existing.id as string) : crypto.randomUUID();
 
-    const newUser = {
+    const newUser: DbUser = {
       id: userId,
       email: form.email.toLowerCase(),
-      password: btoa(form.password),
-      tipo: userType,
+      password: form.password,
+      tipo: userType as "usuario" | "prestador",
       nombre: form.nombre.trim(),
       rut: form.rut.trim(),
       telefono: form.telefono.trim(),
@@ -253,7 +254,8 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       fechaRegistro: existing ? (existing.fechaRegistro as string) : new Date().toISOString(),
     };
 
-    saveUser(newUser);
+    // Guardar en Supabase y localmente
+    await dbRegisterUser(newUser);
 
     if (userType === "prestador") {
       const initialServicio = {
@@ -264,8 +266,8 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       };
       localStorage.setItem(`altoke_servicio_${newUser.id}`, JSON.stringify(initialServicio));
 
-      saveCustomService({
-        id: `provider-${newUser.id}`,
+      const serviceObj = {
+        id: crypto.randomUUID(),
         titulo: form.servicios.trim(),
         descripcion: `Servicio profesional y responsable ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`,
         categoria: form.categoria || "Otros",
@@ -281,7 +283,10 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
         fotoPrestador: foto || "",
         telefono: form.telefono.trim(),
         emailPrestador: form.email.trim().toLowerCase(),
-      });
+      };
+
+      saveCustomService(serviceObj);
+      await dbSaveService(serviceObj, newUser.id);
     }
 
     localStorage.setItem("altoke_session", JSON.stringify(newUser));

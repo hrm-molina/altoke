@@ -115,17 +115,49 @@ AFTER INSERT OR UPDATE ON public.calificaciones
 FOR EACH ROW
 EXECUTE FUNCTION actualizar_rating_servicio();
 
--- 8. POLÍTICAS DE SEGURIDAD (Row Level Security - RLS)
+-- 8. PERMISOS DE ROLES (Necesarios para que Supabase permita el acceso a la API)
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+
+-- 9. POLÍTICAS DE SEGURIDAD (Row Level Security - RLS)
 ALTER TABLE public.usuarios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.servicios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.calificaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.alertas ENABLE ROW LEVEL SECURITY;
 
--- Lectura pública para el catálogo (cualquiera puede ver servicios y reseñas)
-CREATE POLICY "Servicios visibles públicamente" ON public.servicios FOR SELECT USING (activo = TRUE);
-CREATE POLICY "Reseñas visibles públicamente" ON public.calificaciones FOR SELECT USING (TRUE);
+-- Lectura y gestión de usuarios
+DROP POLICY IF EXISTS "Permitir registro de usuarios" ON public.usuarios;
 CREATE POLICY "Permitir registro de usuarios" ON public.usuarios FOR INSERT WITH CHECK (TRUE);
+
+DROP POLICY IF EXISTS "Permitir leer usuarios" ON public.usuarios;
+CREATE POLICY "Permitir leer usuarios" ON public.usuarios FOR SELECT USING (TRUE);
+
+DROP POLICY IF EXISTS "Permitir actualizar usuarios" ON public.usuarios;
+CREATE POLICY "Permitir actualizar usuarios" ON public.usuarios FOR UPDATE USING (TRUE);
+
+-- Servicios
+DROP POLICY IF EXISTS "Servicios visibles públicamente" ON public.servicios;
+CREATE POLICY "Servicios visibles públicamente" ON public.servicios FOR SELECT USING (activo = TRUE);
+
+DROP POLICY IF EXISTS "Permitir publicar servicios" ON public.servicios;
 CREATE POLICY "Permitir publicar servicios" ON public.servicios FOR INSERT WITH CHECK (TRUE);
+
+DROP POLICY IF EXISTS "Permitir actualizar servicios" ON public.servicios;
 CREATE POLICY "Permitir actualizar servicios" ON public.servicios FOR UPDATE USING (TRUE);
+
+DROP POLICY IF EXISTS "Permitir eliminar servicios" ON public.servicios;
+CREATE POLICY "Permitir eliminar servicios" ON public.servicios FOR DELETE USING (TRUE);
+
+-- Reseñas / Calificaciones
+DROP POLICY IF EXISTS "Reseñas visibles públicamente" ON public.calificaciones;
+CREATE POLICY "Reseñas visibles públicamente" ON public.calificaciones FOR SELECT USING (TRUE);
+
+DROP POLICY IF EXISTS "Permitir calificar servicios" ON public.calificaciones;
 CREATE POLICY "Permitir calificar servicios" ON public.calificaciones FOR INSERT WITH CHECK (TRUE);
+
+-- Alertas
+DROP POLICY IF EXISTS "Gestionar alertas" ON public.alertas;
 CREATE POLICY "Gestionar alertas" ON public.alertas FOR ALL USING (TRUE);
+

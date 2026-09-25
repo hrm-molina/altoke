@@ -80,6 +80,8 @@ export function getCustomServices(): Servicio[] {
   }
 }
 
+import { dbSaveService } from "./db";
+
 export function saveCustomService(service: Servicio): void {
   if (typeof window === "undefined") return;
   try {
@@ -92,6 +94,11 @@ export function saveCustomService(service: Servicio): void {
     }
     localStorage.setItem("altoke_provider_services", JSON.stringify(existing));
     window.dispatchEvent(new Event("storage"));
+
+    // Guardar asíncronamente en Supabase
+    dbSaveService(service).catch((err) => {
+      console.warn("Error en segundo plano guardando servicio:", err);
+    });
   } catch {}
 }
 

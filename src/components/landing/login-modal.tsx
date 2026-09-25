@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Mail, Lock, AlertCircle, Check, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { dbLoginUser } from "@/lib/db";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
   const [loading, setLoading] = useState(false);
   const [tipoMismatch, setTipoMismatch] = useState<"usuario" | "prestador" | null>(null);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError("");
 
     if (!email.trim() || !password) {
@@ -38,58 +39,32 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
 
     setLoading(true);
 
-    setTimeout(() => {
-      const users = getUsers();
-
-      // 1. Buscar primero una cuenta que coincida con email + contraseña + tipo exacto
-      const exactMatch = defaultTipo
-        ? users.find(
-            (u) =>
-              (u.email as string).toLowerCase() === email.toLowerCase() &&
-              atob(u.password as string) === password &&
-              u.tipo === defaultTipo
-          )
-        : null;
-
-      if (exactMatch) {
-        // Encontró la cuenta del tipo correcto → login directo
-        localStorage.setItem("altoke_session", JSON.stringify(exactMatch));
+    try {
+      const res = await dbLoginUser(email, password, defaultTipo);
+      if (res.tipoMismatch) {
+        setTipoMismatch(res.tipoMismatch);
         setLoading(false);
-        onClose();
-        router.push(exactMatch.tipo === "prestador" ? "/prestador" : "/explorar");
         return;
       }
-
-      // 2. Buscar cualquier cuenta con esas credenciales (independiente del tipo)
-      const anyMatch = users.find(
-        (u) =>
-          (u.email as string).toLowerCase() === email.toLowerCase() &&
-          atob(u.password as string) === password
-      );
-
-      if (!anyMatch) {
-        setError("Email o contraseña incorrectos");
+      if (!res.success || !res.user) {
+        setError(res.error || "Email o contraseña incorrectos");
         setLoading(false);
         return;
       }
 
-      // 3. Existe cuenta pero con tipo diferente → mostrar aviso de tipo incorrecto
-      if (defaultTipo && anyMatch.tipo !== defaultTipo) {
-        setTipoMismatch(defaultTipo);
-        setLoading(false);
-        return;
-      }
-
-      localStorage.setItem("altoke_session", JSON.stringify(anyMatch));
+      localStorage.setItem("altoke_session", JSON.stringify(res.user));
+      window.dispatchEvent(new Event("storage"));
       setLoading(false);
       onClose();
-      const tipo = anyMatch.tipo as string;
-      if (tipo === "prestador") {
+      if (res.user.tipo === "prestador") {
         router.push("/prestador");
       } else {
         router.push("/explorar");
       }
-    }, 600);
+    } catch {
+      setError("Error al iniciar sesión");
+      setLoading(false);
+    }
   };
 
   const resetAndClose = () => {
