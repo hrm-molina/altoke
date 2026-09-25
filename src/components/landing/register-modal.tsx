@@ -813,11 +813,11 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                     />
                     <span className="text-xs text-[#64748B] leading-relaxed">
                       Declaro que soy <strong className="text-[#F1F5F9] font-semibold">mayor de 18 años</strong> y acepto los{" "}
-                      <a href="#" className="text-blue-400 hover:underline">
+                      <a href="/terminos" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
                         términos y condiciones
                       </a>{" "}
                       y la{" "}
-                      <a href="#" className="text-blue-400 hover:underline">
+                      <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
                         política de privacidad
                       </a>{" "}
                       *
