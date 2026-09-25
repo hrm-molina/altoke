@@ -96,22 +96,36 @@ CREATE INDEX IF NOT EXISTS idx_servicios_prestador ON public.servicios(prestador
 CREATE INDEX IF NOT EXISTS idx_calificaciones_servicio ON public.calificaciones(servicio_id);
 CREATE INDEX IF NOT EXISTS idx_usuarios_email ON public.usuarios(email);
 
--- 7. TRIGGER AUTOMÁTICO: Recalcular promedio de estrellas y total de reseñas
+-- 7. TRIGGER AUTOMÁTICO: Recalcular promedio de estrellas y total de reseñas (incluso al borrar)
 CREATE OR REPLACE FUNCTION actualizar_rating_servicio()
 RETURNS TRIGGER AS $$
+DECLARE
+    target_id UUID;
+    avg_val NUMERIC;
+    count_val INTEGER;
 BEGIN
-    UPDATE public.servicios
-    SET 
-        rating = ROUND((SELECT AVG(calificacion) FROM public.calificaciones WHERE servicio_id = NEW.servicio_id)::numeric, 1),
-        resenas = (SELECT COUNT(*) FROM public.calificaciones WHERE servicio_id = NEW.servicio_id)
-    WHERE id = NEW.servicio_id;
-    RETURN NEW;
+    target_id := COALESCE(NEW.servicio_id, OLD.servicio_id);
+    IF target_id IS NOT NULL THEN
+        SELECT 
+            COALESCE(ROUND(AVG(calificacion)::numeric, 1), 5.0),
+            COUNT(*)
+        INTO avg_val, count_val
+        FROM public.calificaciones
+        WHERE servicio_id = target_id;
+
+        UPDATE public.servicios
+        SET 
+            rating = avg_val,
+            resenas = count_val
+        WHERE id = target_id;
+    END IF;
+    RETURN COALESCE(NEW, OLD);
 END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_actualizar_rating ON public.calificaciones;
 CREATE TRIGGER trg_actualizar_rating
-AFTER INSERT OR UPDATE ON public.calificaciones
+AFTER INSERT OR UPDATE OR DELETE ON public.calificaciones
 FOR EACH ROW
 EXECUTE FUNCTION actualizar_rating_servicio();
 

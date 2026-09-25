@@ -107,13 +107,13 @@ export function ServiceCard({ servicio, onClick }: ServiceCardProps) {
       {/* Rating */}
       <div className="mb-3 flex items-center gap-1.5">
         <div className="flex items-center gap-0.5">
-          {renderStars(servicio.rating)}
+          {renderStars((servicio.resenas === 0 || !servicio.resenas) ? 5 : servicio.rating)}
         </div>
         <span className="text-sm font-semibold text-[#F1F5F9]">
-          {servicio.rating}
+          {(servicio.resenas === 0 || !servicio.resenas) ? 5 : servicio.rating}
         </span>
         <span className="text-xs text-[#64748B]">
-          ({servicio.resenas})
+          ({servicio.resenas || 0})
         </span>
       </div>
 

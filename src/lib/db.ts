@@ -192,14 +192,16 @@ export async function dbLoginUser(
 // ==========================================
 
 export function mapRowToServicio(row: Record<string, unknown>): Servicio {
+  const resenasCount = Number(row.resenas || 0);
+  const ratingVal = resenasCount === 0 ? 5.0 : Number(row.rating || 5.0);
   return {
     id: String(row.id),
     titulo: String(row.titulo || ""),
     descripcion: String(row.descripcion || ""),
     categoria: String(row.categoria || "Otros"),
     precio: Number(row.precio || 0),
-    rating: Number(row.rating || 5.0),
-    resenas: Number(row.resenas || 0),
+    rating: ratingVal,
+    resenas: resenasCount,
     comuna: String(row.comuna || ""),
     region: String(row.region || ""),
     sector: String(row.sector || ""),

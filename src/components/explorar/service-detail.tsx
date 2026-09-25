@@ -149,10 +149,10 @@ function ReviewsModal({
           </div>
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-0.5">
-              {renderStars(reviews.length > 0 ? Number((reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length).toFixed(1)) : servicio.rating, 14)}
+              {renderStars(reviews.length > 0 ? Number((reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length).toFixed(1)) : 5, 14)}
             </div>
             <span className="text-sm font-bold text-[#F1F5F9]">
-              {reviews.length > 0 ? Number((reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length).toFixed(1)) : servicio.rating}
+              {reviews.length > 0 ? Number((reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length).toFixed(1)) : 5}
             </span>
             <span className="text-xs text-[#64748B]">({reviews.length})</span>
           </div>
@@ -292,14 +292,16 @@ export function ServiceDetail({ servicio, onClose }: ServiceDetailProps) {
             {/* Rating — reseñas es clickeable */}
             <div className="flex items-center gap-2 mb-4">
               <div className="flex items-center gap-0.5">
-                {renderStars(servicio.rating)}
+                {renderStars((servicio.resenas === 0 || !servicio.resenas) ? 5 : servicio.rating)}
               </div>
-              <span className="text-sm font-semibold text-[#F1F5F9]">{servicio.rating}</span>
+              <span className="text-sm font-semibold text-[#F1F5F9]">
+                {(servicio.resenas === 0 || !servicio.resenas) ? 5 : servicio.rating}
+              </span>
               <button
                 onClick={() => setReviewsOpen(true)}
                 className="text-xs text-blue-400 hover:text-blue-300 hover:underline transition-colors cursor-pointer"
               >
-                ({servicio.resenas > 0 ? `${servicio.resenas} ${servicio.resenas === 1 ? "reseña" : "reseñas"}` : "ver reseñas"})
+                ({servicio.resenas > 0 ? `${servicio.resenas} ${servicio.resenas === 1 ? "reseña" : "reseñas"}` : "sin reseñas"})
               </button>
             </div>
 
