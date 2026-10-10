@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Zap, ArrowLeft, MessageCircle, HelpCircle, ShieldCheck, Star, User, CreditCard } from "lucide-react";
 
@@ -12,14 +12,14 @@ const faqs = [
   {
     icon: HelpCircle,
     category: "Primeros pasos",
-    q: "¿Qué es AlToke.cl?",
-    a: "AlToke.cl es una plataforma chilena que conecta a personas que necesitan realizar tareas rápidas con colaboradores dispuestos a ayudar en su comuna. Puedes publicar cualquier servicio lícito: hacer fila, pasear perros, traslados, armar muebles y mucho más.",
+    q: "¿Qué es AlToke Chile?",
+    a: "AlToke Chile (altokechile.cl) es una plataforma chilena que conecta a personas que necesitan realizar tareas rápidas con colaboradores dispuestos a ayudar en su comuna. Puedes publicar cualquier servicio lícito: hacer fila, pasear perros, traslados, armar muebles y mucho más.",
   },
   {
     icon: User,
     category: "Cuenta",
     q: "¿Cómo me registro?",
-    a: "Haz clic en el botón 'Registrarse' en la barra de navegación. Puedes registrarte como Cliente (para contratar servicios) o como Colaborador (para ofrecer servicios). Completa tu perfil con tus datos y empieza a usar la plataforma.",
+    a: "Haz clic en el botón 'Registrarse' en la barra de navegación. Puedes registrarte como Cliente (para contratar servicios) o como Colaborador (para ofrecer servicios). Debes ser mayor de 18 años conforme a la legislación chilena y aceptar la política de privacidad.",
   },
   {
     icon: Star,
@@ -29,21 +29,21 @@ const faqs = [
   },
   {
     icon: ShieldCheck,
-    category: "Seguridad",
-    q: "¿Cómo sé si un colaborador es confiable?",
-    a: "Cada colaborador tiene un perfil con valoraciones y comentarios de clientes anteriores. Te recomendamos revisar el historial antes de contratar. Además, solo se permiten servicios lícitos en la plataforma.",
+    category: "Seguridad y Legalidad",
+    q: "¿Cómo sé si un colaborador es confiable y seguro?",
+    a: "Cada colaborador cuenta con perfil, verificación de RUT y valoraciones de clientes anteriores. Además, por ley sólo se admiten servicios 100% lícitos y verificados.",
   },
   {
     icon: CreditCard,
-    category: "Pagos",
+    category: "Pagos y Boletas",
     q: "¿Cómo funcionan los pagos?",
-    a: "Los pagos se acuerdan directamente entre el Cliente y el Colaborador. La plataforma actúa como intermediario de conexión, no procesa pagos directamente. Puedes acordar el método de pago que más te acomode con la otra parte.",
+    a: "Los pagos se acuerdan directamente entre el Cliente y el Colaborador en pesos chilenos (CLP). La plataforma actúa como intermediario de conexión tecnológica. El prestador emite su respectiva boleta de honorarios o comprobante tributario.",
   },
   {
     icon: MessageCircle,
-    category: "Soporte",
-    q: "¿Cómo reporto un problema o abuso?",
-    a: "Si tienes un problema o detectas un comportamiento inapropiado, escríbenos a altokechile.info@gmail.com con el detalle de lo ocurrido. Revisaremos tu caso a la brevedad.",
+    category: "Soporte y Reclamos",
+    q: "¿Cómo reporto un problema o reclamo?",
+    a: "Conforme al Reglamento de Comercio Electrónico, disponemos de canal formal con respuesta en 48 horas hábiles. Escríbenos a altokechile.info@gmail.com o a través de nuestra sección de Contacto.",
   },
 ];
 
@@ -57,7 +57,7 @@ export default function AyudaPage() {
               <Zap size={18} fill="currentColor" />
             </div>
             <span className="text-xl font-bold text-[#F1F5F9]">
-              AlToke<span className="text-blue-400">.cl</span>
+              AlToke<span className="text-blue-400">Chile</span>
             </span>
           </Link>
           <Link
@@ -135,7 +135,7 @@ function PageFooter() {
     <footer className="border-t border-[#1E293B]/50 mt-10">
       <div className="mx-auto max-w-4xl px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <p className="text-xs text-[#475569]">
-          © {new Date().getFullYear()} AlToke.cl · Hecho en Chile 🇨🇱
+          © {new Date().getFullYear()} AlToke Chile (altokechile.cl) · Hecho en Chile 🇨🇱
         </p>
         <div className="flex gap-4 text-xs text-[#475569]">
           <Link href="/terminos" className="hover:text-blue-400 transition-colors">Términos</Link>

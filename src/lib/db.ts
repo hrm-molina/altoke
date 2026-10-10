@@ -1,29 +1,6 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { type Servicio } from "./mock-services";
 
-export interface DbUser {
-  id: string;
-  email: string;
-  password?: string;
-  password_hash?: string;
-  tipo: "usuario" | "prestador";
-  nombre: string;
-  rut?: string;
-  telefono: string;
-  fechaNacimiento: string;
-  fecha_nacimiento?: string;
-  region: string;
-  comuna: string;
-  ciudadSector?: string;
-  ciudad_sector?: string;
-  servicios?: string;
-  valorHora?: string | number;
-  valor_hora?: number;
-  foto?: string;
-  fechaRegistro?: string;
-  fecha_registro?: string;
-}
-
 export interface DbReview {
   id?: string;
   servicio_id?: string;
@@ -61,135 +38,6 @@ export interface DbAlert {
   atendida?: boolean;
   fecha?: string;
 }
-
-// ==========================================
-// 1. USUARIOS (REGISTRO, LOGIN, ACTUALIZAR)
-// ==========================================
-
-export async function dbRegisterUser(user: DbUser): Promise<{ success: boolean; user: DbUser; error?: string }> {
-  // Asegurar que el ID sea un UUID válido
-  const userId = user.id && user.id.includes("-") ? user.id : crypto.randomUUID();
-  const normalizedUser: DbUser = { ...user, id: userId };
-
-  // Guardar siempre en cache local para redundancia instantánea
-  if (typeof window !== "undefined") {
-    try {
-      const users: DbUser[] = JSON.parse(localStorage.getItem("altoke_users") || "[]");
-      const idx = users.findIndex((u) => u.email.toLowerCase() === user.email.toLowerCase() && u.tipo === user.tipo);
-      if (idx !== -1) {
-        users[idx] = { ...users[idx], ...normalizedUser };
-      } else {
-        users.push(normalizedUser);
-      }
-      localStorage.setItem("altoke_users", JSON.stringify(users));
-    } catch {}
-  }
-
-  // Si Supabase está disponible, insertar en la nube
-  if (supabase && isSupabaseConfigured) {
-    try {
-      const birthDate = user.fechaNacimiento || user.fecha_nacimiento || "2000-01-01";
-      const { error } = await supabase.from("usuarios").upsert({
-        id: userId,
-        email: user.email.toLowerCase().trim(),
-        password_hash: user.password ? btoa(user.password) : user.password_hash || "",
-        tipo: user.tipo,
-        nombre: user.nombre.trim(),
-        rut: user.rut || null,
-        telefono: user.telefono.trim(),
-        fecha_nacimiento: birthDate,
-        region: user.region,
-        comuna: user.comuna,
-        ciudad_sector: user.ciudadSector || user.ciudad_sector || null,
-        servicios: user.servicios || null,
-        valor_hora: Number(user.valorHora || user.valor_hora || 0),
-        foto: user.foto || null,
-        fecha_registro: user.fechaRegistro || new Date().toISOString(),
-      }, { onConflict: "email" });
-
-      if (error) {
-        console.warn("Supabase upsert usuarios:", error.message);
-      }
-    } catch (e) {
-      console.warn("Error conectando a Supabase al registrar usuario:", e);
-    }
-  }
-
-  return { success: true, user: normalizedUser };
-}
-
-export async function dbLoginUser(
-  email: string,
-  pass: string,
-  tipoRequerido?: "usuario" | "prestador"
-): Promise<{ success: boolean; user?: DbUser; error?: string; tipoMismatch?: "usuario" | "prestador" }> {
-  const cleanEmail = email.trim().toLowerCase();
-  const encodedPass = btoa(pass);
-
-  // 1. Intentar primero con Supabase si está disponible
-  if (supabase && isSupabaseConfigured) {
-    try {
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("*")
-        .eq("email", cleanEmail);
-
-      if (!error && data && data.length > 0) {
-        // Encontrar cuenta que coincida con la contraseña
-        const userRow = data.find((r) => r.password_hash === encodedPass || r.password_hash === pass);
-        if (userRow) {
-          if (tipoRequerido && userRow.tipo !== tipoRequerido) {
-            return { success: false, tipoMismatch: tipoRequerido };
-          }
-          const userObj: DbUser = {
-            id: userRow.id,
-            email: userRow.email,
-            tipo: userRow.tipo,
-            nombre: userRow.nombre,
-            rut: userRow.rut || "",
-            telefono: userRow.telefono,
-            fechaNacimiento: userRow.fecha_nacimiento,
-            region: userRow.region,
-            comuna: userRow.comuna,
-            ciudadSector: userRow.ciudad_sector || "",
-            servicios: userRow.servicios || "",
-            valorHora: userRow.valor_hora || 0,
-            foto: userRow.foto || "",
-            fechaRegistro: userRow.fecha_registro,
-          };
-          return { success: true, user: userObj };
-        }
-      }
-    } catch (e) {
-      console.warn("Error en login con Supabase:", e);
-    }
-  }
-
-  // 2. Fallback a usuarios locales
-  if (typeof window !== "undefined") {
-    try {
-      const localUsers: DbUser[] = JSON.parse(localStorage.getItem("altoke_users") || "[]");
-      const matched = localUsers.find(
-        (u) =>
-          u.email.toLowerCase() === cleanEmail &&
-          ((u.password && atob(u.password) === pass) || u.password === encodedPass || u.password === pass)
-      );
-
-      if (matched) {
-        if (tipoRequerido && matched.tipo !== tipoRequerido) {
-          return { success: false, tipoMismatch: tipoRequerido };
-        }
-        return { success: true, user: matched };
-      }
-    } catch {}
-  }
-
-  return { success: false, error: "Email o contraseña incorrectos" };
-}
-
-// ==========================================
-// 2. SERVICIOS (CATÁLOGO Y PUBLICACIÓN)
-// ==========================================
 
 export function mapRowToServicio(row: Record<string, unknown>): Servicio {
   const resenasCount = Number(row.resenas || 0);
@@ -235,7 +83,6 @@ export async function dbFetchServices(): Promise<Servicio[]> {
     }
   }
 
-  // Fallback a localStorage
   if (typeof window !== "undefined") {
     try {
       const raw = localStorage.getItem("altoke_provider_services");
@@ -246,13 +93,11 @@ export async function dbFetchServices(): Promise<Servicio[]> {
 }
 
 export async function dbSaveService(service: Servicio, prestadorId?: string): Promise<boolean> {
-  // Asegurar que el ID sea UUID válido
-  const serviceId = service.id && service.id.length > 20 && service.id.includes("-") 
-    ? service.id 
+  const serviceId = service.id && service.id.length > 20 && service.id.includes("-")
+    ? service.id
     : crypto.randomUUID();
   const validService = { ...service, id: serviceId };
 
-  // Guardar en cache local de inmediato
   if (typeof window !== "undefined") {
     try {
       const raw = localStorage.getItem("altoke_provider_services");
@@ -268,7 +113,6 @@ export async function dbSaveService(service: Servicio, prestadorId?: string): Pr
     } catch {}
   }
 
-  // Guardar en Supabase
   if (supabase && isSupabaseConfigured) {
     try {
       const validPrestadorId = prestadorId && prestadorId.includes("-") ? prestadorId : null;
@@ -308,10 +152,6 @@ export async function dbSaveService(service: Servicio, prestadorId?: string): Pr
   return true;
 }
 
-// ==========================================
-// 3. CALIFICACIONES / RESEÑAS
-// ==========================================
-
 export async function dbAddReview(review: DbReview): Promise<boolean> {
   const reviewId = crypto.randomUUID();
 
@@ -319,7 +159,6 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
     try {
       let targetServiceId = review.servicio_id || review.servicioId;
 
-      // Si el ID tiene prefijo provider- o no es UUID válido en servicios, buscar el servicio por título o prestador
       if (!targetServiceId || !targetServiceId.includes("-") || targetServiceId.startsWith("provider-")) {
         const { data: svcFound } = await supabase
           .from("servicios")
@@ -345,7 +184,6 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
         fecha: review.fecha || new Date().toISOString(),
       });
 
-      // Asegurar que el rating y resenas del servicio se actualicen en Supabase
       if (targetServiceId && targetServiceId.includes("-")) {
         const { data: allReviews } = await supabase
           .from("calificaciones")
@@ -395,10 +233,6 @@ export async function dbFetchReviews(servicioId?: string): Promise<DbReview[]> {
   }
   return [];
 }
-
-// ==========================================
-// 4. ALERTAS DE CONTRATACIÓN
-// ==========================================
 
 export async function dbCreateAlert(alert: DbAlert): Promise<boolean> {
   const alertId = crypto.randomUUID();

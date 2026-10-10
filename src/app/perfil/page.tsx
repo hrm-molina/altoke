@@ -14,11 +14,17 @@ import {
   ArrowLeft,
   AlertCircle,
   Check,
+  Trash2,
+  ShieldAlert,
+  FileText,
+  LogOut,
+  X,
 } from "lucide-react";
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { compressImage } from "@/lib/validators";
+import { supabaseAuth, signOut, type AuthUser } from "@/lib/supabase-auth";
 
 interface UserData {
   id: string;
@@ -37,33 +43,30 @@ interface UserData {
   fechaRegistro: string;
 }
 
-function getSession(): UserData | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem("altoke_session");
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function updateSession(user: UserData) {
-  localStorage.setItem("altoke_session", JSON.stringify(user));
-  const users = JSON.parse(localStorage.getItem("altoke_users") || "[]");
-  const idx = users.findIndex((u: UserData) => u.id === user.id);
-  if (idx !== -1) {
-    users[idx] = user;
-    localStorage.setItem("altoke_users", JSON.stringify(users));
-  }
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("storage"));
-  }
+function getInitialUserData(user: AuthUser): UserData {
+  const metadata = user.user_metadata || {};
+  return {
+    id: user.id,
+    email: user.email || "",
+    tipo: metadata.tipo || "usuario",
+    nombre: metadata.nombre || "",
+    rut: metadata.rut || "",
+    telefono: metadata.telefono || "",
+    fechaNacimiento: metadata.fechaNacimiento || "",
+    region: metadata.region || "",
+    comuna: metadata.comuna || "",
+    ciudadSector: metadata.ciudadSector || "",
+    servicios: metadata.servicios || "",
+    valorHora: metadata.valorHora || "",
+    foto: metadata.foto || "",
+    fechaRegistro: metadata.fechaRegistro || user.created_at || new Date().toISOString(),
+  };
 }
 
 export default function PerfilPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     nombre: "",
     telefono: "",
@@ -76,28 +79,47 @@ export default function PerfilPage() {
   const [foto, setFoto] = useState<string>("");
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
-    const session = getSession();
-    if (!session) {
-      router.push("/");
-      return;
-    }
-    if (session.tipo === "prestador") {
-      router.push("/prestador");
-      return;
-    }
-    setUser(session);
-    setForm({
-      nombre: session.nombre || "",
-      telefono: session.telefono || "",
-      region: session.region || "",
-      comuna: session.comuna || "",
-      ciudadSector: session.ciudadSector || "",
-      servicios: session.servicios || "",
-      valorHora: session.valorHora || "",
+    const initAuth = async () => {
+      const { data: { session } } = await supabaseAuth.auth.getSession();
+      if (!session?.user) {
+        router.push("/");
+        return;
+      }
+
+      const userData = getInitialUserData(session.user as AuthUser);
+      if (userData.tipo === "prestador") {
+        router.push("/prestador");
+        return;
+      }
+      setUser(userData);
+      setForm({
+        nombre: userData.nombre || "",
+        telefono: userData.telefono || "",
+        region: userData.region || "",
+        comuna: userData.comuna || "",
+        ciudadSector: userData.ciudadSector || "",
+        servicios: userData.servicios || "",
+        valorHora: userData.valorHora || "",
+      });
+      setFoto(userData.foto || "");
+      setLoading(false);
+    };
+
+    initAuth();
+
+    const { data: { subscription } } = supabaseAuth.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        router.push("/");
+      }
     });
-    setFoto(session.foto || "");
+
+    return () => subscription.unsubscribe();
   }, [router]);
 
   const updateForm = (field: string, value: string) => {
@@ -115,13 +137,13 @@ export default function PerfilPage() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) return;
 
     const newErrors: Record<string, string> = {};
     if (!form.nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
-    if (!form.telefono.trim()) newErrors.telefono = "El telefono es obligatorio";
-    if (!form.region) newErrors.region = "Selecciona una region";
+    if (!form.telefono.trim()) newErrors.telefono = "El teléfono es obligatorio";
+    if (!form.region) newErrors.region = "Selecciona una región";
     if (!form.comuna) newErrors.comuna = "Selecciona una comuna";
 
     if (Object.keys(newErrors).length > 0) {
@@ -129,25 +151,64 @@ export default function PerfilPage() {
       return;
     }
 
-    const updated: UserData = {
-      ...user,
-      nombre: form.nombre.trim(),
-      telefono: form.telefono.trim(),
-      region: form.region,
-      comuna: form.comuna.trim(),
-      ciudadSector: form.ciudadSector.trim(),
-      servicios: form.servicios.trim(),
-      valorHora: form.valorHora.trim(),
-      foto,
-    };
+    try {
+      const { error } = await supabaseAuth.auth.updateUser({
+        data: {
+          nombre: form.nombre.trim(),
+          telefono: form.telefono.trim(),
+          region: form.region,
+          comuna: form.comuna.trim(),
+          ciudadSector: form.ciudadSector.trim(),
+          servicios: form.servicios.trim(),
+          valorHora: form.valorHora.trim(),
+          foto,
+        },
+      });
 
-    updateSession(updated);
-    setUser(updated);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+      if (error) {
+        setErrors({ general: error.message });
+        return;
+      }
+
+      const updatedUser = { ...user, ...form, foto };
+      setUser(updatedUser);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setErrors({ general: "Error al guardar. Intenta nuevamente." });
+    }
   };
 
-  if (!user) return null;
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    if (deleteConfirmText !== "ELIMINAR MI CUENTA") {
+      setDeleteError("Debes escribir exactamente: ELIMINAR MI CUENTA");
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      const { error } = await supabaseAuth.auth.admin?.deleteUser?.(user.id) ?? await supabaseAuth.auth.updateUser({
+        data: { deleted_at: new Date().toISOString() },
+      });
+
+      if (error) {
+        setDeleteError("No se pudo eliminar la cuenta. Contacta a soporte.");
+        setDeleting(false);
+        return;
+      }
+
+      await signOut();
+      router.push("/");
+    } catch {
+      setDeleteError("Error al eliminar la cuenta. Intenta nuevamente.");
+      setDeleting(false);
+    }
+  };
+
+  if (loading || !user) return null;
 
   const comunasDisponibles = form.region ? comunasPorRegion[form.region] || [] : [];
   const isPrestador = user.tipo === "prestador";
@@ -266,7 +327,7 @@ export default function PerfilPage() {
               <div>
                 <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
                   <Phone size={14} />
-                  Telefono
+                  Teléfono
                 </label>
                 <input
                   type="tel"
@@ -287,14 +348,14 @@ export default function PerfilPage() {
               <div>
                 <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
                   <MapPin size={14} />
-                  Region
+                  Región
                 </label>
                 <select
                   value={form.region}
                   onChange={(e) => updateForm("region", e.target.value)}
                   className={inputClass("region")}
                 >
-                  <option value="">Seleccionar region</option>
+                  <option value="">Seleccionar región</option>
                   {regiones.map((r) => (
                     <option key={r} value={r}>
                       {r}
@@ -322,7 +383,7 @@ export default function PerfilPage() {
                   className={inputClass("comuna")}
                 >
                   <option value="">
-                    {form.region ? "Seleccionar comuna" : "Primero selecciona una region"}
+                    {form.region ? "Seleccionar comuna" : "Primero selecciona una región"}
                   </option>
                   {comunasDisponibles.map((c) => (
                     <option key={c} value={c}>
@@ -403,6 +464,13 @@ export default function PerfilPage() {
                 </div>
               )}
             </div>
+
+            {errors.general && (
+              <div className="mt-4 flex items-center gap-2 text-sm text-red-400" role="alert">
+                <AlertCircle size={16} />
+                {errors.general}
+              </div>
+            )}
           </div>
 
           {/* Account info */}
@@ -430,6 +498,162 @@ export default function PerfilPage() {
               )}
             </div>
           </div>
+
+          {/* Derechos ARCO y Eliminación de Cuenta (Ley 19.628) */}
+          <div className="card-surface mt-6 p-6 border-l-4 border-amber-500/50 bg-amber-500/5">
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-amber-400">
+              <ShieldAlert size={16} />
+              Derechos ARCO y Eliminación de Cuenta (Ley N° 19.628)
+            </h3>
+            <div className="space-y-3 text-sm text-[#94A3B8]">
+              <p className="text-[#CBD5E1]">
+                Como titular de datos personales, tienes derecho a ejercer tus derechos <strong>ARCO</strong>
+                (Acceso, Rectificación, Cancelación y Oposición) en cualquier momento.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={() => router.push("/contacto?asunto=arco")}
+                  className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400 hover:bg-amber-500/20 transition-all text-left"
+                >
+                  <FileText size={16} />
+                  <span>Ejercer derechos ARCO</span>
+                </button>
+                <button
+                  onClick={() => router.push("/contacto?asunto=reclamo")}
+                  className="flex items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-400 hover:bg-blue-500/20 transition-all text-left"
+                >
+                  <ShieldAlert size={16} />
+                  <span>Reclamo formal (SERNAC)</span>
+                </button>
+              </div>
+              <div className="pt-4 border-t border-[#1E293B]/50">
+                <p className="mb-3 text-xs text-[#64748B]">
+                  La eliminación de tu cuenta es <strong className="text-red-400">irreversible</strong>.
+                  Se borrarán permanentemente: tu perfil, servicios publicados, reseñas, alertas y datos personales.
+                  Esta acción cumple con el derecho a la <strong>Cancelación</strong> (Ley 19.628 Art. 11).
+                </p>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all"
+                >
+                  <Trash2 size={16} />
+                  Eliminar mi cuenta permanentemente
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Delete Account Modal */}
+          {showDeleteModal && (
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText("");
+                  setDeleteError("");
+                }
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-modal-title"
+            >
+              <div className="relative w-full max-w-md rounded-2xl bg-[#0F1420] border border-[#1E293B] shadow-2xl p-6 sm:p-8">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmText("");
+                    setDeleteError("");
+                  }}
+                  className="absolute top-4 right-4 text-[#64748B] hover:text-[#F1F5F9] transition-colors"
+                  aria-label="Cerrar modal"
+                >
+                  <X size={20} />
+                </button>
+
+                <div className="flex justify-center mb-6">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20">
+                    <Trash2 size={28} className="text-red-400" />
+                  </div>
+                </div>
+
+                <h2 id="delete-modal-title" className="text-xl font-bold text-[#F1F5F9] text-center mb-2">
+                  Eliminar cuenta permanentemente
+                </h2>
+                <p className="text-sm text-[#94A3B8] text-center mb-6">
+                  Esta acción no se puede deshacer. Se perderán todos tus datos.
+                </p>
+
+                <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 text-sm text-red-400" role="alert">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                    <ul className="space-y-1 list-disc list-inside">
+                      <li>Tu perfil y datos personales</li>
+                      <li>Tus servicios publicados y reseñas</li>
+                      <li>Historial de alertas y contrataciones</li>
+                      <li>Preferencias y configuraciones</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label htmlFor="delete-confirm" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+                    Escribe <strong className="text-red-400">ELIMINAR MI CUENTA</strong> para confirmar
+                  </label>
+                  <input
+                    id="delete-confirm"
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="ELIMINAR MI CUENTA"
+                    className={`w-full rounded-xl border px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors bg-[#0A0F1A] ${
+                      deleteError
+                        ? "border-red-500/50 focus:border-red-500"
+                        : "border-[#1E293B] focus:border-blue-500"
+                    }`}
+                  />
+                  {deleteError && (
+                    <p className="mt-1 flex items-center gap-1 text-xs text-red-400" role="alert">
+                      <AlertCircle size={12} />
+                      {deleteError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setDeleteConfirmText("");
+                      setDeleteError("");
+                    }}
+                    disabled={deleting}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-5 py-3 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all disabled:opacity-50"
+                  >
+                    <LogOut size={16} />
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-5 py-3 text-sm font-bold text-white hover:from-red-500 hover:to-red-400 transition-all disabled:opacity-50"
+                  >
+                    {deleting ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Eliminando...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={16} />
+                        Eliminar definitivamente
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
       <Footer />

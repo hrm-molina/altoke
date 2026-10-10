@@ -22,12 +22,10 @@ export const categorias = [
   "Pasear perros",
   "Limpieza",
   "Mudanza",
-  "Compañia",
   "Reparaciones",
   "Encomiendas",
   "Armar muebles",
   "Jardineria",
-  "Cuidado de niños",
   "Mascotas",
   "Tecnología",
   "Otros",
@@ -81,9 +79,18 @@ export function getCustomServices(): Servicio[] {
 }
 
 import { dbSaveService } from "./db";
+import { validateServiceContent } from "./content-moderation";
 
 export function saveCustomService(service: Servicio): void {
   if (typeof window === "undefined") return;
+  
+  // Validación de contenido prohibido (última barrera)
+  const contentValidation = validateServiceContent(service.titulo, service.descripcion, service.categoria);
+  if (!contentValidation.valid) {
+    console.warn("Servicio rechazado por contenido prohibido:", contentValidation.errors[0]);
+    return;
+  }
+  
   try {
     const existing = getCustomServices();
     const idx = existing.findIndex((s) => s.id === service.id);

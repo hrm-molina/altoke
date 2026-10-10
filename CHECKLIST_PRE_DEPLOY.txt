@@ -1,0 +1,339 @@
+================================================================================
+CHECKLIST PRE-DEPLOY — AlTokeChile (altokechile.cl)
+================================================================================
+Fecha: Octubre 2026
+Versión: 1.0
+Estado: LISTO PARA REVISIÓN MANUAL ANTES DE PRODUCCIÓN
+================================================================================
+
+📋 INSTRUCCIONES
+- Marca cada ítem con [x] al verificar
+- Cualquier [ ] sin marcar = NO DEPLOYAR
+- Ejecuta en orden: LOCAL → STAGING → PRODUCCIÓN
+
+================================================================================
+1. CONFIGURACIÓN DE ENTORNO (LOCAL / STAGING / PROD)
+================================================================================
+
+[ ] 1.1 Archivo .env.local / Vercel Environment Variables
+    [ ] NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+    [ ] NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+    [ ] SUPABASE_SERVICE_ROLE_KEY=eyJ... (solo server-side / API routes)
+    [ ] NODE_ENV=production (en Vercel)
+
+[ ] 1.2 Dominio y DNS
+    [ ] altokechile.cl apuntando a Vercel (CNAME cname.vercel-dns.com)
+    [ ] www.altokechile.cl redirige a altokechile.cl
+    [ ] Certificado SSL válido (Vercel auto)
+
+[ ] 1.3 Supabase Project Settings
+    [ ] Auth → Providers → Email: ENABLED
+    [ ] Auth → Providers → Email Confirmations: ENABLED
+    [ ] Auth → URL Configuration → Site URL: https://altokechile.cl
+    [ ] Auth → URL Configuration → Redirect URLs: https://altokechile.cl/auth/callback
+    [ ] Database → Extensions: uuid-ossp ENABLED
+
+================================================================================
+2. BASE DE DATOS — SCHEMA Y RLS (EJECUTAR EN SUPABASE SQL EDITOR)
+================================================================================
+
+[ ] 2.1 Ejecutar supabase/schema.sql completo (sin errores)
+    [ ] Tablas: usuarios, servicios, calificaciones, alertas, contactos, terms_acceptance
+    [ ] Índices creados
+    [ ] Triggers: actualizar_rating_servicio, validar_contenido_servicio
+    [ ] RLS ENABLED en todas las tablas
+    [ ] Políticas auth.uid() aplicadas (NO USING (TRUE) en tablas sensibles)
+    [ ] GRANT SELECT ON public.servicios TO anon (solo catálogo público)
+    [ ] REVOKE ALL ON usuarios, calificaciones, alertas, contactos, terms_acceptance FROM anon
+
+[ ] 2.2 Verificar datos de prueba
+    [ ] Categorías permitidas en check_categoria_permitida (NO 'cuidado de niños', 'compañia')
+    [ ] Constraint check_mayor_de_edad (fecha_nacimiento <= 18 años atrás)
+    [ ] Constraint check_anti_auto_calificacion (email_cliente != email_prestador)
+
+================================================================================
+3. FLUJOS CRÍTICOS — SMOKE TESTS MANUALES
+================================================================================
+
+3.1 REGISTRO USUARIO
+[ ] Abrir https://altokechile.cl (o localhost:3000)
+[ ] Click "Iniciar usuario" → "Regístrate acá"
+[ ] Paso 1: Seleccionar "Usuario"
+[ ] Paso 2: Email válido + contraseña ≥8 chars + confirmación
+[ ] Paso 3: Nombre, teléfono chileno (+56 9...), fecha nacimiento (≥18 años), región, comuna, aceptar términos
+[ ] Submit → Redirige a /explorar
+[ ] Verificar en Supabase Auth: usuario creado, email_confirmed_at = null (pendiente)
+[ ] Revisar email: llega "Confirm your signup" → click link → email_confirmed_at poblado
+[ ] Login con email confirmado → entra a /explorar
+
+3.2 REGISTRO PRESTADOR
+[ ] Click "Iniciar servicios" → "Regístrate acá"
+[ ] Paso 1: Seleccionar "Prestador"
+[ ] Paso 2: Email + pass
+[ ] Paso 3: Nombre, RUT válido (módulo 11), teléfono, fecha nac, región, comuna, ciudad/sector,
+          categoría (solo permitidas), título servicio, valor hora, fotos opcionales, aceptar términos
+[ ] Submit → Redirige a /prestador
+[ ] Verificar en /prestador: formulario de perfil precargado, servicio visible en catálogo
+[ ] Verificar en Supabase: fila en usuarios (tipo='prestador'), fila en servicios (prestador_id = user.id)
+
+3.3 LOGIN / LOGOUT
+[ ] Login usuario correcto → /explorar
+[ ] Login prestador correcto → /prestador
+[ ] Login credenciales inválidas → error "Email o contraseña incorrectos"
+[ ] Login email no confirmado → error + botón "Reenviar email"
+[ ] Logout desde navbar → redirige a /, sesión limpia
+
+3.4 EXPLORAR SERVICIOS (CATÁLOGO PÚBLICO)
+[ ] Sin login: acceder a /explorar → redirige a /login (middleware/auth check)
+[ ] Con login usuario: ver grid de servicios
+[ ] Filtros: búsqueda texto, región, comuna, sector, categoría, precio min/max
+[ ] Ordenar: rating, fecha
+[ ] Click servicio → modal detalle (ServiceDetail)
+[ ] Botón "Ver teléfono" → crea alerta en BD, muestra teléfono, permite calificar
+
+3.5 CALIFICACIONES / RESEÑAS
+[ ] En alerta pendiente: click "Sí" (contraté) → "Calificar"
+[ ] Modal RateService: estrellas 1-5 + reseña obligatoria
+[ ] Submit → alerta desaparece, aparece en Historial
+[ ] Anti-auto-rating: intentar calificar propio servicio → bloqueado (trigger BD + UI)
+[ ] Ver en /explorar?tab=historial: reseña listada con estrellas, fecha, texto
+
+3.6 ALERTAS
+[ ] En /explorar?tab=alertas: listar alertas pendientes
+[ ] "Sí/No" → confirma o descarta
+[ ] "Calificar" → abre RateService
+[ ] "Descartar" → elimina alerta
+
+3.7 PERFIL USUARIO (/perfil)
+[ ] Editar nombre, teléfono, región, comuna, sector → Guardar → persiste
+[ ] Cambiar foto → upload + compresión → preview → guardar
+[ ] Sección "Derechos ARCO y Eliminación de Cuenta" visible
+[ ] Botón "Ejercer derechos ARCO" → redirige a /contacto?asunto=arco
+[ ] Botón "Reclamo formal (SERNAC)" → redirige a /contacto?asunto=reclamo
+
+3.8 ELIMINAR CUENTA (DERECHO A CANCELACIÓN - LEY 19.628)
+[ ] En /perfil: click "Eliminar mi cuenta permanentemente"
+[ ] Modal: advierte irreversibilidad, lista datos que se borran
+[ ] Input: escribir exactamente "ELIMINAR MI CUENTA"
+[ ] Click "Eliminar definitivamente" → loading → logout → redirige a /
+[ ] Verificar en Supabase: usuario eliminado (o soft-delete con deleted_at)
+[ ] Datos asociados: servicios, reseñas, alertas, contactos → eliminados o anonimizados
+
+3.9 PANEL PRESTADOR (/prestador)
+[ ] Perfil: editar datos → guardar → sincroniza catálogo público
+[ ] Servicio: editar título, descripción, categoría, foto → guardar
+[ ] Validación contenido: palabras prohibidas → error en cliente + trigger BD
+[ ] Jobs/Contrataciones: listar (mock localStorage por ahora)
+
+3.10 CONTACTO / RECLAMOS (/contacto)
+[ ] Formulario: nombre, email, asunto (dropdown), mensaje ≥10 chars
+[ ] Submit → POST /api/contacto → 201 + mensaje éxito
+[ ] Verificar en Supabase: fila en contactos (ip, user_agent, timestamp, estado='pendiente')
+[ ] Asunto "Ejercicio Derechos ARCO" → pre-seleccionado si ?asunto=arco
+[ ] Asunto "Reclamo formal" → pre-seleccionado si ?asunto=reclamo
+[ ] Email directo mailto: sigue disponible como fallback
+
+3.11 TÉRMINOS Y PRIVACIDAD
+[ ] /terminos: renderiza completo, enlaces internos funcionan
+[ ] /privacidad: renderiza completo, derechos ARCO explicados
+[ ] Checkbox registro: links a /terminos y /privacidad abren en nueva pestaña
+[ ] Cookie banner: primera visita → muestra banner
+    [ ] "Aceptar todas" → guarda consentimiento, no vuelve a salir
+    [ ] "Solo necesarias" → guarda, no vuelve a salir
+    [ ] "Rechazar todas" → guarda, no vuelve a salir
+    [ ] "Ver detalles" → expande categorías (Esenciales, Funcionales, Analíticas)
+    [ ] Link "Leer política" → /privacidad
+
+================================================================================
+4. SEGURIDAD — VERIFICACIONES TÉCNICAS
+================================================================================
+
+[ ] 4.1 Headers HTTP (curl -I https://altokechile.cl)
+    [ ] Content-Security-Policy: presente, sin 'unsafe-inline' innecesario
+    [ ] Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+    [ ] X-Frame-Options: DENY
+    [ ] X-Content-Type-Options: nosniff
+    [ ] Referrer-Policy: strict-origin-when-cross-origin
+    [ ] Permissions-Policy: camera=(), microphone=(), geolocation=(self), payment=()
+    [ ] Cross-Origin-Opener-Policy: same-origin
+    [ ] Cross-Origin-Resource-Policy: same-origin
+
+[ ] 4.2 Rate Limiting (probar con curl/Postman)
+    [ ] POST /api/auth/login x6 en <1 min → 429 + Retry-After
+    [ ] POST /api/auth/register x4 en <1 min → 429
+    [ ] GET /api/servicios x31 en <1 min → 429
+    [ ] POST /api/contacto x6 en <1 min → 429
+
+[ ] 4.3 RLS Verification (usar anon key desde navegador)
+    [ ] SELECT usuarios → 0 rows (policy denies)
+    [ ] SELECT calificaciones → 0 rows
+    [ ] SELECT alertas → 0 rows
+    [ ] SELECT contactos → 0 rows
+    [ ] SELECT terms_acceptance → 0 rows
+    [ ] SELECT servicios WHERE activo=true → rows OK (catálogo público)
+    [ ] INSERT usuarios (auth.uid() = id) → OK solo en signup
+    [ ] UPDATE usuarios (auth.uid() = id) → OK solo own profile
+
+[ ] 4.4 Contraseñas NO en localStorage
+    [ ] DevTools → Application → LocalStorage → altoke_session: NO password field
+    [ ] altoke_users: NO password field (solo metadata no sensible)
+
+[ ] 4.5 Session Handling
+    [ ] Supabase Auth JWT en cookie/headers (no localStorage custom)
+    [ ] Refresh token rotation automático
+    [ ] Logout limpia sesión Supabase + localStorage
+
+================================================================================
+5. ACCESIBILIDAD (WCAG 2.1 AA) — REVISIÓN RÁPIDA
+================================================================================
+
+[ ] 5.1 Modales (Register, Login, ServiceDetail, DeleteAccount)
+    [ ] role="dialog", aria-modal="true", aria-labelledby
+    [ ] Focus trap (Tab cicla dentro del modal)
+    [ ] Esc cierra modal
+    [ ] Focus retorna a trigger al cerrar
+
+[ ] 5.2 Formularios
+    [ ] Labels asociados (htmlFor + id) — NO solo placeholder
+    [ ] Errores: aria-invalid + aria-describedby + role="alert"
+    [ ] Contraste textos ≥ 4.5:1 (revisar #94A3B8 sobre #06080F = 3.2:1 ⚠️ FALLA)
+
+[ ] 5.3 Navegación teclado
+    [ ] Tab order lógico en todas las páginas
+    [ ] Botones estrella (RateService) accesibles (role="radio" o button + aria-label)
+    [ ] Botón "Ver teléfono" accesible
+    [ ] Skip link "Saltar al contenido principal" (falta implementar)
+
+[ ] 5.4 Landmarks
+    [ ] <header>, <main>, <footer>, <nav>, <aside> presentes
+    [ ] h1 único por página
+
+================================================================================
+6. RENDIMIENTO Y SEO
+================================================================================
+
+[ ] 6.1 Build Production
+    [ ] npm run build → 0 errores TypeScript + 0 errores ESLint
+    [ ] Bundle size razonable (next-bundle-analyzer si disponible)
+    [ ] Imágenes: usar <Image /> en service-card, service-detail, perfil, prestador
+
+[ ] 6.2 Core Web Vitals (Lighthouse)
+    [ ] LCP < 2.5s
+    [ ] CLS < 0.1
+    [ ] INP < 200ms
+
+[ ] 6.3 SEO Básico
+    [ ] metadata.title + description en todas las páginas
+    [ ] Open Graph / Twitter cards
+    [ ] Sitemap.xml (next-sitemap o manual)
+    [ ] robots.txt
+
+[ ] 6.4 PWA (opcional pero recomendado)
+    [ ] manifest.json
+    [ ] Service Worker (workbox) para offline-first
+
+================================================================================
+7. LEGAL / CUMPLIMIENTO CHILE (LEY 19.628, 19.496, D.6/2021, 21.459)
+================================================================================
+
+[ ] 7.1 Privacidad
+    [ ] Política /privacidad completa y accesible
+    [ ] Derechos ARCO explicados + canal ejercicio (contacto)
+    [ ] Plazo conservación datos documentado
+    [ ] Subprocesadores (Supabase) listados → DPA firmado
+
+[ ] 7.2 Términos y Condiciones
+    [ ] Operador identificado (nombre fantasía, dominio, contacto, jurisdicción)
+    [ ] Naturaleza intermediación tecnológica (no relación laboral)
+    [ ] Mayoría 18 años + RUT prestadores
+    [ ] Servicios lícitos only (categorías prohibidas listadas)
+    [ ] Precios CLP, transparencia, obligaciones tributarias prestador
+    [ ] Derecho retracto / cancelaciones
+    [ ] Canal reclamos 48h hábiles (Decreto 6/2021)
+    [ ] Legislación aplicable Chile, fuero consumidor
+
+[ ] 7.3 Cookies / Almacenamiento
+    [ ] Banner primera visita con 3 opciones (Aceptar/Esenciales/Rechazar)
+    [ ] Categorías detalladas (Esenciales, Funcionales, Analíticas)
+    [ ] Consentimiento loggeado (timestamp, versión, modo, IP, UA)
+
+[ ] 7.4 Trazabilidad Consentimiento
+    [ ] Registro: POST /api/terms-acceptance con userId, email, version, tipo, IP, UA
+    [ ] Tabla terms_acceptance poblada en Supabase
+
+================================================================================
+8. MONITOREO Y OBSERVABILIDAD (PRODUCCIÓN)
+================================================================================
+
+[ ] 8.1 Error Tracking
+    [ ] Sentry / LogRocket configurado (DSN en env)
+    [ ] Captura errores cliente + servidor
+    [ ] Alertas en canal Slack/Email para errores 5xx
+
+[ ] 8.2 Analytics (Privacy-Friendly)
+    [ ] Plausible / Umami / Matomo (NO Google Analytics)
+    [ ] Sin PII en eventos
+    [ ] Consentimiento previo (categoría Analíticas)
+
+[ ] 8.3 Uptime Monitoring
+    [ ] UptimeRobot / BetterStack / Pingdom
+    [ ] Checks: /, /explorar, /api/contacto, /api/terms-acceptance
+    [ ] Alertas: downtime > 1 min, latency > 5s
+
+[ ] 8.4 Backups
+    [ ] Supabase Point-in-Time Recovery habilitado (PITR)
+    [ ] Backups diarios verificados
+    [ ] Procedimiento restore documentado
+
+================================================================================
+9. TESTING DE REGRESIÓN (POST-DEPLOY)
+================================================================================
+
+[ ] 9.1 Smoke Test Producción (5 min)
+    [ ] https://altokechile.cl carga (200 OK)
+    [ ] Registro usuario → email confirm → login → /explorar
+    [ ] Registro prestador → login → /prestador → editar servicio
+    [ ] Usuario ve servicio → ver teléfono → calificar → historial
+    [ ] Prestador ve su panel → edita perfil/servicio
+    [ ] Eliminar cuenta usuario → éxito
+    [ ] Contacto formulario → éxito + BD
+    [ ] Cookie banner → 3 opciones funcionan
+
+[ ] 9.2 Rollback Plan
+    [ ] Vercel: deployments previos accesibles para rollback instantáneo
+    [ ] Supabase: migraciones reversibles / PITR
+
+================================================================================
+10. DOCUMENTACIÓN Y HANDOFF
+================================================================================
+
+[ ] 10.1 README.md actualizado (scripts, env vars, deploy)
+[ ] 10.2 AGENTS.md / CLAUDE.md actualizados
+[ ] 10.3 Runbooks: incident response, deploy, rollback, backup restore
+[ ] 10.4 Contactos: dev team, Supabase admin, dominio/DNS admin
+[ ] 10.5 Changelog v1.0.0 generado
+
+================================================================================
+✅ FIRMA DE APROBACIÓN
+================================================================================
+
+Revisado por: _________________________   Fecha: ______________
+Rol: _________________________________
+
+Revisado por: _________________________   Fecha: ______________
+Rol: _________________________________
+
+🚀 APROBADO PARA PRODUCCIÓN:  [ ] SÍ   [ ] NO (ver items pendientes)
+
+================================================================================
+NOTAS ADICIONALES / INCIDENCIAS ENCONTRADAS
+================================================================================
+1. ________________________________________________________________
+2. ________________________________________________________________
+3. ________________________________________________________________
+4. ________________________________________________________________
+5. ________________________________________________________________
+
+================================================================================
+FIN DEL CHECKLIST
+================================================================================

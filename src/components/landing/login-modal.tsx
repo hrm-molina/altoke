@@ -1,24 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { X, Mail, Lock, AlertCircle, Check, Zap } from "lucide-react";
+import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { dbLoginUser } from "@/lib/db";
+import { signInWithEmail } from "@/lib/supabase-auth";
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToRegister?: () => void;
   defaultTipo?: "usuario" | "prestador";
-}
-
-function getUsers(): Record<string, unknown>[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("altoke_users") || "[]");
-  } catch {
-    return [];
-  }
 }
 
 export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }: LoginModalProps) {
@@ -28,9 +19,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [tipoMismatch, setTipoMismatch] = useState<"usuario" | "prestador" | null>(null);
+  const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
 
   const handleLogin = async () => {
     setError("");
+    setEmailNotConfirmed(false);
 
     if (!email.trim() || !password) {
       setError("Completa todos los campos");
@@ -40,29 +33,65 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
     setLoading(true);
 
     try {
-      const res = await dbLoginUser(email, password, defaultTipo);
-      if (res.tipoMismatch) {
-        setTipoMismatch(res.tipoMismatch);
-        setLoading(false);
-        return;
-      }
-      if (!res.success || !res.user) {
-        setError(res.error || "Email o contraseña incorrectos");
+      const res = await signInWithEmail(email, password);
+      if (res.error) {
+        const errMsg = res.error.toLowerCase();
+        if (errMsg.includes("email not confirmed") || errMsg.includes("email no confirmado")) {
+          setEmailNotConfirmed(true);
+          setError("Confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada.");
+        } else if (errMsg.includes("invalid credentials") || errMsg.includes("invalid login")) {
+          setError("Email o contraseña incorrectos");
+        } else {
+          setError(res.error);
+        }
         setLoading(false);
         return;
       }
 
-      localStorage.setItem("altoke_session", JSON.stringify(res.user));
-      window.dispatchEvent(new Event("storage"));
+      if (!res.user) {
+        setError("Error al iniciar sesión");
+        setLoading(false);
+        return;
+      }
+
+      const userTipo = res.user.user_metadata?.tipo || "usuario";
+      if (defaultTipo && userTipo !== defaultTipo) {
+        setTipoMismatch(defaultTipo === "prestador" ? "usuario" : "prestador");
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
       onClose();
-      if (res.user.tipo === "prestador") {
+      if (userTipo === "prestador") {
         router.push("/prestador");
       } else {
         router.push("/explorar");
       }
     } catch {
-      setError("Error al iniciar sesión");
+      setError("Error de conexión. Intenta nuevamente.");
+      setLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    setLoading(true);
+    try {
+      const { error } = await signInWithEmail(email, password);
+      if (error && error.toLowerCase().includes("email not confirmed")) {
+        const { error: resendError } = await supabaseAuth.auth.resend({
+          type: "signup",
+          email,
+        });
+        if (resendError) {
+          setError("Error reenviando email. Intenta más tarde.");
+        } else {
+          setError("Email de confirmación reenviado. Revisa tu bandeja de entrada.");
+        }
+      }
+    } catch {
+      setError("Error reenviando email.");
+    } finally {
       setLoading(false);
     }
   };
@@ -72,6 +101,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
     setPassword("");
     setError("");
     setTipoMismatch(null);
+    setEmailNotConfirmed(false);
     setLoading(false);
     onClose();
   };
@@ -86,12 +116,16 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="login-title"
     >
       <div className="relative w-full max-w-md rounded-2xl bg-[#0F1420] border border-[#1E293B] shadow-2xl p-6 sm:p-8">
         {/* Close */}
         <button
           onClick={resetAndClose}
           className="absolute top-4 right-4 text-[#64748B] hover:text-[#F1F5F9] transition-colors"
+          aria-label="Cerrar modal"
         >
           <X size={20} />
         </button>
@@ -103,7 +137,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
           </div>
         </div>
 
-        <h2 className="text-xl font-bold text-[#F1F5F9] text-center mb-2">
+        <h2 id="login-title" className="text-xl font-bold text-[#F1F5F9] text-center mb-2">
           {defaultTipo === "prestador"
             ? "Iniciar sesión como prestador"
             : defaultTipo === "usuario"
@@ -115,11 +149,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
             ? "Ingresa para gestionar tu servicio"
             : defaultTipo === "usuario"
               ? "Ingresa para buscar y contratar servicios"
-              : "Ingresa a tu cuenta de AlToke"}
+              : "Ingresa a tu cuenta de AlTokeChile"}
         </p>
 
         {tipoMismatch === "usuario" && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm">
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm" role="alert">
             <div className="flex items-start gap-2 text-amber-400 mb-3">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
               <span>Esta cuenta está registrada como <strong>prestador de servicios</strong>. Aún no tienes una cuenta como usuario.</span>
@@ -137,7 +171,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
           </div>
         )}
         {tipoMismatch === "prestador" && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm">
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm" role="alert">
             <div className="flex items-start gap-2 text-amber-400 mb-3">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
               <span>Esta cuenta está registrada como <strong>usuario</strong>. Aún no tienes una cuenta como prestador de servicios.</span>
@@ -155,47 +189,67 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
           </div>
         )}
         {error && !tipoMismatch && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400" role="alert">
             <AlertCircle size={16} />
             {error}
           </div>
         )}
 
+        {emailNotConfirmed && (
+          <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-4 text-sm text-blue-400">
+            <p className="mb-2">¿No recibiste el email de confirmación?</p>
+            <button
+              type="button"
+              onClick={handleResendConfirmation}
+              disabled={loading}
+              className="w-full rounded-xl border border-blue-500/50 bg-transparent py-2 text-sm font-medium text-blue-400 hover:bg-blue-500/10 transition-all disabled:opacity-50"
+            >
+              {loading ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Reenviar email de confirmación"}
+            </button>
+          </div>
+        )}
+
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+            <label htmlFor="login-email" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
               Email
             </label>
             <div className="relative">
               <Mail
                 size={16}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569]"
+                aria-hidden="true"
               />
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
+                autoComplete="email"
                 className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 pl-10 pr-4 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+            <label htmlFor="login-password" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
               Contraseña
             </label>
             <div className="relative">
               <Lock
                 size={16}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569]"
+                aria-hidden="true"
               />
               <input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Tu contraseña"
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                autoComplete="current-password"
                 className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 pl-10 pr-4 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500"
               />
             </div>
@@ -230,7 +284,15 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
             Regístrate acá
           </button>
         </p>
+
+        <p className="mt-4 text-center text-xs text-[#64748B]">
+          <a href="/auth/reset-password" className="text-blue-400 hover:underline">
+            ¿Olvidaste tu contraseña?
+          </a>
+        </p>
       </div>
     </div>
   );
 }
+
+import { supabaseAuth } from "@/lib/supabase-auth";

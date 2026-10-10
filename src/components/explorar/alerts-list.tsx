@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Bell, Phone, Star, Trash2, ShieldX } from "lucide-react";
+import { useState } from "react";
+import { Bell, Phone, Star, Trash2 } from "lucide-react";
 import { getAllServices, type Servicio, isSelfRatingCheck } from "@/lib/mock-services";
 import { RateService } from "./rate-service";
 
@@ -46,15 +46,10 @@ const categoryEmojis: Record<string, string> = {
 };
 
 export function AlertsList() {
-  const [alerts, setAlerts] = useState<AlertEntry[]>([]);
-  const [mounted, setMounted] = useState(false);
+  const [alerts, setAlerts] = useState<AlertEntry[]>(() => getAlerts());
+  const [mounted] = useState(() => typeof window !== "undefined");
   const [confirmedAlerts, setConfirmedAlerts] = useState<Record<string, boolean>>({});
   const [ratingService, setRatingService] = useState<Servicio | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-    setAlerts(getAlerts());
-  }, []);
 
   if (!mounted) return null;
 

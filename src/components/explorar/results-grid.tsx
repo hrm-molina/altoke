@@ -30,10 +30,9 @@ export function ResultsGrid({
   sortBy,
   onServiceClick,
 }: ResultsGridProps) {
-  const [services, setServices] = useState<Servicio[]>([]);
+  const [services, setServices] = useState<Servicio[]>(() => getAllServices());
 
   useEffect(() => {
-    setServices(getAllServices());
     dbFetchServices().then((remote) => {
       if (remote && remote.length > 0) {
         setServices(remote);

@@ -16,12 +16,12 @@ export function Footer() {
                 <Zap size={18} fill="currentColor" />
               </div>
               <span className="text-xl font-bold text-[#F1F5F9]">
-                AlToke<span className="text-blue-400">.cl</span>
+                AlToke<span className="text-blue-400">Chile</span>
               </span>
             </Link>
             <p className="mt-4 text-sm text-[#64748B] leading-relaxed">
               La plataforma chilena para conectar necesidades rápidas con colaboradores
-              dispuestos a ayudar en tu comuna.
+              dispuestos a ayudar en tu comuna. 100% servicios lícitos.
             </p>
           </div>
 
@@ -29,7 +29,7 @@ export function Footer() {
           <div className="flex gap-16 mt-8 md:mt-0">
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8] mb-4">
-                Legal
+                Legal y Normativa
               </h4>
               <ul className="space-y-2.5">
                 <li>
@@ -46,7 +46,7 @@ export function Footer() {
             </div>
             <div>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8] mb-4">
-                Ayuda
+                Atención y Reclamos
               </h4>
               <ul className="space-y-2.5">
                 <li>
@@ -56,7 +56,7 @@ export function Footer() {
                 </li>
                 <li>
                   <Link href="/contacto" className="text-sm text-[#64748B] hover:text-blue-400 transition-colors">
-                    Contacto
+                    Canal de Reclamos y Contacto
                   </Link>
                 </li>
               </ul>
@@ -67,10 +67,10 @@ export function Footer() {
         {/* Bottom */}
         <div className="flex flex-col items-center justify-between gap-3 pt-8 md:flex-row">
           <p className="text-xs text-[#475569]">
-            © {new Date().getFullYear()} AlToke.cl
+            © {new Date().getFullYear()} AlToke Chile · altokechile.cl
           </p>
           <p className="text-xs text-[#475569]">
-            Hecho en Chile 🇨🇱
+            Conforme a la legislación de la República de Chile 🇨🇱
           </p>
         </div>
       </div>

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { X, User, Briefcase, ArrowRight, ArrowLeft, Upload, Check, AlertCircle, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { saveCustomService, categorias } from "@/lib/mock-services";
-import { validateRut, formatRut, validateChileanPhone, compressImage } from "@/lib/validators";
-import { dbRegisterUser, dbSaveService, type DbUser } from "@/lib/db";
+import { validateRut, validateChileanPhone, compressImage } from "@/lib/validators";
+import { dbSaveService } from "@/lib/db";
+import { signUpWithEmail } from "@/lib/supabase-auth";
+import { validateServiceContent } from "@/lib/content-moderation";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -15,41 +17,20 @@ interface RegisterModalProps {
   defaultTipo?: "usuario" | "prestador";
 }
 
-function getUsers(): Record<string, unknown>[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("altoke_users") || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveUser(user: Record<string, unknown>) {
-  const users = getUsers();
-  const existingIdx = users.findIndex(
-    (u) =>
-      (u.email as string).toLowerCase() === (user.email as string).toLowerCase() &&
-      u.tipo === user.tipo
+function FieldError({ field, errors }: { field: string; errors: Record<string, string> }) {
+  if (!errors[field]) return null;
+  return (
+    <p className="mt-1 flex items-center gap-1 text-xs text-red-400" role="alert">
+      <AlertCircle size={12} />
+      {errors[field]}
+    </p>
   );
-  if (existingIdx !== -1) {
-    users[existingIdx] = { ...users[existingIdx], ...user };
-  } else {
-    users.push(user);
-  }
-  localStorage.setItem("altoke_users", JSON.stringify(users));
 }
 
 export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalProps) {
   const router = useRouter();
-  const [step, setStep] = useState(defaultTipo ? 2 : 1);
-  const [userType, setUserType] = useState<"usuario" | "prestador" | null>(defaultTipo || null);
-
-  useEffect(() => {
-    if (defaultTipo) {
-      setUserType(defaultTipo);
-      setStep(2);
-    }
-  }, [defaultTipo]);
+  const [step, setStep] = useState(() => (defaultTipo ? 2 : 1));
+  const [userType, setUserType] = useState<"usuario" | "prestador" | null>(() => defaultTipo || null);
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -97,6 +78,17 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     }
   };
 
+  const inputClass = useMemo(
+    () =>
+      (field: string) =>
+        `w-full rounded-xl border px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors bg-[#0A0F1A] ${
+          errors[field]
+            ? "border-red-500/50 focus:border-red-500"
+            : "border-[#1E293B] focus:border-blue-500"
+        }`,
+    [errors]
+  );
+
   const validateStep2 = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -124,26 +116,6 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
 
   const handleProceedToStep3 = () => {
     if (!validateStep2()) return;
-
-    // Si ya existe registro previo con este email, auto-completar datos comunes para ahorrar tiempo
-    const existing = getUsers().find(
-      (u) => (u.email as string).toLowerCase() === form.email.toLowerCase()
-    );
-    if (existing) {
-      setForm((prev) => ({
-        ...prev,
-        nombre: prev.nombre || (existing.nombre as string) || "",
-        telefono: prev.telefono || (existing.telefono as string) || "",
-        region: prev.region || (existing.region as string) || "",
-        comuna: prev.comuna || (existing.comuna as string) || "",
-        ciudadSector: prev.ciudadSector || (existing.ciudadSector as string) || "",
-        fechaNacimiento: prev.fechaNacimiento || (existing.fechaNacimiento as string) || "",
-        rut: prev.rut || (existing.rut as string) || "",
-      }));
-      if (!foto && existing.foto) {
-        setFoto(existing.foto as string);
-      }
-    }
     setStep(3);
   };
 
@@ -205,6 +177,19 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
   const handleCreateAccount = async () => {
     if (!validateStep3()) return;
 
+    // Validación de contenido para prestadores
+    if (userType === "prestador") {
+      const contentValidation = validateServiceContent(
+        form.servicios,
+        `Servicio ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`,
+        form.categoria
+      );
+      if (!contentValidation.valid) {
+        setErrors({ servicios: contentValidation.errors[0] });
+        return;
+      }
+    }
+
     // Regla de oro: Bloqueo estricto e infranqueable de menores de 18 años
     const bParts = (form.fechaNacimiento || "").split("-");
     if (bParts.length === 3) {
@@ -229,69 +214,94 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       return;
     }
 
-    const existing = getUsers().find(
-      (u) =>
-        (u.email as string).toLowerCase() === form.email.toLowerCase() &&
-        u.tipo === userType
-    );
-    const userId = existing && String(existing.id).includes("-") ? (existing.id as string) : crypto.randomUUID();
-
-    const newUser: DbUser = {
-      id: userId,
-      email: form.email.toLowerCase(),
-      password: form.password,
-      tipo: userType as "usuario" | "prestador",
-      nombre: form.nombre.trim(),
-      rut: form.rut.trim(),
-      telefono: form.telefono.trim(),
-      fechaNacimiento: form.fechaNacimiento,
-      region: form.region,
-      comuna: form.comuna.trim(),
-      ciudadSector: form.ciudadSector.trim(),
-      servicios: form.servicios.trim(),
-      valorHora: form.valorHora.trim(),
-      foto: foto || "",
-      fechaRegistro: existing ? (existing.fechaRegistro as string) : new Date().toISOString(),
-    };
-
-    // Guardar en Supabase y localmente
-    await dbRegisterUser(newUser);
-
-    if (userType === "prestador") {
-      const initialServicio = {
-        titulo: form.servicios.trim(),
-        descripcion: `Servicio ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`,
-        categoria: form.categoria || "Otros",
-        foto: fotoServicio || "",
-      };
-      localStorage.setItem(`altoke_servicio_${newUser.id}`, JSON.stringify(initialServicio));
-
-      const serviceObj = {
-        id: crypto.randomUUID(),
-        titulo: form.servicios.trim(),
-        descripcion: `Servicio profesional y responsable ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`,
-        categoria: form.categoria || "Otros",
-        precio: Number(form.valorHora) || 5000,
-        rating: 5.0,
-        resenas: 0,
-        comuna: form.comuna.trim(),
-        region: form.region,
-        sector: form.ciudadSector.trim() || form.comuna.trim(),
-        foto: fotoServicio || "",
-        fechaPublicacion: new Date().toISOString().split("T")[0],
-        nombrePrestador: form.nombre.trim(),
-        fotoPrestador: foto || "",
+    try {
+      const metadata = {
+        tipo: userType,
+        nombre: form.nombre.trim(),
+        rut: form.rut.trim(),
         telefono: form.telefono.trim(),
-        emailPrestador: form.email.trim().toLowerCase(),
+        fechaNacimiento: form.fechaNacimiento,
+        region: form.region,
+        comuna: form.comuna.trim(),
+        ciudadSector: form.ciudadSector.trim(),
+        servicios: form.servicios.trim(),
+        valorHora: form.valorHora.trim(),
+        foto: foto || "",
       };
 
-      saveCustomService(serviceObj);
-      await dbSaveService(serviceObj, newUser.id);
-    }
+      const { user, error } = await signUpWithEmail(
+        form.email.toLowerCase(),
+        form.password,
+        userType as "usuario" | "prestador",
+        metadata
+      );
 
-    localStorage.setItem("altoke_session", JSON.stringify(newUser));
-    window.dispatchEvent(new Event("storage"));
-    setSuccess(true);
+      if (error) {
+        if (error.toLowerCase().includes("already registered") || error.toLowerCase().includes("ya registrado")) {
+          setErrors({ email: "Este email ya está registrado" });
+        } else {
+          setErrors({ email: error });
+        }
+        return;
+      }
+
+      if (!user) {
+        setErrors({ email: "Error al crear la cuenta" });
+        return;
+      }
+
+      // Log terms acceptance (SEC-08: trazabilidad consentimiento Ley 19.628 Art. 12, D.6/2021 Art. 4)
+      try {
+        await fetch("/api/terms-acceptance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            email: user.email,
+            version: "1.0",
+            tipo: userType,
+          }),
+        });
+      } catch {
+        console.warn("No se pudo registrar la aceptación de términos");
+      }
+
+      if (userType === "prestador") {
+        const initialServicio = {
+          titulo: form.servicios.trim(),
+          descripcion: `Servicio ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`,
+          categoria: form.categoria || "Otros",
+          foto: fotoServicio || "",
+        };
+        localStorage.setItem(`altoke_servicio_${user.id}`, JSON.stringify(initialServicio));
+
+        const serviceObj = {
+          id: crypto.randomUUID(),
+          titulo: form.servicios.trim(),
+          descripcion: `Servicio profesional y responsable ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`,
+          categoria: form.categoria || "Otros",
+          precio: Number(form.valorHora) || 5000,
+          rating: 5.0,
+          resenas: 0,
+          comuna: form.comuna.trim(),
+          region: form.region,
+          sector: form.ciudadSector.trim() || form.comuna.trim(),
+          foto: fotoServicio || "",
+          fechaPublicacion: new Date().toISOString().split("T")[0],
+          nombrePrestador: form.nombre.trim(),
+          fotoPrestador: foto || "",
+          telefono: form.telefono.trim(),
+          emailPrestador: form.email.trim().toLowerCase(),
+        };
+
+        saveCustomService(serviceObj);
+        await dbSaveService(serviceObj, user.id);
+      }
+
+      setSuccess(true);
+    } catch {
+      setErrors({ email: "Error de conexión. Intenta nuevamente." });
+    }
   };
 
   const resetAndClose = () => {
@@ -325,23 +335,6 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) resetAndClose();
   };
-
-  const FieldError = ({ field }: { field: string }) => {
-    if (!errors[field]) return null;
-    return (
-      <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
-        <AlertCircle size={12} />
-        {errors[field]}
-      </p>
-    );
-  };
-
-  const inputClass = (field: string) =>
-    `w-full rounded-xl border px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors bg-[#0A0F1A] ${
-      errors[field]
-        ? "border-red-500/50 focus:border-red-500"
-        : "border-[#1E293B] focus:border-blue-500"
-    }`;
 
   return (
     <div
@@ -394,7 +387,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                 Cuenta creada correctamente
               </h2>
               <p className="text-sm text-[#94A3B8] text-center mb-8">
-                Ya podes usar AlToke. Bienvenido!
+                ¡Ya puedes usar AlTokeChile! Bienvenido/a.
               </p>
               <button
                 onClick={() => {
@@ -415,7 +408,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                 ¿Quién eres?
               </h2>
               <p className="text-sm text-[#94A3B8] text-center mb-8">
-                Elige cómo quieres usar AlToke
+                Elige cómo quieres usar AlTokeChile
               </p>
 
               <div className="grid grid-cols-2 gap-4">
@@ -506,7 +499,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                     placeholder="tu@email.com"
                     className={inputClass("email")}
                   />
-                  <FieldError field="email" />
+                  <FieldError field="email" errors={errors} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
@@ -519,7 +512,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                     placeholder="Minimo 8 caracteres"
                     className={inputClass("password")}
                   />
-                  <FieldError field="password" />
+                  <FieldError field="password" errors={errors} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
@@ -532,7 +525,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                     placeholder="Repite tu contraseña"
                     className={inputClass("confirmPassword")}
                   />
-                  <FieldError field="confirmPassword" />
+                  <FieldError field="confirmPassword" errors={errors} />
                 </div>
               </div>
 
@@ -578,7 +571,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                     placeholder="Juan Perez"
                     className={inputClass("nombre")}
                   />
-                  <FieldError field="nombre" />
+                  <FieldError field="nombre" errors={errors} />
                 </div>
 
                 {/* RUT (solo prestador) */}
@@ -594,7 +587,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                       placeholder="12.345.678-9"
                       className={inputClass("rut")}
                     />
-                    <FieldError field="rut" />
+                    <FieldError field="rut" errors={errors} />
                   </div>
                 )}
 
@@ -610,7 +603,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                     placeholder="+56 9 1234 5678"
                     className={inputClass("telefono")}
                   />
-                  <FieldError field="telefono" />
+                  <FieldError field="telefono" errors={errors} />
                 </div>
 
                 {/* Fecha de nacimiento */}
@@ -631,7 +624,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                     onChange={(e) => updateForm("fechaNacimiento", e.target.value)}
                     className={inputClass("fechaNacimiento")}
                   />
-                  <FieldError field="fechaNacimiento" />
+                  <FieldError field="fechaNacimiento" errors={errors} />
                 </div>
 
                 {/* Foto de perfil (solo prestador) */}
@@ -680,7 +673,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                       </option>
                     ))}
                   </select>
-                  <FieldError field="region" />
+                  <FieldError field="region" errors={errors} />
                 </div>
 
                 {/* Comuna */}
@@ -704,7 +697,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                         </option>
                       ))}
                   </select>
-                  <FieldError field="comuna" />
+                  <FieldError field="comuna" errors={errors} />
                 </div>
 
                 {/* Ciudad o sector */}
@@ -740,7 +733,10 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                           </option>
                         ))}
                       </select>
-                      <FieldError field="categoria" />
+                      <p className="mt-1 text-[11px] text-[#64748B]">
+                        Solo servicios lícitos. No se permiten: servicios sexuales, cuidado de menores, venta de productos.
+                      </p>
+                      <FieldError field="categoria" errors={errors} />
                     </div>
 
                     <div>
@@ -754,7 +750,10 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                         placeholder="Ej: Formateo y mantención de computadores"
                         className={inputClass("servicios")}
                       />
-                      <FieldError field="servicios" />
+                      <p className="mt-1 text-[11px] text-[#64748B]">
+                        No uses palabras relacionadas con: contenido sexual, menores de edad, venta de productos, actividades ilegales.
+                      </p>
+                      <FieldError field="servicios" errors={errors} />
                     </div>
 
                     <div>
@@ -768,7 +767,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                         placeholder="Ej: 25000"
                         className={inputClass("valorHora")}
                       />
-                      <FieldError field="valorHora" />
+                      <FieldError field="valorHora" errors={errors} />
                     </div>
 
                     {/* Foto del servicio */}
@@ -812,18 +811,18 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                       className="mt-0.5 h-4 w-4 rounded border-[#1E293B] bg-[#0A0F1A] text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-xs text-[#64748B] leading-relaxed">
-                      Declaro que soy <strong className="text-[#F1F5F9] font-semibold">mayor de 18 años</strong> y acepto los{" "}
+                      Declaro que soy <strong className="text-[#F1F5F9] font-semibold">mayor de 18 años</strong>, acepto los{" "}
                       <a href="/terminos" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
                         términos y condiciones
                       </a>{" "}
-                      y la{" "}
+                      y autorizo expresamente el tratamiento de mis datos conforme a la{" "}
                       <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
                         política de privacidad
                       </a>{" "}
-                      *
+                      (Ley N° 19.628 de Chile) *
                     </span>
                   </label>
-                  <FieldError field="terminos" />
+                  <FieldError field="terminos" errors={errors} />
                 </div>
               </div>
 

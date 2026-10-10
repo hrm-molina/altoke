@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Star, Clock, Trash2, History } from "lucide-react";
 
 interface HistoryEntry {
@@ -60,13 +60,8 @@ const categoryEmojis: Record<string, string> = {
 };
 
 export function HistoryList() {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    setHistory(getHistory());
-  }, []);
+  const [history, setHistory] = useState<HistoryEntry[]>(() => getHistory());
+  const [mounted] = useState(() => typeof window !== "undefined");
 
   if (!mounted) return null;
 

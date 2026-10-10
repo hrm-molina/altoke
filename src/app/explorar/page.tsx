@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/landing/navbar";
@@ -50,7 +50,6 @@ function ExplorarContent() {
   const [historyKey, setHistoryKey] = useState(0);
   const [alertsKey, setAlertsKey] = useState(0);
   const [alertCount, setAlertCount] = useState(0);
-  const [totalResults, setTotalResults] = useState<number | null>(null); // null hasta hidratación
 
   useEffect(() => {
     const updateAlerts = () => {
@@ -66,6 +65,11 @@ function ExplorarContent() {
     return () => window.removeEventListener("storage", updateAlerts);
   }, []);
 
+  const totalResults = useMemo(
+    () => getResultCount(search, region, comuna, sector, categoria, precioMin, precioMax),
+    [search, region, comuna, sector, categoria, precioMin, precioMax]
+  );
+
   const clearFilters = () => {
     setRegion("");
     setComuna("");
@@ -74,13 +78,6 @@ function ExplorarContent() {
     setPrecioMin("");
     setPrecioMax("");
   };
-
-  // Calcular totalResults solo en el cliente para evitar hydration mismatch
-  useEffect(() => {
-    setTotalResults(
-      getResultCount(search, region, comuna, sector, categoria, precioMin, precioMax)
-    );
-  }, [search, region, comuna, sector, categoria, precioMin, precioMax]);
 
   const handleRated = () => {
     setHistoryKey((k) => k + 1);

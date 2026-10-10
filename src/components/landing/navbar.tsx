@@ -6,22 +6,13 @@ import { useState, useEffect } from "react";
 import { Menu, X, Zap, LogOut, History, Bell } from "lucide-react";
 import { LoginModal } from "./login-modal";
 import { RegisterModal } from "./register-modal";
+import { supabaseAuth, onAuthStateChange, type AuthUser } from "@/lib/supabase-auth";
 
 interface Session {
+  id: string;
   nombre?: string;
   email?: string;
   tipo?: string;
-}
-
-function getSession(): Session | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem("altoke_session");
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
 }
 
 export function Navbar() {
@@ -33,7 +24,18 @@ export function Navbar() {
   const [alertCount, setAlertCount] = useState(0);
 
   useEffect(() => {
-    setSession(getSession());
+    const { data: { subscription } } = onAuthStateChange((user: AuthUser | null) => {
+      if (user) {
+        setSession({
+          id: user.id,
+          nombre: user.user_metadata?.nombre,
+          email: user.email,
+          tipo: user.user_metadata?.tipo,
+        });
+      } else {
+        setSession(null);
+      }
+    });
 
     const updateAlerts = () => {
       try {
@@ -46,25 +48,27 @@ export function Navbar() {
 
     updateAlerts();
     const handleStorage = () => {
-      setSession(getSession());
       updateAlerts();
     };
     window.addEventListener("storage", handleStorage);
 
-    return () => window.removeEventListener("storage", handleStorage);
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem("altoke_session");
+  const handleLogout = async () => {
+    await supabaseAuth.auth.signOut();
     setSession(null);
     setMobileOpen(false);
     router.push("/");
   };
 
   const handleLoginSuccess = () => {
-    setSession(getSession());
+    // Session will be updated via onAuthStateChange
   };
 
   return (
@@ -76,7 +80,7 @@ export function Navbar() {
               <Zap size={18} fill="currentColor" />
             </div>
             <span className="text-xl font-bold tracking-tight text-[#F1F5F9]">
-              AlToke<span className="text-blue-400">.cl</span>
+              AlToke<span className="text-blue-400">Chile</span>
             </span>
           </Link>
 

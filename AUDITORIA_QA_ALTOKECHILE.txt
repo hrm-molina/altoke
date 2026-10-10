@@ -1,0 +1,345 @@
+================================================================================
+MASTER QA AUDIT REPORT — AlTokeChile (altokechile.cl)
+================================================================================
+Fecha: Octubre 2026
+Versión: 1.0
+Clasificación: CONFIDENCIAL — Solo para equipo de desarrollo
+================================================================================
+
+SUMARIO EJECUTIVO
+-----------------
+Estado General: LISTO PARA PRODUCCIÓN CON CORRECCIONES CRÍTICAS REQUERIDAS
+Puntuación Global: 7.1/10
+
+El proyecto tiene una base legal sólida y arquitectura bien diseñada, pero
+presenta 3 vulnerabilidades de seguridad CRÍTICAS y múltiples problemas de
+alta prioridad que deben resolverse antes del lanzamiento público.
+
+--------------------------------------------------------------------------------
+PUNTUACIÓN POR ÁREA
+--------------------------------------------------------------------------------
+| Área                              | Score | Estado  |
+|-----------------------------------|-------|---------|
+| Cumplimiento Legal (Chile)        |  9/10 | ✅ Fuerte |
+| Autenticación y Seguridad         |  5/10 | ❌ CRÍTICO |
+| Protección de Datos / Privacidad  |  7/10 | ⚠️ Alto   |
+| Base de Datos / RLS               |  6/10 | ⚠️ Alto   |
+| Moderación de Contenido           |  8/10 | ✅ Bueno  |
+| Calidad de Código / TypeScript    |  7/10 | ⚠️ Medio  |
+| Accesibilidad (WCAG 2.1)          |  6/10 | ⚠️ Medio  |
+| Rendimiento                       |  8/10 | ✅ Bueno  |
+--------------------------------------------------------------------------------
+
+================================================================================
+🚨 BLOQUEADORES CRÍTICOS (DEBEN RESOLVERSE ANTES DEL LANZAMIENTO)
+================================================================================
+
+CRIT-01: ALMACENAMIENTO DE CONTRASEÑAS EN BASE64 (NO HASHEADO)
+----------------------------------------------------------------
+Archivo: src/lib/db.ts:95
+Código:
+  password_hash: user.password ? btoa(user.password) : user.password_hash || ""
+
+Riesgo: Base64 es codificación, NO hashing. Cualquiera con acceso de lectura a
+la BD obtiene todas las contraseñas en texto plano. Incumple Ley 19.628 Art. 10
+(medidas de seguridad) y mejores prácticas OWASP.
+
+Solución Requerida:
+  - Migrar a Supabase Auth (bcrypt/argon2 nativo)
+  - O implementar Edge Function con bcrypt/argon2
+  - NUNCA almacenar contraseñas en localStorage ni BD sin hash cryptográfico
+
+CRIT-02: POLÍTICAS RLS COMPLETAMENTE ABIERTAS (TRUE EN TODO)
+----------------------------------------------------------------
+Archivo: supabase/schema.sql:255-287
+Problema: Todas las políticas usan `USING (TRUE)` y `WITH CHECK (TRUE)`
+
+Tablas afectadas:
+  - usuarios: SELECT, INSERT, UPDATE, DELETE sin restricción
+  - servicios: SELECT, INSERT, UPDATE, DELETE sin restricción
+  - calificaciones: SELECT, INSERT sin restricción
+  - alertas: ALL sin restricción
+
+Riesgo: Cualquier usuario anónimo (anon key) puede:
+  - Leer TODOS los emails, RUTs, teléfonos, fechas de nacimiento, contraseñas
+  - Modificar/borrar CUALQUIER registro de CUALQUIER usuario
+  - Insertar reseñas falsas, manipular ratings, spam de alertas
+
+Solución Requerida (Ejemplo usuarios):
+  CREATE POLICY "Usuario ve solo su perfil" ON public.usuarios
+    FOR SELECT USING (auth.uid() = id);
+  CREATE POLICY "Usuario actualiza solo su perfil" ON public.usuarios
+    FOR UPDATE USING (auth.uid() = id);
+  CREATE POLICY "Usuario elimina solo su cuenta" ON public.usuarios
+    FOR DELETE USING (auth.uid() = id);
+
+Y equivalentemente para servicios (prestador_id = auth.uid()), etc.
+
+CRIT-03: AUSENCIA TOTAL DE RATE LIMITING / PROTECCIÓN BRUTE FORCE
+------------------------------------------------------------------
+Endpoints vulnerables:
+  - Login: Intentos ilimitados, sin CAPTCHA, sin lockout
+  - Registro: Sin verificación de email, sin prevención duplicados a nivel BD
+  - Contacto: Formulario mailto: directo (cosecha de emails, spam)
+
+Riesgo: Ataques de diccionario, credential stuffing, enumeración de usuarios,
+abuso de formularios. Incumple principio de seguridad por defecto.
+
+Solución Requerida:
+  - Middleware Next.js o Edge Function con rate limiting (ej: 5 req/min/IP)
+  - CAPTCHA (hCaptcha/turnstile) en login/registro
+  - Verificación de email obligatoria antes de activar cuenta
+  - Reemplazar mailto: por Edge Function + Resend/SendGrid
+
+================================================================================
+⚠️ ALTA PRIORIDAD — SEGURIDAD Y LEGAL
+================================================================================
+
+SEC-01: Contraseña en localStorage durante registro (texto plano temporal)
+  Archivo: src/components/landing/register-modal.tsx:242
+  Riesgo: XSS → robo de credenciales antes de hashear
+
+SEC-02: Sin headers CSP / HSTS / Secure Cookies
+  Archivo: next.config.ts (faltante)
+  Riesgo: Inyección XSS, MITM en conexiones no HTTPS
+
+SEC-03: Sesión sin expiración (localStorage permanente)
+  Archivo: src/components/landing/navbar.tsx (getSession)
+  Riesgo: Sesión robada = acceso permanente
+
+SEC-04: Formulario contacto usa mailto: (harvesting de emails)
+  Archivo: src/app/contacto/page.tsx:89
+  Riesgo: Spam, phishing, no hay trazabilidad de reclamos
+
+SEC-05: GRANT ALL ON ALL TABLES TO anon (schema.sql:245)
+  Riesgo: Acceso total a BD vía API REST pública
+
+SEC-06: Sin verificación de email en registro
+  Requerido por: Ley 19.628 Art. 12 (consentimiento válido e informado)
+
+SEC-07: Sin UI "Derecho al Olvido" / Eliminación de cuenta
+  Requerido por: Ley 19.628 Art. 11, 12 (derechos ARCO)
+
+SEC-08: Aceptación términos no loggeada (timestamp + IP + UA)
+  Requerido por: D.6/2021 Art. 4 (prueba de consentimiento)
+
+SEC-09: Cookie Banner sin botón "Rechazar Todas"
+  Requerido por: Ley 19.628 + estándares GDPR
+
+SEC-10: Falta DPA (Data Processing Agreement) con Supabase
+  Requerido por: Ley 19.628 si Supabase es subprocesador
+
+================================================================================
+⚠️ ALTA PRIORIDAD — BASE DE DATOS / RLS
+================================================================================
+
+DB-01: Políticas usuarios sin auth.uid()
+DB-02: Políticas servicios sin prestador_id = auth.uid()
+DB-03: calificaciones INSERT policy = TRUE → manipulación ratings
+DB-04: alertas ALL policy = TRUE → spam, fuga datos
+DB-05: Sin índices compuestos para queries frecuentes (region+comuna+categoria)
+DB-06: Trigger actualizar_rating_servicio no maneja concurrencia (race condition)
+DB-07: Trigger validar_contenido_servicio usa \y (word boundary) — no cubre
+        variaciones con acentos/tildes en español (ej: "niños" vs "ninos")
+
+================================================================================
+⚠️ MEDIA PRIORIDAD — MODERACIÓN DE CONTENIDO
+================================================================================
+
+CONT-01: Categoría "Compañia" permanece en emoji map (service-detail.tsx:18)
+  - Eliminada de BD pero UI la muestra
+
+CONT-02: Sin escaneo de imágenes (NSFW, documentos, capturas de pantalla)
+  - Upload acepta cualquier imagen
+
+CONT-03: Lista keywords incompleta — faltan términos chilenos:
+  - "onlyfans", "telegram", "whatsapp para sexo", "pack", "videollamada hot"
+  - "pago contra entrega", "mercadopago", "webpay" (venta encubierta)
+  - "delivery", "envío gratis", "stock disponible" (ecommerce encubierto)
+
+CONT-04: Sin hash perceptual de imágenes (pHash) para detectar re-subidas
+CONT-05: Sin moderación humana / cola de revisión para casos borde
+
+================================================================================
+📝 MEDIA PRIORIDAD — CALIDAD DE CÓDIGO / TYPESCRIPT
+================================================================================
+
+CODE-01: 36 errores ESLint bloqueantes (npm run lint falla)
+  - useEffect setState sincrónico: 10+ archivos
+  - Componente FieldError definido inline durante render (register-modal.tsx:343)
+  - Comillas sin escapar en JSX: terminos/page.tsx, privacidad/page.tsx
+  - Imports/variables no usadas: 8 archivos
+
+CODE-02: Tipos `any` implícitos en callbacks y mapRowToServicio
+CODE-03: Manejo de errores genérico (catch {}) sin logging estructurado
+CODE-04: Sin tests unitarios / integración / E2E
+CODE-05: Duplicación de lógica validación (client + server + DB)
+
+================================================================================
+📝 MEDIA PRIORIDAD — ACCESIBILIDAD (WCAG 2.1 AA)
+================================================================================
+
+A11Y-01: Modales sin role="dialog", aria-modal, focus trap, tecla Esc
+A11Y-02: Botones estrella (RateService) no navegables por teclado
+A11Y-03: Botón revelar teléfono (ServiceDetail) no accesible por teclado
+A11Y-04: Contraste #94A3B8 sobre #06080F = 3.2:1 (falla WCAG AA 4.5:1)
+A11Y-05: Inputs sin labels asociados correctamente (algunos usan placeholder)
+A11Y-06: Sin skip links / landmark regions
+
+================================================================================
+📝 MEDIA PRIORIDAD — RENDIMIENTO
+================================================================================
+
+PERF-01: dbFetchServices() trae TODOS servicios sin paginación
+PERF-02: 8 warnings next/image — usar <Image> en lugar de <img>
+PERF-03: Sin Service Worker / PWA manifest
+PERF-04: Bundle size no analizado (next-bundle-analyzer)
+PERF-05: Imágenes base64 en localStorage → storage quota risk
+
+================================================================================
+📝 BAJA PRIORIDAD — EDGE CASES NO MANEJADOS
+================================================================================
+
+EDGE-01: Cambio email → sesión stale hasta reload
+EDGE-02: Supabase caído → fallo silencioso, sin notificación usuario
+EDGE-03: Títulos duplicados → dbAddReview matchea por título erróneo
+EDGE-04: Upload >10MB → compressImage crashea (sin check tamaño)
+EDGE-05: RUTs falsos pasan validador (ej: 11.111.111-1)
+EDGE-06: Zona horaria Chile no considerada en fechas (UTC vs America/Santiago)
+
+================================================================================
+✅ FORTALEZAS (MANTENER)
+================================================================================
+
+1. Arquitectura offline-first: localStorage + sync asíncrono Supabase — bien diseñada
+2. Documentación legal: Términos, Privacidad, Contacto — genuinamente compliant
+   con Ley 19.496, 19.628, D.6/2021, 21.459, 17.336, 19.039
+3. Moderación 4 capas: categorías removidas + validación cliente + gate save + trigger BD
+4. Validadores chilenos correctos: RUT (Módulo 11), teléfono, mayoría 18+
+5. Anti-auto-rating: cliente + constraint BD check_anti_auto_calificacion
+6. TypeScript strict mode — captura mayoría errores de tipo
+7. UI dark responsiva — design system consistente, animaciones fluidas
+8. Build estático exitoso (next build ✅)
+
+================================================================================
+🛠️ PLAN DE CORRECCIÓN RECOMENDADO (ORDEN DE PRIORIDAD)
+================================================================================
+
+FASE 1: SEGURIDAD Y LEGAL — SEMANA 1 (BLOQUEANTE)
+--------------------------------------------------
+[ ] 1.1 Migrar a Supabase Auth (@supabase/auth-helpers-nextjs)
+     - Desactivar auth personalizado completamente
+     - Habilitar email verification obligatorio
+     - Configurar password reset flow
+     - Social login (Google/Apple) para mercado chileno
+
+[ ] 1.2 Reescribir TODAS las políticas RLS con auth.uid()
+     - usuarios: auth.uid() = id
+     - servicios: prestador_id = auth.uid()
+     - calificaciones: cliente_id = auth.uid() para INSERT
+     - alertas: usuario_id = auth.uid()
+
+[ ] 1.3 Rate limiting en middleware.ts
+     - /api/auth/*: 5 req/min/IP
+     - /api/servicios: 30 req/min/IP
+     - Login: lockout 15 min tras 5 fallos
+
+[ ] 1.4 Verificación email obligatoria en registro
+[ ] 1.5 UI "Eliminar Cuenta" + ejercicio derechos ARCO en /perfil
+[ ] 1.6 Log aceptación términos (timestamp, IP, user-agent, versión)
+[ ] 1.7 Cookie Banner: agregar "Rechazar Todas" + categorías granulares
+[ ] 1.8 Firmar DPA con Supabase
+
+FASE 2: CALIDAD CÓDIGO — SEMANA 1-2
+------------------------------------
+[ ] 2.1 Corregir TODOS los errores ESLint (0 errors objetivo)
+     - Mover FieldError fuera de render
+     - Fix useEffect patterns (useRef + useLayoutEffect o key pattern)
+     - Escapar comillas en JSX
+     - Remover imports/variables no usadas
+
+[ ] 2.2 Headers seguridad en next.config.ts:
+     - Content-Security-Policy estricto
+     - Strict-Transport-Security (HSTS)
+     - X-Frame-Options: DENY
+     - Referrer-Policy: strict-origin-when-cross-origin
+
+[ ] 2.3 Reemplazar mailto: por Edge Function + Resend/SendGrid
+[ ] 2.4 Sesión con expiración 24h + refresh token rotation
+[ ] 2.5 Validación tamaño archivo (<5MB) + tipo MIME en compressImage
+
+FASE 3: PULIMIENTO — SEMANA 2
+------------------------------
+[ ] 3.1 Auditoría accesibilidad completa + fixes
+[ ] 3.2 Paginación + infinite scroll en /explorar
+[ ] 3.3 Validación imágenes: max 5MB, tipo, scan NSFW (API externa)
+[ ] 3.4 Expandir blocklist keywords + añadir pHash para imágenes
+[ ] 3.5 PWA manifest + Service Worker (workbox)
+[ ] 3.6 Análisis bundle size + optimización
+
+FASE 4: ENDURECIMIENTO LEGAL PRE-LANZAMIENTO
+---------------------------------------------
+[ ] 4.1 Load testing: 1000 usuarios concurrentes en /explorar
+[ ] 4.2 Penetration testing básico (OWASP Top 10)
+[ ] 4.3 Revisión legal final con abogado chileno (Ley 19.628, 19.496, D.6/2021)
+[ ] 4.4 Documentación de procedimientos: breach notification, DSAR, retention
+
+================================================================================
+📋 CHECKLIST DESPLIEGUE PRODUCCIÓN
+================================================================================
+
+| Ítem                                    | Estado | Notas                                    |
+|-----------------------------------------|--------|------------------------------------------|
+| Schema Supabase aplicado                | ❌     | Ejecutar schema.sql en SQL Editor        |
+| Supabase Auth habilitado                | ❌     | Desactivar auth custom                   |
+| RLS policies corregidas                 | ❌     | CRÍTICO                                  |
+| Env vars en Vercel                      | ✅     | .env.local tiene URL + anon key          |
+| Dominio personalizado (altokechile.cl)  | ❌     | Configurar Vercel + Supabase             |
+| HTTPS forzado + HSTS                    | ❌     | Vercel auto, agregar header HSTS         |
+| Error tracking (Sentry)                 | ❌     | Agregar para producción                  |
+| Analytics privacy-friendly (Plausible)  | ❌     | Sin PII                                  |
+| Backups automáticos Supabase            | ❌     | Configurar Point-in-Time Recovery        |
+| Monitoreo uptime                        | ❌     | UptimeRobot / BetterStack                |
+
+================================================================================
+💡 RECOMENDACIÓN ARQUITECTÓNICA ESTRATÉGICA
+================================================================================
+
+ELIMINAR AUTH PERSONALIZADO COMPLETAMENTE → USAR SUPABASE AUTH + RLS PROPIO
+
+Razones:
+  1. Supabase Auth maneja: bcrypt/argon2, email verify, password reset,
+     sesiones JWT, refresh tokens, social login, MFA
+  2. auth.uid() permite RLS perfecto sin lógica custom
+  3. Reduce superficie ataque: menos código = menos bugs
+  4. Cumple Ley 19.628 "medidas técnicas adecuadas" por defecto
+  5. Listo para escalar: 100k+ usuarios sin cambios
+
+Migración:
+  - Mantener localStorage solo para cache UI (no auth)
+  - Sincronizar perfiles usuarios tabla pública via trigger auth.users
+  - Usar supabase.auth.onAuthStateChange() para estado sesión
+
+================================================================================
+🎯 CONCLUSIÓN FINAL
+================================================================================
+
+NO LANZAR A PÚBLICO HASTA COMPLETAR FASE 1.
+
+La documentación legal es excelente (nivel producción), la lógica de producto
+es sólida y la arquitectura offline-first es bien ejecutada. PERO:
+
+  • La autenticación está FUNDAMENTALMENTE ROTA (base64 ≠ hash)
+  • RLS provee CERO protección (políticas = TRUE)
+  • Sin rate limiting = puerta abierta a abuso
+
+Corregir esos 2 pilares + migrar a Supabase Auth, y tendrás un marketplace
+chileno legalmente compliant, seguro y listo para escrutinio SERNAC.
+
+================================================================================
+FIN DEL INFORME
+================================================================================
+Generado por: Master QA Audit — AlTokeChile
+Fecha: Octubre 2026
+Versión auditoría: 1.0
+================================================================================

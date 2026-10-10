@@ -23,6 +23,7 @@ import { Footer } from "@/components/landing/footer";
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { categorias, saveCustomService, getServiceById } from "@/lib/mock-services";
 import { compressImage } from "@/lib/validators";
+import { validateServiceContent } from "@/lib/content-moderation";
 
 interface UserData {
   id: string;
@@ -108,25 +109,89 @@ function getPrestadorJobs(): PrestadorJob[] {
   }
 }
 
+function getInitialSession(): UserData | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("altoke_session");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function getInitialProfileForm(): {
+  nombre: string;
+  telefono: string;
+  region: string;
+  comuna: string;
+  ciudadSector: string;
+} {
+  const session = getInitialSession();
+  if (!session) {
+    return { nombre: "", telefono: "", region: "", comuna: "", ciudadSector: "" };
+  }
+  return {
+    nombre: session.nombre || "",
+    telefono: session.telefono || "",
+    region: session.region || "",
+    comuna: session.comuna || "",
+    ciudadSector: session.ciudadSector || "",
+  };
+}
+
+function getInitialFoto(): string {
+  const session = getInitialSession();
+  return session?.foto || "";
+}
+
+function getInitialServicioForm(): ServicioData {
+  const session = getInitialSession();
+  if (!session) {
+    return { titulo: "", descripcion: "", categoria: "" };
+  }
+  const servicio = getServicioPrestador(session.id);
+  const customService = getServiceById(`provider-${session.id}`);
+  if (servicio) {
+    return {
+      titulo: servicio.titulo || "",
+      descripcion: servicio.descripcion || "",
+      categoria: servicio.categoria || customService?.categoria || "",
+      foto: servicio.foto || customService?.foto || "",
+    };
+  } else if (customService) {
+    return {
+      titulo: customService.titulo,
+      descripcion: customService.descripcion,
+      categoria: customService.categoria,
+      foto: customService.foto || "",
+    };
+  } else {
+    return {
+      titulo: session.servicios || "",
+      descripcion: "",
+      categoria: "",
+      foto: "",
+    };
+  }
+}
+
+function getInitialJobs(): PrestadorJob[] {
+  const session = getInitialSession();
+  if (!session) return [];
+  const allJobs = getPrestadorJobs();
+  return allJobs.filter((j) => j.nombrePrestador === session.nombre);
+}
+
 export default function PrestadorPage() {
   const router = useRouter();
-  const [user, setUser] = useState<UserData | null>(null);
-  const [profileForm, setProfileForm] = useState({
-    nombre: "",
-    telefono: "",
-    region: "",
-    comuna: "",
-    ciudadSector: "",
-  });
-  const [foto, setFoto] = useState<string>("");
-  const [servicioForm, setServicioForm] = useState<ServicioData>({
-    titulo: "",
-    descripcion: "",
-    categoria: "",
-  });
+  const [user, setUser] = useState<UserData | null>(getInitialSession);
+  const [profileForm, setProfileForm] = useState(getInitialProfileForm);
+  const [foto, setFoto] = useState(getInitialFoto);
+  const [servicioForm, setServicioForm] = useState(getInitialServicioForm);
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [jobs, setJobs] = useState<PrestadorJob[]>([]);
+  const [jobs, _setJobs] = useState(getInitialJobs);
 
   useEffect(() => {
     const session = getSession();
@@ -138,45 +203,7 @@ export default function PrestadorPage() {
       router.push("/explorar");
       return;
     }
-    setUser(session);
-    setProfileForm({
-      nombre: session.nombre || "",
-      telefono: session.telefono || "",
-      region: session.region || "",
-      comuna: session.comuna || "",
-      ciudadSector: session.ciudadSector || "",
-    });
-    setFoto(session.foto || "");
-
-    const servicio = getServicioPrestador(session.id);
-    const customService = getServiceById(`provider-${session.id}`);
-    if (servicio) {
-      setServicioForm({
-        titulo: servicio.titulo || "",
-        descripcion: servicio.descripcion || "",
-        categoria: servicio.categoria || customService?.categoria || "",
-        foto: servicio.foto || customService?.foto || "",
-      });
-    } else if (customService) {
-      setServicioForm({
-        titulo: customService.titulo,
-        descripcion: customService.descripcion,
-        categoria: customService.categoria,
-        foto: customService.foto || "",
-      });
-    } else {
-      setServicioForm({
-        titulo: session.servicios || "",
-        descripcion: "",
-        categoria: "",
-        foto: "",
-      });
-    }
-
-    // Load prestador jobs
-    const allJobs = getPrestadorJobs();
-    const myJobs = allJobs.filter((j) => j.nombrePrestador === session.nombre);
-    setJobs(myJobs);
+    // user is already initialized via lazy initialization
   }, [router]);
 
   const updateProfile = (field: string, value: string) => {
@@ -255,6 +282,16 @@ export default function PrestadorPage() {
     if (!servicioForm.titulo.trim()) newErrors.titulo = "El titulo es obligatorio";
     if (!servicioForm.descripcion.trim()) newErrors.descripcion = "La descripcion es obligatoria";
     if (!servicioForm.categoria) newErrors.categoria = "Selecciona una categoria";
+
+    // Validación de contenido prohibido
+    const contentValidation = validateServiceContent(
+      servicioForm.titulo,
+      servicioForm.descripcion,
+      servicioForm.categoria
+    );
+    if (!contentValidation.valid) {
+      newErrors.categoria = contentValidation.errors[0];
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -529,6 +566,9 @@ export default function PrestadorPage() {
                   placeholder="Ej: Hago fila en cualquier lugar"
                   className={inputClass("titulo")}
                 />
+                <p className="mt-1 text-[11px] text-[#64748B]">
+                  No uses palabras relacionadas con: contenido sexual, menores de edad, venta de productos, actividades ilegales.
+                </p>
                 {errors.titulo && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle size={12} />
@@ -549,6 +589,9 @@ export default function PrestadorPage() {
                   rows={4}
                   className={`${inputClass("descripcion")} resize-none`}
                 />
+                <p className="mt-1 text-[11px] text-[#64748B]">
+                  No uses palabras relacionadas con: contenido sexual, menores de edad, venta de productos, actividades ilegales.
+                </p>
                 {errors.descripcion && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle size={12} />
@@ -574,6 +617,9 @@ export default function PrestadorPage() {
                     </option>
                   ))}
                 </select>
+                <p className="mt-1 text-[11px] text-[#64748B]">
+                  Solo servicios lícitos. No se permiten: servicios sexuales, cuidado de menores, venta de productos.
+                </p>
                 {errors.categoria && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
                     <AlertCircle size={12} />
