@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { X, User, Briefcase, ArrowRight, ArrowLeft, Upload, Check, AlertCircle, ShieldAlert } from "lucide-react";
+import { X, User, Briefcase, ArrowRight, ArrowLeft, Upload, Check, AlertCircle, ShieldAlert, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { regiones, comunasPorRegion } from "@/lib/regions";
@@ -52,6 +52,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
   const [fotoServicio, setFotoServicio] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Regla de oro: estrictamente mayores de 18 años
   const today = new Date();
@@ -176,6 +177,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
   };
 
   const handleCreateAccount = async () => {
+    if (submitting) return;
     if (!validateStep3()) return;
 
     // Validación de contenido para prestadores
@@ -215,6 +217,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       return;
     }
 
+    setSubmitting(true);
     try {
       const metadata = {
         tipo: userType,
@@ -302,6 +305,8 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       setSuccess(true);
     } catch {
       setErrors({ email: "Error de conexión. Intenta nuevamente." });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -837,10 +842,20 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                 </button>
                 <button
                   onClick={handleCreateAccount}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow flex items-center justify-center gap-2"
+                  disabled={submitting}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Crear cuenta
-                  <Check size={16} />
+                  {submitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Creando cuenta...
+                    </>
+                  ) : (
+                    <>
+                      Crear cuenta
+                      <Check size={16} />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
