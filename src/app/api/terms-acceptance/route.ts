@@ -13,6 +13,21 @@ const supabaseClient = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
+async function insertWithFallback(table: string, record: Record<string, unknown>) {
+  if (supabaseClient) {
+    const { error } = await supabaseClient.from(table).insert(record);
+    if (!error) return { success: true };
+    console.warn(`anon insert failed on ${table}, trying service_role:`, error.message);
+  }
+  if (supabaseAdmin) {
+    const { error } = await supabaseAdmin.from(table).insert(record);
+    if (!error) return { success: true };
+    console.error(`service_role insert failed on ${table}:`, error.message);
+    return { success: false, error: error.message };
+  }
+  return { success: false, error: "No Supabase client available" };
+}
+
 interface TermsAcceptanceRequest {
   userId?: string;
   email?: string;
@@ -57,24 +72,12 @@ export async function POST(request: NextRequest) {
       fecha: timestamp,
     };
 
-    if (supabaseAdmin) {
-      const { error } = await supabaseAdmin.from("terms_acceptance").insert(record);
-      if (error) {
-        console.error("Error guardando aceptación términos:", error);
-        return NextResponse.json(
-          { error: "Error al procesar la solicitud" },
-          { status: 500 }
-        );
-      }
-    } else if (supabaseClient) {
-      const { error } = await supabaseClient.from("terms_acceptance").insert(record);
-      if (error) {
-        console.error("Error guardando aceptación términos:", error);
-        return NextResponse.json(
-          { error: "Error al procesar la solicitud" },
-          { status: 500 }
-        );
-      }
+    const result = await insertWithFallback("terms_acceptance", record);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Error al procesar la solicitud" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(

@@ -13,6 +13,21 @@ const supabaseClient = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
+async function insertWithFallback(table: string, record: Record<string, unknown>) {
+  if (supabaseClient) {
+    const { error } = await supabaseClient.from(table).insert(record);
+    if (!error) return { success: true };
+    console.warn(`anon insert failed on ${table}, trying service_role:`, error.message);
+  }
+  if (supabaseAdmin) {
+    const { error } = await supabaseAdmin.from(table).insert(record);
+    if (!error) return { success: true };
+    console.error(`service_role insert failed on ${table}:`, error.message);
+    return { success: false, error: error.message };
+  }
+  return { success: false, error: "No Supabase client available" };
+}
+
 interface ContactRequest {
   nombre: string;
   email: string;
@@ -66,33 +81,12 @@ export async function POST(request: NextRequest) {
       estado: "pendiente",
     };
 
-    if (supabaseAdmin) {
-      const { error } = await supabaseAdmin.from("contactos").insert(contactRecord);
-      if (error) {
-        console.error("Error guardando contacto:", error);
-        return NextResponse.json(
-          { error: "Error al procesar la solicitud" },
-          { status: 500 }
-        );
-      }
-    } else if (supabaseClient) {
-      const { error } = await supabaseClient.from("contactos").insert(contactRecord);
-      if (error) {
-        console.error("Error guardando contacto:", error);
-        return NextResponse.json(
-          { error: "Error al procesar la solicitud" },
-          { status: 500 }
-        );
-      }
-    } else {
-      console.warn("Supabase no configurado, guardando en localStorage como fallback");
-      if (typeof window !== "undefined") {
-        try {
-          const contacts = JSON.parse(localStorage.getItem("altoke_contactos") || "[]");
-          contacts.push(contactRecord);
-          localStorage.setItem("altoke_contactos", JSON.stringify(contacts));
-        } catch {}
-      }
+    const result = await insertWithFallback("contactos", contactRecord);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Error al procesar la solicitud" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(
