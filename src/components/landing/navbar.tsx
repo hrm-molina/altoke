@@ -144,17 +144,14 @@ export function Navbar() {
                           Mi servicio
                         </Link>
                       )}
-                      <Link
-                        href="/perfil"
-                        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                      >
+                      <div className="flex items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
                           {session.nombre?.charAt(0) || "U"}
                         </div>
-                        <span className="text-sm text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">
+                        <span className="text-sm text-[#94A3B8]">
                           {session.nombre || session.email}
                         </span>
-                      </Link>
+                      </div>
                       <button
                         onClick={handleLogout}
                         className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
@@ -279,11 +276,7 @@ export function Navbar() {
                           Mi servicio
                         </Link>
                       )}
-                      <Link
-                        href="/perfil"
-                        onClick={() => setMobileOpen(false)}
-                        className="flex items-center gap-3 px-1 py-2 hover:opacity-80 transition-opacity"
-                      >
+                      <div className="flex items-center gap-3 px-1 py-2">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1E293B] text-sm font-bold text-[#94A3B8]">
                           {session.nombre?.charAt(0) || "U"}
                         </div>
@@ -293,7 +286,7 @@ export function Navbar() {
                           </p>
                           <p className="text-xs text-[#64748B]">{session.email}</p>
                         </div>
-                      </Link>
+                      </div>
                       <button
                         onClick={handleLogout}
                         className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all"
