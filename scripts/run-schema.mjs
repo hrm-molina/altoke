@@ -96,17 +96,17 @@ BEGIN
         NEW.id,
         NEW.email,
         '',
-        COALESCE(NEW.raw_user_meta_data->>'tipo', 'usuario'),
-        COALESCE(NEW.raw_user_meta_data->>'nombre', ''),
-        NEW.raw_user_meta_data->>'rut',
-        COALESCE(NEW.raw_user_meta_data->>'telefono', ''),
-        COALESCE((NEW.raw_user_meta_data->>'fechaNacimiento')::date, CURRENT_DATE),
-        COALESCE(NEW.raw_user_meta_data->>'region', ''),
-        COALESCE(NEW.raw_user_meta_data->>'comuna', ''),
-        NEW.raw_user_meta_data->>'ciudadSector',
-        NEW.raw_user_meta_data->>'servicios',
-        COALESCE((NEW.raw_user_meta_data->>'valorHora')::numeric, 0),
-        NEW.raw_user_meta_data->>'foto'
+        COALESCE(NULLIF(NEW.raw_user_meta_data->>'tipo', ''), 'usuario'),
+        COALESCE(NULLIF(NEW.raw_user_meta_data->>'nombre', ''), ''),
+        NULLIF(NEW.raw_user_meta_data->>'rut', ''),
+        COALESCE(NULLIF(NEW.raw_user_meta_data->>'telefono', ''), ''),
+        COALESCE(NULLIF(NEW.raw_user_meta_data->>'fechaNacimiento', '')::date, (CURRENT_DATE - INTERVAL '18 years')),
+        COALESCE(NULLIF(NEW.raw_user_meta_data->>'region', ''), ''),
+        COALESCE(NULLIF(NEW.raw_user_meta_data->>'comuna', ''), ''),
+        NULLIF(NEW.raw_user_meta_data->>'ciudadSector', ''),
+        NULLIF(NEW.raw_user_meta_data->>'servicios', ''),
+        COALESCE(NULLIF(NEW.raw_user_meta_data->>'valorHora', '')::numeric, 0),
+        NULLIF(NEW.raw_user_meta_data->>'foto', '')
     )
     ON CONFLICT (id) DO NOTHING;
     RETURN NEW;
