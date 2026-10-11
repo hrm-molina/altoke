@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Dog, Car, Wrench, Package, Heart } from "lucide-react";
+import { Users, Dog, Car, Wrench, Package, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { RegisterModal } from "./register-modal";
 
@@ -11,7 +11,7 @@ const examples = [
   { icon: Car, text: "Traslados" },
   { icon: Wrench, text: "Armar muebles" },
   { icon: Package, text: "Encomiendas" },
-  { icon: Heart, text: "Ir de compras" },
+  { icon: ShoppingBag, text: "Ir de compras" },
 ];
 
 const floatingServices = [
