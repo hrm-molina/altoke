@@ -176,25 +176,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
           <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm" role="alert">
             <div className="flex items-start gap-2 text-amber-400 mb-3">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <span>Esta cuenta está registrada como <strong>prestador de servicios</strong>. Aún no tienes una cuenta como usuario.</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                resetAndClose();
-                onSwitchToRegister?.();
-              }}
-              className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-all"
-            >
-              Crear cuenta como usuario
-            </button>
-          </div>
-        )}
-        {tipoMismatch === "prestador" && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm" role="alert">
-            <div className="flex items-start gap-2 text-amber-400 mb-3">
-              <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <span>Esta cuenta está registrada como <strong>usuario</strong>. Aún no tienes una cuenta como prestador de servicios.</span>
+              <span>Esta cuenta está registrada como <strong>usuario</strong>. No estás registrado como prestador de servicios.</span>
             </div>
             <button
               type="button"
@@ -205,6 +187,24 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
               className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-all"
             >
               Crear cuenta como prestador
+            </button>
+          </div>
+        )}
+        {tipoMismatch === "prestador" && (
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm" role="alert">
+            <div className="flex items-start gap-2 text-amber-400 mb-3">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span>Esta cuenta está registrada como <strong>prestador de servicios</strong>. No estás registrado como usuario.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                resetAndClose();
+                onSwitchToRegister?.();
+              }}
+              className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-all"
+            >
+              Crear cuenta como usuario
             </button>
           </div>
         )}
