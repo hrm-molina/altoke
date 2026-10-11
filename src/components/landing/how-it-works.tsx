@@ -211,6 +211,7 @@ export function HowItWorks() {
       </div>
 
       <RegisterModal
+        key={registerTipo}
         isOpen={registerOpen}
         onClose={() => setRegisterOpen(false)}
         defaultTipo={registerTipo}

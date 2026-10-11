@@ -390,6 +390,7 @@ export function Navbar() {
         defaultTipo={loginTipo}
       />
       <RegisterModal
+        key={loginTipo}
         isOpen={registerOpen}
         onClose={() => {
           setRegisterOpen(false);
