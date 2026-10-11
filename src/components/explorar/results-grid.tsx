@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { SearchX } from "lucide-react";
-import { getAllServices, type Servicio } from "@/lib/mock-services";
+import { type Servicio } from "@/lib/mock-services";
 import { dbFetchServices } from "@/lib/db";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import type { SortOption } from "./sort-bar";
 import { ServiceCard } from "./service-card";
 
@@ -17,6 +18,7 @@ interface ResultsGridProps {
   precioMax: string;
   sortBy: SortOption;
   onServiceClick: (servicio: Servicio) => void;
+  onCountChange?: (count: number) => void;
 }
 
 export function ResultsGrid({
@@ -29,20 +31,31 @@ export function ResultsGrid({
   precioMax,
   sortBy,
   onServiceClick,
+  onCountChange,
 }: ResultsGridProps) {
-  const [services, setServices] = useState<Servicio[]>(() => getAllServices());
+  const [services, setServices] = useState<Servicio[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    dbFetchServices().then((remote) => {
-      if (remote && remote.length > 0) {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      const remote = await dbFetchServices();
+      if (!cancelled) {
         setServices(remote);
+        setLoading(false);
       }
-    });
-    const handleStorage = () => {
-      setServices(getAllServices());
     };
+
+    load();
+
+    const handleStorage = () => load();
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   const filtered = useMemo(() => {
@@ -112,6 +125,18 @@ export function ResultsGrid({
     return result;
   }, [services, search, region, comuna, sector, categoria, precioMin, precioMax, sortBy]);
 
+  useEffect(() => {
+    onCountChange?.(filtered.length);
+  }, [filtered.length, onCountChange]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+      </div>
+    );
+  }
+
   if (services.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -155,60 +180,4 @@ export function ResultsGrid({
       ))}
     </div>
   );
-}
-
-export function getResultCount(
-  search: string,
-  region: string,
-  comuna: string,
-  sector: string,
-  categoria: string,
-  precioMin: string,
-  precioMax: string
-): number {
-  let result = getAllServices();
-
-  if (search.trim()) {
-    const q = search.toLowerCase();
-    result = result.filter(
-      (s) =>
-        s.titulo.toLowerCase().includes(q) ||
-        s.descripcion.toLowerCase().includes(q) ||
-        s.categoria.toLowerCase().includes(q) ||
-        s.nombrePrestador.toLowerCase().includes(q)
-    );
-  }
-
-  if (region) {
-    result = result.filter((s) => s.region === region);
-  }
-
-  if (comuna) {
-    result = result.filter((s) => s.comuna === comuna);
-  }
-
-  if (sector.trim()) {
-    const q = sector.toLowerCase();
-    result = result.filter((s) => s.sector.toLowerCase().includes(q));
-  }
-
-  if (categoria) {
-    result = result.filter((s) => s.categoria === categoria);
-  }
-
-  if (precioMin) {
-    const min = Number(precioMin);
-    if (!isNaN(min)) {
-      result = result.filter((s) => s.precio >= min);
-    }
-  }
-
-  if (precioMax) {
-    const max = Number(precioMax);
-    if (!isNaN(max)) {
-      result = result.filter((s) => s.precio <= max);
-    }
-  }
-
-  return result.length;
 }

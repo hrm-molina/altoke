@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/landing/navbar";
@@ -8,7 +8,7 @@ import { Footer } from "@/components/landing/footer";
 import { SearchBar } from "@/components/explorar/search-bar";
 import { Filters } from "@/components/explorar/filters";
 import { SortBar, type SortOption } from "@/components/explorar/sort-bar";
-import { ResultsGrid, getResultCount } from "@/components/explorar/results-grid";
+import { ResultsGrid } from "@/components/explorar/results-grid";
 import { ServiceDetail } from "@/components/explorar/service-detail";
 import { HistoryList } from "@/components/explorar/history-list";
 import { AlertsList } from "@/components/explorar/alerts-list";
@@ -50,6 +50,7 @@ function ExplorarContent() {
   const [historyKey, setHistoryKey] = useState(0);
   const [alertsKey, setAlertsKey] = useState(0);
   const [alertCount, setAlertCount] = useState(0);
+  const [totalResults, setTotalResults] = useState(0);
 
   useEffect(() => {
     const updateAlerts = () => {
@@ -64,11 +65,6 @@ function ExplorarContent() {
     window.addEventListener("storage", updateAlerts);
     return () => window.removeEventListener("storage", updateAlerts);
   }, []);
-
-  const totalResults = useMemo(
-    () => getResultCount(search, region, comuna, sector, categoria, precioMin, precioMax),
-    [search, region, comuna, sector, categoria, precioMin, precioMax]
-  );
 
   const clearFilters = () => {
     setRegion("");
@@ -217,6 +213,7 @@ function ExplorarContent() {
                 precioMax={precioMax}
                 sortBy={sortBy}
                 onServiceClick={setSelectedService}
+                onCountChange={setTotalResults}
               />
             </>
           )}

@@ -71,7 +71,7 @@ export async function dbFetchServices(): Promise<Servicio[]> {
         .eq("activo", true)
         .order("created_at", { ascending: false });
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         const mapped = data.map(mapRowToServicio);
         if (typeof window !== "undefined") {
           localStorage.setItem("altoke_provider_services", JSON.stringify(mapped));
