@@ -139,16 +139,14 @@ export function Navbar() {
                           Explorar
                         </Link>
                       )}
-                      <Link
-                        href="/prestador"
-                        className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
-                          pathname === "/prestador"
-                            ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
-                            : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
-                        }`}
-                      >
-                        Mi servicio
-                      </Link>
+                      {pathname !== "/explorar" && (
+                        <Link
+                          href="/prestador"
+                          className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                        >
+                          Mi servicio
+                        </Link>
+                      )}
                       <Link
                         href="/perfil"
                         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -279,17 +277,15 @@ export function Navbar() {
                           Explorar servicios
                         </Link>
                       )}
-                      <Link
-                        href="/prestador"
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-center rounded-xl border py-3 text-center text-sm font-medium transition-all ${
-                          pathname === "/prestador"
-                            ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
-                            : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
-                        }`}
-                      >
-                        Mi servicio
-                      </Link>
+                      {pathname !== "/explorar" && (
+                        <Link
+                          href="/prestador"
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center justify-center rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                        >
+                          Mi servicio
+                        </Link>
+                      )}
                       <Link
                         href="/perfil"
                         onClick={() => setMobileOpen(false)}
