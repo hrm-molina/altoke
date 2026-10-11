@@ -1,7 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
 
 export const runtime = "nodejs";
+
+const ASUNTOS: Record<string, string> = {
+  consulta: "Consulta general sobre el servicio",
+  reclamo: "Reclamo formal o disconformidad (Ley 19.496)",
+  arco: "Ejercicio Derechos ARCO - Privacidad (Ley 19.628)",
+  reporte: "Reportar servicio indebido o ilícito",
+  soporte: "Soporte técnico con mi cuenta",
+  otro: "Otro requerimiento",
+};
+
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+async function sendContactEmail(input: {
+  nombre: string;
+  email: string;
+  asunto: string;
+  mensaje: string;
+  ip: string;
+  casoId: string;
+}): Promise<{ sent: boolean; error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return { sent: false, error: "RESEND_API_KEY no configurada" };
+
+  const destino = process.env.CONTACTO_EMAIL_DESTINO || "altokechile.info@gmail.com";
+  const from = process.env.CONTACTO_EMAIL_FROM || "AlToke Chile <onboarding@resend.dev>";
+  const asuntoLabel = ASUNTOS[input.asunto] || input.asunto;
+
+  const resend = new Resend(apiKey);
+  const { error } = await resend.emails.send({
+    from,
+    to: [destino],
+    replyTo: input.email,
+    subject: `[AlTokeChile] ${asuntoLabel} — ${input.nombre}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#0f172a">
+        <h2 style="margin:0 0 4px;font-size:18px">Nuevo requerimiento desde altokechile.cl</h2>
+        <p style="margin:0 0 16px;color:#64748b;font-size:13px">Caso <strong>${input.casoId}</strong> · ${new Date().toLocaleString("es-CL", { timeZone: "America/Santiago" })}</p>
+        <table style="width:100%;border-collapse:collapse;font-size:14px">
+          <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;width:120px">Nombre</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0"><strong>${escapeHtml(input.nombre)}</strong></td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b">Email</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0"><a href="mailto:${escapeHtml(input.email)}">${escapeHtml(input.email)}</a></td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b">Motivo</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0">${escapeHtml(asuntoLabel)}</td></tr>
+          <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b">IP</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b">${escapeHtml(input.ip)}</td></tr>
+        </table>
+        <h3 style="margin:20px 0 8px;font-size:14px">Mensaje</h3>
+        <div style="padding:14px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;line-height:1.55;white-space:pre-wrap">${escapeHtml(input.mensaje)}</div>
+        <p style="margin-top:16px;font-size:12px;color:#94a3b8">Responde directamente a este correo para contestar al usuario. No respondas desde este correo si quieres abrir otro caso.</p>
+      </div>`,
+  });
+
+  if (error) return { sent: false, error: error.message };
+  return { sent: true };
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -91,11 +145,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const casoId = `ALK-${Date.now()}`;
+    const emailResult = await sendContactEmail({
+      nombre: contactRecord.nombre,
+      email: contactRecord.email,
+      asunto: contactRecord.asunto,
+      mensaje: contactRecord.mensaje,
+      ip,
+      casoId,
+    });
+    if (!emailResult.sent) {
+      console.error(`Email de contacto ${casoId} NO enviado:`, emailResult.error);
+    }
+
     return NextResponse.json(
       {
         success: true,
         message: "Requerimiento recibido. Responderemos en un plazo máximo de 48 horas hábiles.",
-        casoId: `ALK-${Date.now()}`,
+        casoId,
       },
       { status: 201 }
     );
