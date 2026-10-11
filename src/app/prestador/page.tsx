@@ -25,6 +25,7 @@ import { categorias, saveCustomService, getServiceById } from "@/lib/mock-servic
 import { compressImage } from "@/lib/validators";
 import { validateServiceContent } from "@/lib/content-moderation";
 import { dbFetchReviewsByPrestador, type DbReview } from "@/lib/db";
+import { supabaseAuth } from "@/lib/supabase-auth";
 import Link from "next/link";
 
 interface UserData {
@@ -255,6 +256,20 @@ export default function PrestadorPage() {
     updateSession(updated);
     setUser(updated);
 
+    // Persistir en Supabase auth metadata (trigger sync a public.usuarios)
+    supabaseAuth.auth.updateUser({
+      data: {
+        nombre: updated.nombre,
+        telefono: updated.telefono,
+        region: updated.region,
+        comuna: updated.comuna,
+        ciudadSector: updated.ciudadSector,
+        servicios: updated.servicios,
+        valorHora: updated.valorHora,
+        foto: updated.foto,
+      },
+    }).catch(() => {});
+
     // Sync to public catalog
     const serviceId = `provider-${user.id}`;
     const existing = getServiceById(serviceId);
@@ -312,6 +327,14 @@ export default function PrestadorPage() {
     };
     updateSession(updated);
     setUser(updated);
+
+    // Persistir en Supabase auth metadata (trigger sync a public.usuarios)
+    supabaseAuth.auth.updateUser({
+      data: {
+        servicios: updated.servicios,
+        valorHora: user.valorHora,
+      },
+    }).catch(() => {});
 
     // Sync to public catalog
     const serviceId = `provider-${user.id}`;

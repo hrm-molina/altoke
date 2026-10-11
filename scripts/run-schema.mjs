@@ -126,7 +126,34 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;`,
   `DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;`,
   `CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();`
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();`,
+
+  `-- 9b. Trigger: sincronizar cambios de metadata a public.usuarios`,
+  `CREATE OR REPLACE FUNCTION public.handle_user_metadata_update()
+    RETURNS TRIGGER AS $$
+    BEGIN
+        IF NEW.raw_user_meta_data IS DISTINCT FROM OLD.raw_user_meta_data THEN
+            UPDATE public.usuarios SET
+                tipo          = COALESCE(NULLIF(NEW.raw_user_meta_data->>'tipo', ''), tipo),
+                nombre        = COALESCE(NULLIF(NEW.raw_user_meta_data->>'nombre', ''), nombre),
+                rut           = COALESCE(NULLIF(NEW.raw_user_meta_data->>'rut', ''), rut),
+                telefono      = COALESCE(NULLIF(NEW.raw_user_meta_data->>'telefono', ''), telefono),
+                region        = COALESCE(NULLIF(NEW.raw_user_meta_data->>'region', ''), region),
+                comuna        = COALESCE(NULLIF(NEW.raw_user_meta_data->>'comuna', ''), comuna),
+                ciudad_sector = COALESCE(NULLIF(NEW.raw_user_meta_data->>'ciudadSector', ''), ciudad_sector),
+                servicios     = COALESCE(NULLIF(NEW.raw_user_meta_data->>'servicios', ''), servicios),
+                valor_hora    = COALESCE(NULLIF(NEW.raw_user_meta_data->>'valorHora', '')::numeric, valor_hora),
+                foto          = COALESCE(NULLIF(NEW.raw_user_meta_data->>'foto', ''), foto)
+            WHERE id = NEW.id;
+        END IF;
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql SECURITY DEFINER;`,
+  `DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;`,
+  `CREATE TRIGGER on_auth_user_updated
+    AFTER UPDATE OF raw_user_meta_data ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_user_metadata_update();`
 ];
 
 async function run() {
