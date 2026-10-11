@@ -24,7 +24,7 @@ import { regiones, comunasPorRegion } from "@/lib/regions";
 import { categorias, saveCustomService, getServiceById } from "@/lib/mock-services";
 import { compressImage } from "@/lib/validators";
 import { validateServiceContent } from "@/lib/content-moderation";
-import { dbFetchReviewsByPrestador, type DbReview } from "@/lib/db";
+import { dbFetchReviewsByPrestador, dbFetchServices, dbSaveService, type DbReview } from "@/lib/db";
 import { supabaseAuth } from "@/lib/supabase-auth";
 import Link from "next/link";
 
@@ -211,6 +211,21 @@ export default function PrestadorPage() {
     if (session.email) {
       dbFetchReviewsByPrestador(session.email).then(setDbReviews).catch(() => {});
     }
+    // Cargar servicio desde Supabase y actualizar formulario
+    if (session.id) {
+      dbFetchServices().then((services) => {
+        const svc = services.find((s) => s.id === `provider-${session.id}`);
+        if (svc) {
+          setServicioForm((prev) => ({
+            ...prev,
+            titulo: svc.titulo || prev.titulo,
+            descripcion: svc.descripcion || prev.descripcion,
+            categoria: svc.categoria || prev.categoria,
+            foto: svc.foto || prev.foto,
+          }));
+        }
+      }).catch(() => {});
+    }
   }, [router]);
 
   const updateProfile = (field: string, value: string) => {
@@ -273,7 +288,7 @@ export default function PrestadorPage() {
     // Sync to public catalog
     const serviceId = `provider-${user.id}`;
     const existing = getServiceById(serviceId);
-    saveCustomService({
+    const profileServiceData = {
       id: serviceId,
       titulo: existing?.titulo || servicioForm.titulo || updated.servicios || "Servicios profesionales",
       descripcion: existing?.descripcion || servicioForm.descripcion || `Servicio ofrecido por ${updated.nombre} en ${updated.comuna}.`,
@@ -284,13 +299,15 @@ export default function PrestadorPage() {
       comuna: updated.comuna,
       region: updated.region,
       sector: updated.ciudadSector || updated.comuna,
-      foto: existing?.foto || "",
+      foto: servicioForm.foto || existing?.foto || "",
       fechaPublicacion: existing?.fechaPublicacion || new Date().toISOString().split("T")[0],
       nombrePrestador: updated.nombre,
       fotoPrestador: updated.foto || "",
       telefono: updated.telefono,
       emailPrestador: (updated.email as string || "").toLowerCase(),
-    });
+    };
+    saveCustomService(profileServiceData);
+    dbSaveService(profileServiceData, user.id).catch(() => {});
 
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -339,7 +356,7 @@ export default function PrestadorPage() {
     // Sync to public catalog
     const serviceId = `provider-${user.id}`;
     const existing = getServiceById(serviceId);
-    saveCustomService({
+    const serviceData = {
       id: serviceId,
       titulo: servicioForm.titulo.trim(),
       descripcion: servicioForm.descripcion.trim(),
@@ -356,7 +373,9 @@ export default function PrestadorPage() {
       fotoPrestador: user.foto || "",
       telefono: user.telefono,
       emailPrestador: (user.email as string || "").toLowerCase(),
-    });
+    };
+    saveCustomService(serviceData);
+    dbSaveService(serviceData, user.id).catch(() => {});
 
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
