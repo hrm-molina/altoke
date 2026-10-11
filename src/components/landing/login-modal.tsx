@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signInWithEmail, supabaseAuth } from "@/lib/supabase-auth";
+import { signInWithEmail, signOut, supabaseAuth } from "@/lib/supabase-auth";
 import { PasswordInput } from "@/components/ui/password-input";
 
 interface LoginModalProps {
@@ -57,6 +57,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
 
       const userTipo = res.user.user_metadata?.tipo || "usuario";
       if (defaultTipo && userTipo !== defaultTipo) {
+        // Cerrar sesión inmediatamente — no debe quedar activa
+        await signOut();
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("altoke_session");
+        }
         setTipoMismatch(defaultTipo === "prestador" ? "usuario" : "prestador");
         setLoading(false);
         return;
