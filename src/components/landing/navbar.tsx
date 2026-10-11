@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Menu, X, Zap, LogOut, History, Bell } from "lucide-react";
 import { LoginModal } from "./login-modal";
@@ -16,6 +16,7 @@ interface Session {
 }
 
 export function Navbar() {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginTipo, setLoginTipo] = useState<"usuario" | "prestador">("usuario");
@@ -130,15 +131,21 @@ export function Navbar() {
                     </>
                   ) : session.tipo === "ambos" ? (
                     <>
-                      <Link
-                        href="/explorar"
-                        className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                      >
-                        Explorar
-                      </Link>
+                      {pathname !== "/prestador" && (
+                        <Link
+                          href="/explorar"
+                          className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                        >
+                          Explorar
+                        </Link>
+                      )}
                       <Link
                         href="/prestador"
-                        className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-sm font-medium text-blue-400 hover:text-blue-300 hover:border-blue-500/50 transition-all"
+                        className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
+                          pathname === "/prestador"
+                            ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
+                            : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                        }`}
                       >
                         Mi servicio
                       </Link>
@@ -263,17 +270,23 @@ export function Navbar() {
                     </>
                   ) : session.tipo === "ambos" ? (
                     <>
-                      <Link
-                        href="/explorar"
-                        onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-center rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                      >
-                        Explorar servicios
-                      </Link>
+                      {pathname !== "/prestador" && (
+                        <Link
+                          href="/explorar"
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center justify-center rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                        >
+                          Explorar servicios
+                        </Link>
+                      )}
                       <Link
                         href="/prestador"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/10 py-3 text-center text-sm font-medium text-blue-400 hover:text-blue-300 hover:border-blue-500/50 transition-all"
+                        className={`flex items-center justify-center rounded-xl border py-3 text-center text-sm font-medium transition-all ${
+                          pathname === "/prestador"
+                            ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
+                            : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                        }`}
                       >
                         Mi servicio
                       </Link>
