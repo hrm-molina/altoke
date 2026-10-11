@@ -86,7 +86,8 @@ export async function POST(request: NextRequest) {
       { success: true, message: "Aceptación de términos registrada" },
       { status: 201 }
     );
-  } catch {
+  } catch (e) {
+    console.error("Error en POST /api/terms-acceptance:", e);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }

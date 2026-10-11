@@ -99,7 +99,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch {
+  } catch (e) {
+    console.error("Error en POST /api/contacto:", e);
     return NextResponse.json(
       { error: "Error interno del servidor" },
       { status: 500 }
