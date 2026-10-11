@@ -5,6 +5,7 @@ import { X, User, Briefcase, ArrowRight, ArrowLeft, Upload, Check, AlertCircle, 
 import { useRouter } from "next/navigation";
 
 import { regiones, comunasPorRegion } from "@/lib/regions";
+import { PasswordInput } from "@/components/ui/password-input";
 import { saveCustomService, categorias } from "@/lib/mock-services";
 import { validateRut, validateChileanPhone, compressImage } from "@/lib/validators";
 import { dbSaveService } from "@/lib/db";
@@ -505,12 +506,12 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                   <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
                     Contraseña *
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={form.password}
-                    onChange={(e) => updateForm("password", e.target.value)}
+                    onChange={(v) => updateForm("password", v)}
                     placeholder="Minimo 8 caracteres"
                     className={inputClass("password")}
+                    invalid={!!errors.password}
                   />
                   <FieldError field="password" errors={errors} />
                 </div>
@@ -518,12 +519,12 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                   <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
                     Confirmar contraseña *
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={form.confirmPassword}
-                    onChange={(e) => updateForm("confirmPassword", e.target.value)}
+                    onChange={(v) => updateForm("confirmPassword", v)}
                     placeholder="Repite tu contraseña"
                     className={inputClass("confirmPassword")}
+                    invalid={!!errors.confirmPassword}
                   />
                   <FieldError field="confirmPassword" errors={errors} />
                 </div>

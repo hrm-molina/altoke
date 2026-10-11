@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signInWithEmail } from "@/lib/supabase-auth";
+import { PasswordInput } from "@/components/ui/password-input";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -242,15 +243,14 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569]"
                 aria-hidden="true"
               />
-              <input
+              <PasswordInput
                 id="login-password"
-                type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={setPassword}
                 placeholder="Tu contraseña"
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 autoComplete="current-password"
-                className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 pl-10 pr-4 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500"
+                className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 pl-10 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500"
               />
             </div>
           </div>

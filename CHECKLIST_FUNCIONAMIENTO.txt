@@ -1,0 +1,299 @@
+================================================================================
+CHECKLIST DE FUNCIONAMIENTO — AlTokeChile
+Revisión manual de la plataforma COMO USUARIO REAL antes de publicar
+================================================================================
+No es revisión de código. Es sentarse, usar la plataforma y marcar lo que
+efectivamente funciona. Duration estimada: 45-60 min.
+
+INSTRUCCIONES
+- Señala [ ] = sin probar   [x] = funciona   [!] = roto (anotar abajo)
+- Probar en este orden: 1) Computador  2) Celular
+- Probar en Chrome y en al menos un navegador más (Safari/Firefox/Edge)
+- Al final: si hay algún [!] en secciones 1-7 → NO PUBLICAR
+
+================================================================================
+PARTE A — LANDING Y NAVEGACIÓN (visitante sin sesión)
+================================================================================
+
+A1. Abrir la página en modo incógnito (sin cookies ni sesión)
+[ ] Carga completa, sin pantalla en blanco ni errores
+[ ] Se ve el título/hero "AlToke" con botón "Regístrate gratis"
+[ ] Navbar muestra "Iniciar servicios" e "Iniciar usuario"
+[ ] Se muestra el banner de cookies en la primera visita
+[ ] No hay textos rotos (caracteres raros como �) ni imágenes rotas
+
+A2. Menú del celular (abrir en el celular o con ventana angosta)
+[ ] Aparece el botón de menú (hamburguesa)
+[ ] Al tocarlo se despliegan las opciones
+[ ] Se puede cerrar el menú
+
+A3. Secciones de la landing
+[ ] "Cómo funciona" (How it works) se ve completo
+[ ] Footer: links a Términos, Privacidad, Ayuda, Contacto funcionan (abren bien)
+[ ] Footer muestra "© 2026 AlToke Chile"
+
+A4. Cookies (banner)
+[ ] Botón "Ver detalles de categorías" expande las categorías
+[ ] "Aceptar todas" → el banner desaparece y NO vuelve a salir
+[ ] Borrar cookies del navegador y recargar → el banner vuelve a aparecer
+[ ] "Solo necesarias" → desaparece y no vuelve
+[ ] Borrar cookies, recargar → "Rechazar todas" → desaparece y no vuelve
+[ ] Link "Leer política" abre /privacidad
+
+A5. Páginas legales (desde el footer)
+[ ] /terminos carga completa, sin cortarse
+[ ] /privacidad carga completa (incluye derechos ARCO)
+[ ] /ayuda carga con sus preguntas frecuentes
+[ ] /contacto carga con su formulario
+
+================================================================================
+PARTE B — REGISTRO DE USUARIO (el rol que busca servicios)
+================================================================================
+
+B1. Abrir registro
+[ ] Click "Regístrate gratis" en el hero → se abre el modal de registro
+[ ] O click "Iniciar usuario" → "Regístrate acá" → abre el registro de usuario
+
+B2. Paso 1 — Tipo de persona
+[ ] Se puede elegir "Usuario" y "Prestador"
+[ ] Elegir "Usuario" y avanzar
+
+B3. Paso 2 — Email y contraseña
+[ ] Poner un email inválido (ej: "abc") → aparece error, no avanza
+[ ] Poner contraseña corta (ej: "123") → aparece error
+[ ] Poner email válido + contraseña de 8+ caracteres → avanza
+
+B4. Paso 3 — Datos personales
+[ ] Campos: nombre, teléfono, fecha nacimiento, región, comuna, términos
+[ ] Teléfono inválido (ej: "123") → error
+[ ] Fecha de nacimiento de menor (hoy menos 10 años) → error o bloqueo
+[ ] Elegir región → las comunas de esa región aparecen en el desplegable
+[ ] Cambiar de región → las comunas cambian
+[ ] Sin marcar "acepto términos" → error, no registra
+[ ] Links de Términos/Privacidad en el checkbox abren en nueva pestaña
+
+B5. Completar el registro
+[ ] Registrar con email y contraseña que NO existan → éxito
+[ ] Llega email de confirmación a la bandeja (revisar spam también)
+[ ] Click en el link de confirmación → email queda confirmado
+[ ] Verificar en Supabase (Auth → Users): el usuario aparece confirmado
+[ ] Verificar en Supabase (tabla usuarios): aparece la fila con tipo='usuario'
+
+================================================================================
+PARTE C — LOGIN Y SESIÓN
+================================================================================
+
+C1. Login correcto
+[ ] "Iniciar usuario" → email correcto + contraseña → entra a /explorar
+
+C2. Login con errores (probar los 3)
+[ ] Contraseña equivocada → mensaje "Email o contraseña incorrectos"
+[ ] Email inexistente → mismo mensaje (no revela si el email existe)
+[ ] Email registrado pero SIN confirmar → mensaje pidiendo confirmar
+      + botón para reenviar el email de confirmación
+
+C3. Sesión
+[ ] Recargar la página → la sesión se mantiene
+[ ] Cerrar el navegador, abrir de nuevo → según diseño, se mantiene o pide login (anotar cuál)
+[ ] Click en cerrar sesión (logout) → vuelve a la landing y ya no hay navbar de sesión
+[ ] Con sesión cerrada, escribir directamente la dirección /explorar → NO entra (lo manda a login)
+
+================================================================================
+PARTE D — EXPLORAR SERVICIOS (función principal)
+================================================================================
+
+D1. Ver el catálogo
+[ ] Entrar a /explorar como usuario → se ven servicios (o estado vacío si no hay datos)
+[ ] Si no hay servicios registrados, se entiende el mensaje ("no hay servicios" o similar)
+
+D2. Filtros
+[ ] Escribir en el buscador → filtra por texto
+[ ] Elegir región → solo quedan servicios de esa región
+[ ] Elegir comuna (tras elegir región) → filtra
+[ ] Poner precio mínimo/máximo → filtra
+[ ] Botón de limpiar filtros → vuelve a la lista completa
+
+D3. Abrir un servicio
+[ ] Click en un servicio → se abre el detalle (modal o vista)
+[ ] Se ve: título, categoría, descripción, valor, zona
+[ ] Sección de teléfono oculta con mensaje "Haz clic para mostrar el teléfono"
+
+D4. Ver teléfono (flujo clave)
+[ ] Click en "ver teléfono" estando LOGUEADO → aparece el número real
+[ ] Verificar en Supabase (tabla alertas): se creó una alerta pendiente para el usuario
+
+D5. Calificar
+[ ] En la alerta o en el flujo de "calificar" → se abre el formulario de reseña
+[ ] Intentar enviar sin estrellas → bloqueado
+[ ] Intentar enviar sin texto de reseña → bloqueado
+[ ] Poner 3 estrellas + un texto → se envía correctamente
+[ ] Verificar en Supabase (tabla calificaciones): aparece la reseña
+[ ] Verificar que el rating del servicio se actualizó (aparece el promedio nuevo)
+
+D6. Auto-calificación (trampa de seguridad)
+[ ] Con la cuenta del PRESTADOR, intentar calificar su propio servicio → debe estar bloqueado
+
+D7. Historial
+[ ] Navbar → "Mi Historial" (o /explorar?tab=historial)
+[ ] La reseña que hiciste aparece con estrellas, fecha y texto
+[ ] Pestaña "Servicios" → vuelve al catálogo
+
+D8. Alertas
+[ ] Navbar → "Alertas" (o /explorar?tab=alertas)
+[ ] Aparece la alerta pendiente del servicio que viste
+[ ] Botón "Sí" (contraté) → la alerta avanza a la opción de calificar
+[ ] Botón descartar/no → la alerta desaparece
+
+================================================================================
+PARTE E — REGISTRO Y PANEL DE PRESTADOR
+================================================================================
+
+E1. Registro prestador
+[ ] "Iniciar servicios" → "Regístrate acá" → modal de prestador
+[ ] RUT inválido (ej: "11.111.111-1") → error "RUT no válido"
+[ ] RUT válido con formato 12.345.678-9 → pasa
+[ ] Todos los campos del paso de datos: nombre, RUT, teléfono, fecha nac,
+      región/comuna, ciudad/sector, categoría, título del servicio, valor hora
+[ ] Intentar categoría no permitida (si aparece en el desplegable) → no la deja
+[ ] Aceptar términos → registrar → éxito
+[ ] Verificar en Supabase: fila en usuarios con tipo='prestador' y fila en servicios
+
+E2. Panel del prestador (/prestador)
+[ ] Login prestador → entra a /prestador
+[ ] Sección "Mi perfil de prestador": datos precargados correctamente
+[ ] Editar nombre/teléfono → "Guardar perfil" → mensaje de éxito
+[ ] Recargar la página → los cambios persistieron
+[ ] Sección "Mi servicio": datos precargados
+[ ] Editar título/descripción/valor → "Guardar servicio" → éxito
+[ ] Recargar → persiste
+[ ] Cambiar la categoría del servicio → se guarda
+
+E3. Visibilidad cruzada (probar con las DOS cuentas abiertas)
+[ ] Con el USUARIO, en /explorar: el servicio del prestador se ve actualizado
+      (mismo título, mismo valor)
+
+E4. Contrataciones del prestador
+[ ] Si el usuario "contrató" (vio teléfono + dijo que sí), aparece en la lista
+      de contrataciones del prestador (o se indica que aún no hay)
+
+================================================================================
+PARTE F — PERFIL DE USUARIO Y ELIMINAR CUENTA
+================================================================================
+
+F1. Editar perfil (/perfil)
+[ ] Navbar → Perfil → carga con los datos actuales
+[ ] Editar nombre → "Guardar cambios" → mensaje de éxito
+[ ] Recargar → el nombre nuevo persiste y también se ve en el navbar
+[ ] Cambiar región/comuna → guarda y persiste
+
+F2. Foto de perfil
+[ ] Subir una foto → aparece preview
+[ ] Guardar → la foto se ve en el perfil
+[ ] Recargar → la foto sigue ahí
+
+F3. Derechos ARCO / SERNAC
+[ ] Botón de derechos ARCO → abre /contacto con asunto preseleccionado
+[ ] Botón SERNAC/reclamo → abre /contacto con asunto de reclamo preseleccionado
+
+F4. Eliminar cuenta (irreversible — usar cuenta de PRUEBA)
+[ ] Click "Eliminar mi cuenta permanentemente" → se abre el modal de confirmación
+[ ] El modal explica qué se borra
+[ ] Escribir texto distinto a "ELIMINAR MI CUENTA" → bloqueado
+[ ] Escribir exactamente "ELIMINAR MI CUENTA" → se habilita el botón rojo
+[ ] Click "Eliminar definitivamente" → proceso completa → queda sin sesión → en la landing
+[ ] Intentar login con esa cuenta eliminada → ya no entra (credenciales inválidas)
+[ ] Verificar en Supabase: el usuario dejó de existir o quedó marcado como eliminado
+[ ] El servicio del prestador eliminado YA NO aparece en /explorar
+
+================================================================================
+PARTE G — CONTACTO Y AYUDA
+================================================================================
+
+G1. Formulario de contacto (/contacto)
+[ ] Enviar con campos vacíos → errores de validación, no envía
+[ ] Email inválido → error
+[ ] Mensaje muy corto → error
+[ ] Llenar todo correctamente → envío exitoso con mensaje de confirmación
+[ ] Verificar en Supabase (tabla contactos): aparece el mensaje con estado pendiente
+[ ] Cada opción del desplegable de asunto existe:
+      Consulta general / Reclamo formal / Derechos ARCO / Reportar servicio / Soporte / Otro
+
+G2. Ayuda (/ayuda)
+[ ] Las preguntas frecuentes se despliegan
+[ ] Hay forma de contactar desde la página de ayuda
+
+================================================================================
+PARTE H — RECORRIDO COMPLETO FIN A FIN (la prueba que más importa)
+================================================================================
+Simular una persona real usando la plataforma de principio a fin.
+Usa una cuenta NUEVA de prueba.
+
+H1. [ ] Registrarse como usuario (email nuevo) → confirmar email → login
+H2. [ ] Explorar → encontrar un servicio → ver teléfono
+H3. [ ] Ir a Alertas → calificar con estrellas + reseña
+H4. [ ] Ir a Mi Historial → ver la reseña reflejada
+H5. [ ] Registrarse como prestador (otro email nuevo) → confirmar → login
+H6. [ ] Editar perfil y servicio → guardar
+H7. [ ] Con la cuenta usuario: verificar que el servicio del prestador se ve bien
+H8. [ ] Prestador: verificar que la contratación/reseña aparece (si aplica)
+H9. [ ] Usuario: enviar un mensaje de contacto → verificar respuesta en BD
+H10. [ ] Usuario: eliminar cuenta de prueba → verificar que desaparece todo
+H11. [ ] Cerrar todas las sesiones → la plataforma sigue cargando bien
+
+================================================================================
+PARTE I — CELULAR (hacer todo con el teléfono, no con ventana angosta)
+================================================================================
+
+I1. [ ] Landing carga bien en el celular, texto legible, sin desbordes
+I2. [ ] Registro completo desde el celular (todos los pasos)
+I3. [ ] Login desde el celular
+I4. [ ] Explorar: filtros se usan bien con dedo (no se enciman botones)
+I5. [ ] Abrir servicio → ver teléfono → funciona
+I6. [ ] Calificar desde el celular → funciona
+I7. [ ] Perfil: editar y eliminar cuenta desde el celular
+I8. [ ] Prestador: editar servicio desde el celular
+I9. [ ] Contacto desde el celular
+I10. [ ] Menú hamburguesa navega a todas las secciones
+
+================================================================================
+PARTE J — ERRORES Y COSAS RARAS (cargar el ojo)
+================================================================================
+
+J1. En TODAS las pantallas revisadas:
+[ ] No hay mensajes de error en rojo sin explicar qué hacer
+[ ] No hay spinners/cargadores que quedan girando para siempre
+[ ] No hay textos con caracteres rotos (�)
+[ ] No hay botones que no responden al tocarlos
+[ ] No hay dobles envíos (si toco 2 veces rápido "Guardar", no se duplica nada)
+[ ] Al recargar en mitad de un formulario, se entiende que se perdieron los datos (o se conservan)
+
+J2. Sesiones cruzadas
+[ ] Abrir la misma cuenta en 2 pestañas → editar en una → recargar la otra → behavior aceptable (se actualiza o avisa)
+
+J3. Prueba con datos vacíos de BD
+[ ] Si la plataforma está vacía (0 servicios, 0 reseñas), todas las páginas
+      muestran estados vacíos amigables, no errores 500
+
+================================================================================
+REGISTRO DE PROBLEMAS ENCONTRADOS
+================================================================================
+N° | Parte | Qué pasó | Qué se esperaba | Gravedad (1=menor, 3=bloquea publicación)
+1  |       |          |                 |
+2  |       |          |                 |
+3  |       |          |                 |
+4  |       |          |                 |
+5  |       |          |                 |
+
+================================================================================
+VEREDICTO
+================================================================================
+
+¿Hay algún problema de gravedad 3 en Partes A-H?   [ ] SÍ  [ ] NO
+¿Funciona el recorrido completo fin a fin (Parte H)? [ ] SÍ  [ ] NO
+¿Funciona bien en celular (Parte I)?                [ ] SÍ  [ ] NO
+
+[ ] APTO PARA PUBLICAR
+[ ] NO APTO — corregir problemas gravedad 3 y repetir desde la parte afectada
+
+Revisado por: ____________________  Fecha: ____________
+================================================================================
