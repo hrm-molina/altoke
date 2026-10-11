@@ -85,6 +85,11 @@ const statements = [
   `CREATE POLICY "Usuario ve su aceptación términos" ON public.terms_acceptance
     FOR SELECT USING (auth.uid() = user_id OR auth.role() = 'service_role');`,
 
+  `-- 7b. Fix RLS: permitir trigger handle_new_user insertar en usuarios`,
+  `DROP POLICY IF EXISTS "Usuario se registra" ON public.usuarios;`,
+  `CREATE POLICY "Usuario se registra" ON public.usuarios
+    FOR INSERT WITH CHECK (auth.uid() = id OR auth.role() = 'service_role');`,
+
   `-- 8. Trigger handle_new_user (SECURITY DEFINER para bypass RLS en INSERT)`,
   `CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$

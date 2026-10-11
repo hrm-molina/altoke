@@ -298,10 +298,10 @@ DROP POLICY IF EXISTS "Usuario ve su perfil" ON public.usuarios;
 CREATE POLICY "Usuario ve su perfil" ON public.usuarios
   FOR SELECT USING (auth.uid() = id);
 
--- Inserción: solo durante registro (auth.uid() coincide con id generado)
+-- Inserción: durante registro (auth.uid() = id) o por el trigger interno (service_role)
 DROP POLICY IF EXISTS "Usuario se registra" ON public.usuarios;
 CREATE POLICY "Usuario se registra" ON public.usuarios
-  FOR INSERT WITH CHECK (auth.uid() = id);
+  FOR INSERT WITH CHECK (auth.uid() = id OR auth.role() = 'service_role');
 
 -- Actualización: usuario actualiza solo su propio perfil
 DROP POLICY IF EXISTS "Usuario actualiza su perfil" ON public.usuarios;
