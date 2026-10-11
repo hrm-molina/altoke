@@ -11,7 +11,7 @@ const examples = [
   { icon: Car, text: "Traslados" },
   { icon: Wrench, text: "Armar muebles" },
   { icon: Package, text: "Encomiendas" },
-  { icon: Heart, text: "Compañía" },
+  { icon: Heart, text: "Ir de compras" },
 ];
 
 const floatingServices = [

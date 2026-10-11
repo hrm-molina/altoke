@@ -461,7 +461,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
 
               <div className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-300">
                 <ShieldAlert size={16} className="shrink-0 text-amber-400" />
-                <span>Regla de oro: Plataforma exclusiva para mayores de 18 años</span>
+                <span>Plataforma exclusiva para mayores de 18 años</span>
               </div>
 
               <button
