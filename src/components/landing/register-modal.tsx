@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { X, User, Briefcase, ArrowRight, ArrowLeft, Upload, Check, AlertCircle, ShieldAlert, Loader2 } from "lucide-react";
+import { X, User, Briefcase, ArrowRight, ArrowLeft, Upload, Check, AlertCircle, ShieldAlert, Loader2, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { regiones, comunasPorRegion } from "@/lib/regions";
@@ -53,6 +53,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   // Regla de oro: estrictamente mayores de 18 años
   const today = new Date();
@@ -233,7 +234,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
         foto: foto || "",
       };
 
-      const { user, error } = await signUpWithEmail(
+      const { user, error, needsEmailConfirmation } = await signUpWithEmail(
         form.email.toLowerCase(),
         form.password,
         userType as "usuario" | "prestador",
@@ -302,6 +303,28 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
         await dbSaveService(serviceObj, user.id);
       }
 
+      // Si Supabase creó sesión activa, sincronizar con localStorage legacy
+      if (!needsEmailConfirmation) {
+        const legacySession = {
+          id: user.id,
+          email: user.email,
+          tipo: userType,
+          nombre: form.nombre.trim(),
+          rut: form.rut.trim(),
+          telefono: form.telefono.trim(),
+          fechaNacimiento: form.fechaNacimiento,
+          region: form.region,
+          comuna: form.comuna.trim(),
+          ciudadSector: form.ciudadSector.trim(),
+          servicios: form.servicios.trim(),
+          valorHora: form.valorHora.trim(),
+          foto: foto || "",
+          fechaRegistro: new Date().toISOString(),
+        };
+        localStorage.setItem("altoke_session", JSON.stringify(legacySession));
+      }
+
+      setNeedsConfirmation(needsEmailConfirmation);
       setSuccess(true);
     } catch {
       setErrors({ email: "Error de conexión. Intenta nuevamente." });
@@ -333,6 +356,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     setFotoServicio(null);
     setErrors({});
     setSuccess(false);
+    setNeedsConfirmation(false);
     onClose();
   };
 
@@ -386,24 +410,51 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
           {/* PANTALLA DE EXITO */}
           {success && (
             <div className="flex flex-col items-center py-8">
-              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
-                <Check size={40} className="text-green-500" />
-              </div>
-              <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">
-                Cuenta creada correctamente
-              </h2>
-              <p className="text-sm text-[#94A3B8] text-center mb-8">
-                ¡Ya puedes usar AlTokeChile! Bienvenido/a.
-              </p>
-              <button
-                onClick={() => {
-                  resetAndClose();
-                  router.push(userType === "prestador" ? "/prestador" : "/explorar");
-                }}
-                className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
-              >
-                {userType === "prestador" ? "Ir a mi perfil" : "Explorar servicios"}
-              </button>
+              {needsConfirmation ? (
+                <>
+                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20">
+                    <Mail size={40} className="text-blue-400" />
+                  </div>
+                  <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">
+                    Revisa tu correo
+                  </h2>
+                  <p className="text-sm text-[#94A3B8] text-center mb-4 leading-relaxed">
+                    Te enviamos un email de confirmación a <strong className="text-[#F1F5F9]">{form.email}</strong>.
+                  </p>
+                  <p className="text-sm text-[#64748B] text-center mb-8 leading-relaxed">
+                    Haz clic en el enlace del email para activar tu cuenta.
+                    Luego vuelve aquí e inicia sesión para comenzar.
+                  </p>
+                  <button
+                    onClick={resetAndClose}
+                    className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                  >
+                    Entendido, ir al inicio
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
+                    <Check size={40} className="text-green-500" />
+                  </div>
+                  <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">
+                    Cuenta creada correctamente
+                  </h2>
+                  <p className="text-sm text-[#94A3B8] text-center mb-8">
+                    ¡Ya puedes usar AlTokeChile! Bienvenido/a.
+                  </p>
+                  <button
+                    onClick={() => {
+                      const destino = userType === "prestador" ? "/prestador" : "/explorar";
+                      resetAndClose();
+                      router.push(destino);
+                    }}
+                    className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                  >
+                    {userType === "prestador" ? "Ir a mi panel" : "Explorar servicios"}
+                  </button>
+                </>
+              )}
             </div>
           )}
 

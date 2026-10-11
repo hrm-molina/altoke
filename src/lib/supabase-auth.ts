@@ -44,7 +44,7 @@ export async function signUpWithEmail(
   password: string,
   tipo: "usuario" | "prestador",
   metadata: Record<string, unknown>
-): Promise<{ user: AuthUser | null; error: string | null }> {
+): Promise<{ user: AuthUser | null; error: string | null; needsEmailConfirmation: boolean }> {
   const client = getSupabaseAuth();
   const { data, error } = await client.auth.signUp({
     email,
@@ -59,14 +59,18 @@ export async function signUpWithEmail(
   });
 
   if (error) {
-    return { user: null, error: error.message };
+    return { user: null, error: error.message, needsEmailConfirmation: false };
   }
 
   if (data.user) {
-    return { user: data.user as AuthUser, error: null };
+    return {
+      user: data.user as AuthUser,
+      error: null,
+      needsEmailConfirmation: !data.session,
+    };
   }
 
-  return { user: null, error: "Error desconocido al registrar" };
+  return { user: null, error: "Error desconocido al registrar", needsEmailConfirmation: false };
 }
 
 export async function signInWithEmail(

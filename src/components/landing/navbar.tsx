@@ -32,8 +32,27 @@ export function Navbar() {
           email: user.email,
           tipo: user.user_metadata?.tipo,
         });
+        // Sincronizar sesión legacy para páginas que usan localStorage
+        const meta = user.user_metadata || {};
+        localStorage.setItem("altoke_session", JSON.stringify({
+          id: user.id,
+          email: user.email,
+          tipo: meta.tipo || "usuario",
+          nombre: meta.nombre || "",
+          rut: meta.rut || "",
+          telefono: meta.telefono || "",
+          fechaNacimiento: meta.fechaNacimiento || "",
+          region: meta.region || "",
+          comuna: meta.comuna || "",
+          ciudadSector: meta.ciudadSector || "",
+          servicios: meta.servicios || "",
+          valorHora: meta.valorHora || "",
+          foto: meta.foto || "",
+          fechaRegistro: user.created_at || new Date().toISOString(),
+        }));
       } else {
         setSession(null);
+        localStorage.removeItem("altoke_session");
       }
     });
 

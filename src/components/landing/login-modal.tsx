@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signInWithEmail } from "@/lib/supabase-auth";
+import { signInWithEmail, supabaseAuth } from "@/lib/supabase-auth";
 import { PasswordInput } from "@/components/ui/password-input";
 
 interface LoginModalProps {
@@ -61,6 +61,25 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         setLoading(false);
         return;
       }
+
+      // Sincronizar sesión legacy para páginas que usan localStorage
+      const meta = res.user.user_metadata || {};
+      localStorage.setItem("altoke_session", JSON.stringify({
+        id: res.user.id,
+        email: res.user.email,
+        tipo: userTipo,
+        nombre: meta.nombre || "",
+        rut: meta.rut || "",
+        telefono: meta.telefono || "",
+        fechaNacimiento: meta.fechaNacimiento || "",
+        region: meta.region || "",
+        comuna: meta.comuna || "",
+        ciudadSector: meta.ciudadSector || "",
+        servicios: meta.servicios || "",
+        valorHora: meta.valorHora || "",
+        foto: meta.foto || "",
+        fechaRegistro: res.user.created_at || new Date().toISOString(),
+      }));
 
       setLoading(false);
       onClose();
@@ -294,5 +313,3 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
     </div>
   );
 }
-
-import { supabaseAuth } from "@/lib/supabase-auth";
