@@ -1,0 +1,129 @@
+================================================================================
+TU CHECKLIST - ACCIONES REQUERIDAS EN DASHBOARDS
+================================================================================
+Proyecto: AlTokeChile (altokechile.cl)
+Commit desplegado: 48f6feb (Security fixes)
+Fecha: Octubre 2026
+================================================================================
+
+🎯 OBJETIVO: Completar en 10-15 min para que la página funcione en producción
+================================================================================
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 1. VERCEL DASHBOARD → Settings → Environment Variables                      │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Agregar estas 3 variables (copiar EXACTAMENTE desde Supabase Dashboard):     │
+│                                                                              │
+│ Variable: NEXT_PUBLIC_SUPABASE_URL                                          │
+│ Valor: https://TU-PROYECTO.supabase.co                                      │
+│ Entornos: ☑ Production  ☑ Preview  ☑ Development                           │
+│                                                                              │
+│ Variable: NEXT_PUBLIC_SUPABASE_ANON_KEY                                     │
+│ Valor: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (anon public key)           │
+│ Entornos: ☑ Production  ☑ Preview  ☑ Development                           │
+│                                                                              │
+│ Variable: SUPABASE_SERVICE_ROLE_KEY                                         │
+│ Valor: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (service_role secret)       │
+│ Entornos: ☑ Production  ☐ Preview  ☐ Development  ← SOLO PRODUCTION        │
+│                                                                              │
+│ DÓNDE ENCONTRARLOS: Supabase Dashboard → Settings → API                     │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 2. SUPABASE DASHBOARD → SQL Editor                                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ ☐ Abrir: https://supabase.com/dashboard/project/TU-PROYECTO/sql              │
+│ ☐ Click "New query"                                                         │
+│ ☐ COPIAR Y PEGAR TODO el contenido de: supabase/schema.sql                  │
+│ ☐ Click "Run" (esperar "Success. No rows returned")                         │
+│                                                                              │
+│ VERIFICAR POST-EJECUCIÓN:                                                   │
+│   Ejecutar: SELECT tablename, rowsecurity FROM pg_tables                    │
+│             WHERE schemaname='public';                                      │
+│   Resultado esperado: TODAS las tablas con rowsecurity = true               │
+│                                                                              │
+│   Tablas nuevas que deben aparecer: contactos, terms_acceptance             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 3. SUPABASE DASHBOARD → Authentication → Settings                           │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Configurar EXACTAMENTE:                                                      │
+│                                                                              │
+│ Site URL:              https://altokechile.cl                               │
+│ Redirect URLs:         https://altokechile.cl/auth/callback                 │
+│                                                                              │
+│ ☑ Enable email confirmations          (OBLIGATORIO)                        │
+│ ☑ Enable email change confirmations   (OBLIGATORIO)                        │
+│ ☑ Secure password requirements        (OBLIGATORIO)                        │
+│                                                                              │
+│ DÓNDE: Supabase Dashboard → Authentication → Settings                       │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 4. DNS (Cloudflare / Namecheap / GoDaddy / etc.)                            │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ ☐ Tipo: CNAME   Nombre: @      Valor: cname.vercel-dns.com                 │
+│ ☐ Tipo: CNAME   Nombre: www    Valor: cname.vercel-dns.com                 │
+│                                                                              │
+│ LUEGO en Vercel Dashboard → Settings → Domains:                             │
+│ ☐ Agregar: altokechile.cl                                                   │
+│ ☐ Agregar: www.altokechile.cl                                               │
+│ ☐ Esperar "Valid Configuration" + SSL automático                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 5. VERIFICACIÓN FINAL (cuando todo lo anterior esté ✅)                     │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ 1. Vercel Dashboard → Deployments → Build VERDE (commit 48f6feb)           │
+│ 2. Abrir: https://altokechile.cl                                            │
+│ 3. Smoke test rápido:                                                       │
+│    ☐ Registro usuario → email real → confirm inbox → login                 │
+│    ☐ Registro prestador → RUT válido → publica servicio                    │
+│    ☐ Calificar 5★ + reseña → aparece en Historial                          │
+│    ☐ /perfil → "ELIMINAR MI CUENTA" → confirma → logout                   │
+│    ☐ /contacto → formulario → éxito                                        │
+│    ☐ Cookie banner → 3 botones funcionan                                   │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+COMANDOS ÚTILES PARA VERIFICAR DESPUÉS
+================================================================================
+
+# Headers de seguridad (debe mostrar CSP, HSTS, X-Frame-Options, etc.)
+curl -I https://altokechile.cl
+
+# Rate limiting (request 6 debe dar 429)
+for i in {1..7}; do curl -s -o /dev/null -w "%{http_code} " -X POST https://altokechile.cl/api/auth/login -d '{"email":"test@test.com","password":"12345678"}' -H "Content-Type: application/json"; done; echo
+
+# RLS con anon key (debe retornar [] en tablas sensibles)
+curl "https://TU-PROYECTO.supabase.co/rest/v1/usuarios?select=*" -H "apikey: ANON_KEY" -H "Authorization: Bearer ANON_KEY"
+
+================================================================================
+ROLLBACK SI ALGO FALLA
+================================================================================
+
+# Vercel: Dashboard → Deployments → "..." en commit anterior → "Promote to Production"
+# Git: git revert HEAD && git push origin main
+# Supabase: Settings → Database → Backups → Point-in-Time Recovery
+
+================================================================================
+ARCHIVOS DE REFERENCIA EN TU PROYECTO
+================================================================================
+
+- supabase/schema.sql          → Ejecutar en Supabase SQL Editor
+- CHECKLIST_PRE_DEPLOY.txt     → Checklist completo detallado
+- AUDITORIA_QA_ALTOKECHILE.txt → Auditoría original con hallazgos
+- .env.local (tu local)        → Ejemplo de variables necesarias
+
+================================================================================
+¿DUDA? REVISA ESTOS LOGS
+================================================================================
+
+- Vercel Deploy Logs: Dashboard → Deployments → Click build → View Function Logs
+- Supabase Logs: Dashboard → Logs → API / Auth / Database
+- Browser DevTools: F12 → Console / Network (errores 400/500)
+
+================================================================================
+FIN - CUANDO TODO ESTÉ ✅, LA PÁGINA ESTARÁ LISTA EN https://altokechile.cl
+================================================================================

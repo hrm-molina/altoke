@@ -1,9 +1,22 @@
-import { createBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { createBrowserClient } from "@supabase/ssr";
 
-export const supabaseAuth = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseBrowserClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+let supabaseAuthInstance: ReturnType<typeof getSupabaseBrowserClient> | null = null;
+
+function getSupabaseAuth(): ReturnType<typeof getSupabaseBrowserClient> {
+  if (!supabaseAuthInstance) {
+    supabaseAuthInstance = getSupabaseBrowserClient();
+  }
+  return supabaseAuthInstance;
+}
+
+export const supabaseAuth = getSupabaseAuth();
 
 export type AuthUser = {
   id: string;
@@ -32,7 +45,8 @@ export async function signUpWithEmail(
   tipo: "usuario" | "prestador",
   metadata: Record<string, unknown>
 ): Promise<{ user: AuthUser | null; error: string | null }> {
-  const { data, error } = await supabaseAuth.auth.signUp({
+  const client = getSupabaseAuth();
+  const { data, error } = await client.auth.signUp({
     email,
     password,
     options: {
@@ -59,7 +73,8 @@ export async function signInWithEmail(
   email: string,
   password: string
 ): Promise<{ user: AuthUser | null; error: string | null }> {
-  const { data, error } = await supabaseAuth.auth.signInWithPassword({
+  const client = getSupabaseAuth();
+  const { data, error } = await client.auth.signInWithPassword({
     email,
     password,
   });
@@ -72,40 +87,47 @@ export async function signInWithEmail(
 }
 
 export async function signOut(): Promise<{ error: string | null }> {
-  const { error } = await supabaseAuth.auth.signOut();
+  const client = getSupabaseAuth();
+  const { error } = await client.auth.signOut();
   return { error: error?.message || null };
 }
 
 export async function resetPassword(email: string): Promise<{ error: string | null }> {
-  const { error } = await supabaseAuth.auth.resetPasswordForEmail(email, {
+  const client = getSupabaseAuth();
+  const { error } = await client.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/auth/reset-password`,
   });
   return { error: error?.message || null };
 }
 
 export async function updatePassword(newPassword: string): Promise<{ error: string | null }> {
-  const { error } = await supabaseAuth.auth.updateUser({ password: newPassword });
+  const client = getSupabaseAuth();
+  const { error } = await client.auth.updateUser({ password: newPassword });
   return { error: error?.message || null };
 }
 
 export async function updateUserMetadata(metadata: Record<string, unknown>): Promise<{ error: string | null }> {
-  const { error } = await supabaseAuth.auth.updateUser({ data: metadata });
+  const client = getSupabaseAuth();
+  const { error } = await client.auth.updateUser({ data: metadata });
   return { error: error?.message || null };
 }
 
 export async function getSession(): Promise<{ user: AuthUser | null; error: string | null }> {
-  const { data, error } = await supabaseAuth.auth.getSession();
+  const client = getSupabaseAuth();
+  const { data, error } = await client.auth.getSession();
   if (error) return { user: null, error: error.message };
   return { user: data.session?.user as AuthUser || null, error: null };
 }
 
 export function onAuthStateChange(callback: (user: AuthUser | null) => void) {
-  return supabaseAuth.auth.onAuthStateChange((_event, session) => {
+  const client = getSupabaseAuth();
+  return client.auth.onAuthStateChange((_event, session) => {
     callback(session?.user as AuthUser || null);
   });
 }
 
 export async function getAccessToken(): Promise<string | null> {
-  const { data } = await supabaseAuth.auth.getSession();
+  const client = getSupabaseAuth();
+  const { data } = await client.auth.getSession();
   return data.session?.access_token || null;
 }

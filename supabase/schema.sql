@@ -408,3 +408,38 @@ DROP POLICY IF EXISTS "Usuario ve su aceptación términos" ON public.terms_acce
 CREATE POLICY "Usuario ve su aceptación términos" ON public.terms_acceptance
   FOR SELECT USING (auth.uid() = user_id OR auth.role() = 'service_role');
 
+-- ==========================================
+-- TRIGGER: Auto-crear perfil en public.usuarios al registrarse (auth.users)
+-- ==========================================
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.usuarios (id, email, password_hash, tipo, nombre, rut, telefono, 
+                                  fecha_nacimiento, region, comuna, ciudad_sector, 
+                                  servicios, valor_hora, foto)
+    VALUES (
+        NEW.id,
+        NEW.email,
+        '',
+        COALESCE(NEW.raw_user_meta_data->>'tipo', 'usuario'),
+        COALESCE(NEW.raw_user_meta_data->>'nombre', ''),
+        NEW.raw_user_meta_data->>'rut',
+        COALESCE(NEW.raw_user_meta_data->>'telefono', ''),
+        COALESCE((NEW.raw_user_meta_data->>'fechaNacimiento')::date, CURRENT_DATE),
+        COALESCE(NEW.raw_user_meta_data->>'region', ''),
+        COALESCE(NEW.raw_user_meta_data->>'comuna', ''),
+        NEW.raw_user_meta_data->>'ciudadSector',
+        NEW.raw_user_meta_data->>'servicios',
+        COALESCE((NEW.raw_user_meta_data->>'valorHora')::numeric, 0),
+        NEW.raw_user_meta_data->>'foto'
+    )
+    ON CONFLICT (id) DO NOTHING;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+

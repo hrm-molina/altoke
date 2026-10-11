@@ -92,4 +92,5 @@ export const config = {
     "/api/contacto/:path*",
     "/api/calificaciones/:path*",
   ],
+  runtime: "experimental-edge",
 };
