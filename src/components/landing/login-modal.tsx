@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signInWithEmail, signOut, supabaseAuth } from "@/lib/supabase-auth";
+import { signInWithEmail, supabaseAuth } from "@/lib/supabase-auth";
 import { PasswordInput } from "@/components/ui/password-input";
 
 interface LoginModalProps {
@@ -55,20 +55,18 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         return;
       }
 
-      const userTipo = res.user.user_metadata?.tipo || "usuario";
-      if (defaultTipo && userTipo !== defaultTipo) {
-        // Cerrar sesión inmediatamente — no debe quedar activa
-        await signOut();
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("altoke_session");
-        }
-        setTipoMismatch(defaultTipo === "prestador" ? "usuario" : "prestador");
+      const userTipo = (res.user.user_metadata?.tipo || "usuario") as string;
+
+      // Si pide un rol que no tiene, ofrecer agregarlo (no bloquear)
+      if (defaultTipo && userTipo !== defaultTipo && userTipo !== "ambos") {
+        setTipoMismatch(userTipo as "usuario" | "prestador");
         setLoading(false);
         return;
       }
 
       // Sincronizar sesión legacy para páginas que usan localStorage
       const meta = res.user.user_metadata || {};
+      // Si es "ambos", guardamos "ambos" en sesión para que pueda acceder a ambas interfaces
       localStorage.setItem("altoke_session", JSON.stringify({
         id: res.user.id,
         email: res.user.email,
@@ -88,11 +86,48 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
 
       setLoading(false);
       onClose();
-      if (userTipo === "prestador") {
-        router.push("/prestador");
-      } else {
-        router.push("/explorar");
+      // Destino según el rol elegido al hacer login
+      const destino = (userTipo === "ambos" ? defaultTipo : userTipo) === "prestador" ? "/prestador" : "/explorar";
+      router.push(destino);
+    } catch {
+      setError("Error de conexión. Intenta nuevamente.");
+      setLoading(false);
+    }
+  };
+
+  const handleUpgradeRole = async () => {
+    if (!tipoMismatch || !defaultTipo) return;
+    setLoading(true);
+    try {
+      // Ya hay sesión activa (se creó al hacer signIn). Actualizar metadata y BD.
+      const nuevoTipo = "ambos";
+      const { error: metaError } = await supabaseAuth.auth.updateUser({
+        data: { tipo: nuevoTipo },
+      });
+      if (metaError) {
+        setError("Error actualizando tu cuenta. Intenta nuevamente.");
+        setLoading(false);
+        return;
       }
+
+      // Actualizar fila en public.usuarios
+      const { data: { user } } = await supabaseAuth.auth.getUser();
+      if (user) {
+        await fetch("/api/upgrade-role", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id, tipo: nuevoTipo }),
+        }).catch(() => {});
+      }
+
+      // Actualizar sesión legacy
+      const sesionActual = JSON.parse(localStorage.getItem("altoke_session") || "{}");
+      sesionActual.tipo = nuevoTipo;
+      localStorage.setItem("altoke_session", JSON.stringify(sesionActual));
+
+      setLoading(false);
+      onClose();
+      router.push(defaultTipo === "prestador" ? "/prestador" : "/explorar");
     } catch {
       setError("Error de conexión. Intenta nuevamente.");
       setLoading(false);
@@ -122,6 +157,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
   };
 
   const resetAndClose = () => {
+    // Si hay mismatch, la sesión quedó activa sin completar — cerrarla
+    if (tipoMismatch) {
+      supabaseAuth.auth.signOut().catch(() => {});
+      localStorage.removeItem("altoke_session");
+    }
     setEmail("");
     setPassword("");
     setError("");
@@ -178,38 +218,34 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         </p>
 
         {tipoMismatch === "usuario" && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm" role="alert">
-            <div className="flex items-start gap-2 text-amber-400 mb-3">
+          <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-4 text-sm" role="alert">
+            <div className="flex items-start gap-2 text-blue-400 mb-3">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <span>Esta cuenta está registrada como <strong>usuario</strong>. No estás registrado como prestador de servicios.</span>
+              <span>Tu cuenta es de <strong>usuario</strong>. ¿Quieres agregar el rol de prestador de servicios?</span>
             </div>
             <button
               type="button"
-              onClick={() => {
-                resetAndClose();
-                onSwitchToRegister?.();
-              }}
-              className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-all"
+              onClick={handleUpgradeRole}
+              disabled={loading}
+              className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-all disabled:opacity-50"
             >
-              Crear cuenta como prestador
+              {loading ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Agregar rol prestador"}
             </button>
           </div>
         )}
         {tipoMismatch === "prestador" && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm" role="alert">
-            <div className="flex items-start gap-2 text-amber-400 mb-3">
+          <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-4 text-sm" role="alert">
+            <div className="flex items-start gap-2 text-blue-400 mb-3">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <span>Esta cuenta está registrada como <strong>prestador de servicios</strong>. No estás registrado como usuario.</span>
+              <span>Tu cuenta es de <strong>prestador</strong>. ¿Quieres agregar el rol de usuario para contratar servicios?</span>
             </div>
             <button
               type="button"
-              onClick={() => {
-                resetAndClose();
-                onSwitchToRegister?.();
-              }}
-              className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-all"
+              onClick={handleUpgradeRole}
+              disabled={loading}
+              className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-all disabled:opacity-50"
             >
-              Crear cuenta como usuario
+              {loading ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Agregar rol usuario"}
             </button>
           </div>
         )}

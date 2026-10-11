@@ -243,7 +243,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
 
       if (error) {
         if (error.toLowerCase().includes("already registered") || error.toLowerCase().includes("ya registrado")) {
-          setErrors({ email: "Este email ya está registrado" });
+          setErrors({ email: "Este email ya está registrado. Inicia sesión y podrás agregar el rol desde ahí." });
         } else {
           setErrors({ email: error });
         }

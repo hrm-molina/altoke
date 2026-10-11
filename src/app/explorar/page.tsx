@@ -30,6 +30,7 @@ function ExplorarContent() {
         return;
       }
       const session = JSON.parse(raw);
+      // Solo redirigir si es EXCLUSIVAMENTE prestador (sin rol usuario)
       if (session.tipo === "prestador") {
         router.push("/prestador");
       }

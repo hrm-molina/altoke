@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    tipo TEXT NOT NULL CHECK (tipo IN ('usuario', 'prestador')),
+    tipo TEXT NOT NULL CHECK (tipo IN ('usuario', 'prestador', 'ambos')),
     nombre TEXT NOT NULL,
     rut TEXT,
     telefono TEXT NOT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS public.terms_acceptance (
     user_id UUID REFERENCES public.usuarios(id) ON DELETE SET NULL,
     email TEXT,
     version TEXT NOT NULL,
-    tipo TEXT NOT NULL CHECK (tipo IN ('usuario', 'prestador')),
+    tipo TEXT NOT NULL CHECK (tipo IN ('usuario', 'prestador', 'ambos')),
     ip TEXT,
     user_agent TEXT,
     fecha TIMESTAMPTZ DEFAULT NOW()

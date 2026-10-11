@@ -90,6 +90,10 @@ const statements = [
   `CREATE POLICY "Usuario se registra" ON public.usuarios
     FOR INSERT WITH CHECK (auth.uid() = id OR auth.role() = 'service_role');`,
 
+  `-- 7c. Permitir tipo 'ambos' (roles dual usuario+prestador)`,
+  `ALTER TABLE public.usuarios DROP CONSTRAINT IF EXISTS usuarios_tipo_check;`,
+  `ALTER TABLE public.usuarios ADD CONSTRAINT usuarios_tipo_check CHECK (tipo IN ('usuario', 'prestador', 'ambos'));`,
+
   `-- 8. Trigger handle_new_user (SECURITY DEFINER para bypass RLS en INSERT)`,
   `CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$

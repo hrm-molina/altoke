@@ -93,6 +93,7 @@ export default function PerfilPage() {
       }
 
       const userData = getInitialUserData(session.user as AuthUser);
+      // Solo redirigir si es EXCLUSIVAMENTE prestador (sin rol usuario)
       if (userData.tipo === "prestador") {
         router.push("/prestador");
         return;

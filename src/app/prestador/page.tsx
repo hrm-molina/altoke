@@ -199,7 +199,7 @@ export default function PrestadorPage() {
       router.push("/");
       return;
     }
-    if (session.tipo !== "prestador") {
+    if (session.tipo !== "prestador" && session.tipo !== "ambos") {
       router.push("/explorar");
       return;
     }

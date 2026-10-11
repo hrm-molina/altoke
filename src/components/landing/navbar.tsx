@@ -128,6 +128,39 @@ export function Navbar() {
                         Cerrar sesión
                       </button>
                     </>
+                  ) : session.tipo === "ambos" ? (
+                    <>
+                      <Link
+                        href="/explorar"
+                        className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      >
+                        Explorar
+                      </Link>
+                      <Link
+                        href="/prestador"
+                        className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-sm font-medium text-blue-400 hover:text-blue-300 hover:border-blue-500/50 transition-all"
+                      >
+                        Mi servicio
+                      </Link>
+                      <Link
+                        href="/perfil"
+                        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
+                          {session.nombre?.charAt(0) || "U"}
+                        </div>
+                        <span className="text-sm text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">
+                          {session.nombre || session.email}
+                        </span>
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      >
+                        <LogOut size={15} />
+                        Cerrar sesión
+                      </button>
+                    </>
                   ) : (
                     <>
                       <Link
@@ -216,6 +249,45 @@ export function Navbar() {
                         <div>
                           <p className="text-sm font-semibold text-[#F1F5F9]">
                             {session.nombre || "Prestador"}
+                          </p>
+                          <p className="text-xs text-[#64748B]">{session.email}</p>
+                        </div>
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all"
+                      >
+                        <LogOut size={15} />
+                        Cerrar sesión
+                      </button>
+                    </>
+                  ) : session.tipo === "ambos" ? (
+                    <>
+                      <Link
+                        href="/explorar"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-center rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      >
+                        Explorar servicios
+                      </Link>
+                      <Link
+                        href="/prestador"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-center rounded-xl border border-blue-500/30 bg-blue-500/10 py-3 text-center text-sm font-medium text-blue-400 hover:text-blue-300 hover:border-blue-500/50 transition-all"
+                      >
+                        Mi servicio
+                      </Link>
+                      <Link
+                        href="/perfil"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-3 px-1 py-2 hover:opacity-80 transition-opacity"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1E293B] text-sm font-bold text-[#94A3B8]">
+                          {session.nombre?.charAt(0) || "U"}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-[#F1F5F9]">
+                            {session.nombre || "Usuario"}
                           </p>
                           <p className="text-xs text-[#64748B]">{session.email}</p>
                         </div>
