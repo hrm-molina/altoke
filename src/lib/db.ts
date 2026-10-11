@@ -234,6 +234,37 @@ export async function dbFetchReviews(servicioId?: string): Promise<DbReview[]> {
   return [];
 }
 
+export async function dbFetchReviewsByPrestador(emailPrestador: string): Promise<DbReview[]> {
+  if (supabase && isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from("calificaciones")
+        .select("*")
+        .ilike("email_prestador", emailPrestador)
+        .order("fecha", { ascending: false });
+
+      if (!error && data) {
+        return data.map((r) => ({
+          id: r.id,
+          servicioId: r.servicio_id,
+          clienteId: r.cliente_id,
+          tituloServicio: r.titulo_servicio,
+          nombreCliente: r.nombre_cliente,
+          emailCliente: r.email_cliente,
+          nombrePrestador: r.nombre_prestador,
+          emailPrestador: r.email_prestador,
+          calificacion: r.calificacion,
+          resena: r.resena,
+          fecha: r.fecha,
+        }));
+      }
+    } catch (e) {
+      console.warn("Error consultando calificaciones del prestador:", e);
+    }
+  }
+  return [];
+}
+
 export async function dbCreateAlert(alert: DbAlert): Promise<boolean> {
   const alertId = crypto.randomUUID();
 

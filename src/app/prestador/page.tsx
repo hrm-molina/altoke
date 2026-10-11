@@ -24,6 +24,8 @@ import { regiones, comunasPorRegion } from "@/lib/regions";
 import { categorias, saveCustomService, getServiceById } from "@/lib/mock-services";
 import { compressImage } from "@/lib/validators";
 import { validateServiceContent } from "@/lib/content-moderation";
+import { dbFetchReviewsByPrestador, type DbReview } from "@/lib/db";
+import Link from "next/link";
 
 interface UserData {
   id: string;
@@ -192,6 +194,7 @@ export default function PrestadorPage() {
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [jobs, _setJobs] = useState(getInitialJobs);
+  const [dbReviews, setDbReviews] = useState<DbReview[]>([]);
 
   useEffect(() => {
     const session = getSession();
@@ -203,7 +206,10 @@ export default function PrestadorPage() {
       router.push("/explorar");
       return;
     }
-    // user is already initialized via lazy initialization
+    // Cargar reseñas desde Supabase
+    if (session.email) {
+      dbFetchReviewsByPrestador(session.email).then(setDbReviews).catch(() => {});
+    }
   }, [router]);
 
   const updateProfile = (field: string, value: string) => {
@@ -350,19 +356,44 @@ export default function PrestadorPage() {
       <main className="flex-1 pt-24 pb-16">
         <div className="mx-auto w-full max-w-2xl px-6 sm:px-10">
           {/* Advisory banner */}
-          <div className="mb-8 flex items-start gap-4 rounded-2xl border-2 border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-6">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/20">
-              <Info size={24} className="text-amber-400" />
+          {user.tipo === "prestador" && (
+            <div className="mb-8 flex items-start gap-4 rounded-2xl border-2 border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-6">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/20">
+                <Info size={24} className="text-amber-400" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-[#F1F5F9] mb-1">
+                  ¿Quieres contratar servicios?
+                </p>
+                <p className="text-base text-[#94A3B8]">
+                  Crea tu cuenta de <span className="font-semibold text-amber-400">usuario</span> desde la landing para buscar y calificar servicios.
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-lg font-bold text-[#F1F5F9] mb-1">
-                ¿Quieres contratar servicios?
-              </p>
-              <p className="text-base text-[#94A3B8]">
-                Crea tu cuenta de <span className="font-semibold text-amber-400">usuario</span> desde la landing para buscar y calificar servicios.
-              </p>
+          )}
+
+          {/* Banner perfil incompleto para tipo ambos */}
+          {user.tipo === "ambos" && (!user.region || !user.comuna || !servicioForm.titulo) && (
+            <div className="mb-8 flex items-start gap-4 rounded-2xl border-2 border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 p-6">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500/20">
+                <Info size={24} className="text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-lg font-bold text-[#F1F5F9] mb-1">
+                  Completa tu perfil de prestador
+                </p>
+                <p className="text-base text-[#94A3B8]">
+                  Para que los clientes te encuentren, completa tu ubicación y publica tu servicio.
+                </p>
+              </div>
+              <Link
+                href="/perfil"
+                className="shrink-0 rounded-xl border border-blue-500/40 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-400 hover:bg-blue-500/20 transition-all"
+              >
+                Completar
+              </Link>
             </div>
-          </div>
+          )}
 
           {/* Header */}
           <div className="mb-8">
@@ -372,6 +403,35 @@ export default function PrestadorPage() {
             <p className="text-sm text-[#94A3B8]">
               Gestiona tu servicio y datos personales
             </p>
+          </div>
+
+          {/* Resumen de calificaciones */}
+          <div className="mb-6 grid grid-cols-3 gap-4">
+            <div className="card-surface flex flex-col items-center justify-center p-5">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Star size={20} className="text-amber-400" fill="currentColor" />
+                <span className="text-2xl font-extrabold text-[#F1F5F9]">
+                  {(() => {
+                    const all = [...jobs.map(j => j.calificacion), ...dbReviews.map(r => r.calificacion)];
+                    if (all.length === 0) return "5.0";
+                    return (all.reduce((a, b) => a + b, 0) / all.length).toFixed(1);
+                  })()}
+                </span>
+              </div>
+              <p className="text-xs text-[#64748B]">Promedio</p>
+            </div>
+            <div className="card-surface flex flex-col items-center justify-center p-5">
+              <span className="text-2xl font-extrabold text-[#F1F5F9] mb-1">
+                {jobs.length + dbReviews.length}
+              </span>
+              <p className="text-xs text-[#64748B]">Trabajos</p>
+            </div>
+            <div className="card-surface flex flex-col items-center justify-center p-5">
+              <span className="text-2xl font-extrabold text-[#F1F5F9] mb-1">
+                {dbReviews.filter(r => r.resena).length + jobs.filter(j => j.resena).length}
+              </span>
+              <p className="text-xs text-[#64748B]">Reseñas</p>
+            </div>
           </div>
 
           {/* Profile card */}
@@ -412,7 +472,7 @@ export default function PrestadorPage() {
                 </h2>
                 <p className="text-sm text-[#64748B]">{user.email}</p>
                 <span className="mt-1 inline-flex items-center rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400">
-                  Prestador de servicios
+                  {user.tipo === "ambos" ? "Usuario y prestador" : "Prestador de servicios"}
                 </span>
               </div>
             </div>
@@ -726,7 +786,7 @@ export default function PrestadorPage() {
               Trabajos calificados por clientes
             </p>
 
-            {jobs.length === 0 ? (
+            {jobs.length === 0 && dbReviews.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#0A0F1A] border border-[#1E293B]">
                   <Clock size={28} className="text-[#475569]" />
@@ -740,9 +800,54 @@ export default function PrestadorPage() {
               </div>
             ) : (
               <div className="space-y-4">
+                {dbReviews.map((review, idx) => (
+                  <div
+                    key={`db-${review.id || idx}`}
+                    className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] p-5"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-[#F1F5F9] mb-1 truncate">
+                          {review.tituloServicio || "Servicio"}
+                        </h4>
+                        <p className="text-xs text-[#64748B] mb-2">
+                          {review.nombreCliente || "Cliente"}
+                        </p>
+                        <div className="flex items-center gap-1 mb-2">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              size={14}
+                              fill={s <= review.calificacion ? "currentColor" : "none"}
+                              className={s <= review.calificacion ? "text-amber-400" : "text-[#334155]"}
+                            />
+                          ))}
+                          <span className="text-xs font-semibold text-[#F1F5F9] ml-1">
+                            {review.calificacion}/5
+                          </span>
+                        </div>
+                        {review.resena && (
+                          <p className="text-sm text-[#94A3B8] italic mb-2">
+                            &ldquo;{review.resena}&rdquo;
+                          </p>
+                        )}
+                        <div className="flex items-center gap-1 text-xs text-[#64748B]">
+                          <Clock size={11} />
+                          <span>
+                            {review.fecha ? new Date(review.fecha).toLocaleDateString("es-CL", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }) : ""}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
                 {jobs.map((job, idx) => (
                   <div
-                    key={`${job.servicioId}-${idx}`}
+                    key={`local-${job.servicioId}-${idx}`}
                     className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] p-5"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -796,7 +901,8 @@ export default function PrestadorPage() {
             </h3>
             <div className="space-y-2 text-sm text-[#64748B]">
               <p>
-                <span className="text-[#94A3B8]">Tipo:</span> Prestador de servicios
+                <span className="text-[#94A3B8]">Tipo:</span>{" "}
+                {user.tipo === "ambos" ? "Usuario y prestador" : "Prestador de servicios"}
               </p>
               <p>
                 <span className="text-[#94A3B8]">Miembro desde:</span>{" "}
