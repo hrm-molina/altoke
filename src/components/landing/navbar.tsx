@@ -139,7 +139,7 @@ export function Navbar() {
                           Explorar
                         </Link>
                       )}
-                      {pathname !== "/explorar" && (
+                      {pathname !== "/prestador" && (
                         <Link
                           href="/prestador"
                           className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
@@ -277,7 +277,7 @@ export function Navbar() {
                           Explorar servicios
                         </Link>
                       )}
-                      {pathname !== "/explorar" && (
+                      {pathname !== "/prestador" && (
                         <Link
                           href="/prestador"
                           onClick={() => setMobileOpen(false)}
