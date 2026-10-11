@@ -46,7 +46,7 @@ export function PasswordInput({
         onKeyDown={onKeyDown}
         aria-invalid={invalid ? "true" : "false"}
         aria-describedby={ariaDescribedBy}
-        className={`${sanitizedClass} pr-11`}
+        className={`${sanitizedClass} pl-4 pr-11`}
       />
       <button
         type="button"
