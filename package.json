@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/validate-deploy-config.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate:deploy": "node scripts/validate-deploy-config.mjs"
   },
   "pnpm": {
     "allowScripts": [

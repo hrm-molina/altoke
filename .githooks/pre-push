@@ -1,0 +1,5 @@
+#!/bin/sh
+# Pre-push: valida la config de deploy antes de llegar a Vercel.
+# Saltar con: git push --no-verify (no recomendado).
+echo "🔎 validate-deploy-config (pre-push)..."
+node scripts/validate-deploy-config.mjs || exit 1

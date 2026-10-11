@@ -1,0 +1,17 @@
+name: validate-deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validar config de deploy (vercel.json, runtimes, next.config)
+        run: node scripts/validate-deploy-config.mjs
