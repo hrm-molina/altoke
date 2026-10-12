@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2, User, Briefcase } from "lucide-react";
+import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signInWithEmail, getUserProfiles, ensureProfileForSession, supabaseAuth } from "@/lib/supabase-auth";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -20,7 +20,6 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailNotConfirmed, setEmailNotConfirmed] = useState(false);
-  const [showRoleSelector, setShowRoleSelector] = useState(false);
 
   const handleLogin = async () => {
     setError("");
@@ -88,15 +87,14 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         return;
       }
 
-      // Si tiene ambos perfiles, mostrar selector
-      if (hasUsuario && hasPrestador) {
-        setShowRoleSelector(true);
-        setLoading(false);
-        return;
-      }
-
-      // Solo un perfil: entrar directo
-      const currentRole = hasPrestador ? "prestador" : "usuario";
+      // Si tiene ambos perfiles, entrar con el rol del modal desde el que
+      // inició sesión (si abrió "Iniciar sesión como prestador", entra a prestador).
+      const currentRole: "usuario" | "prestador" =
+        hasUsuario && hasPrestador
+          ? defaultTipo || "usuario"
+          : hasPrestador
+            ? "prestador"
+            : "usuario";
       const meta = res.user.user_metadata || {};
       let fotoLocal = "";
       try {
@@ -123,50 +121,6 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
       setLoading(false);
       onClose();
       router.push(currentRole === "prestador" ? "/prestador" : "/explorar");
-    } catch {
-      setError("Error de conexión. Intenta nuevamente.");
-      setLoading(false);
-    }
-  };
-
-  const handleRoleSelect = async (role: "usuario" | "prestador") => {
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabaseAuth.auth.getUser();
-      if (!user) {
-        setError("Sesión expirada. Inicia sesión de nuevo.");
-        setLoading(false);
-        return;
-      }
-
-      const meta = user.user_metadata || {};
-      let fotoLocal = "";
-      try {
-        const sesionActual = JSON.parse(localStorage.getItem("altoke_session") || "{}");
-        fotoLocal = sesionActual.foto || "";
-      } catch { /* noop */ }
-
-      localStorage.setItem("altoke_session", JSON.stringify({
-        id: user.id,
-        email: user.email,
-        tipo: role,
-        nombre: meta.nombre || "",
-        rut: meta.rut || "",
-        telefono: meta.telefono || "",
-        fechaNacimiento: meta.fechaNacimiento || "",
-        region: meta.region || "",
-        comuna: meta.comuna || "",
-        ciudadSector: meta.ciudadSector || "",
-        servicios: meta.servicios || "",
-        valorHora: meta.valorHora || "",
-        foto: fotoLocal || meta.foto || "",
-        fechaRegistro: user.created_at || new Date().toISOString(),
-      }));
-
-      setLoading(false);
-      setShowRoleSelector(false);
-      onClose();
-      router.push(role === "prestador" ? "/prestador" : "/explorar");
     } catch {
       setError("Error de conexión. Intenta nuevamente.");
       setLoading(false);
@@ -200,7 +154,6 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
     setPassword("");
     setError("");
     setEmailNotConfirmed(false);
-    setShowRoleSelector(false);
     setLoading(false);
     onClose();
   };
@@ -251,43 +204,10 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
               : "Ingresa a tu cuenta de AlTokeChile"}
         </p>
 
-        {error && !showRoleSelector && (
+        {error && (
           <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400" role="alert">
             <AlertCircle size={16} />
             {error}
-          </div>
-        )}
-
-        {showRoleSelector && (
-          <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-6 text-center" role="dialog" aria-modal="true" aria-labelledby="role-selector-title">
-            <h3 id="role-selector-title" className="text-lg font-bold text-[#F1F5F9] mb-2">
-              Tienes dos cuentas con este email
-            </h3>
-            <p className="text-sm text-[#94A3B8] mb-6">
-              ¿Cómo quieres entrar?
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => handleRoleSelect("usuario")}
-                disabled={loading}
-                className="flex flex-col items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-4 text-sm font-medium text-blue-400 hover:bg-blue-500/20 transition-all disabled:opacity-50"
-              >
-                <User size={28} />
-                <span>Entrar como Usuario</span>
-                <span className="text-xs text-[#64748B]">Buscar y contratar servicios</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSelect("prestador")}
-                disabled={loading}
-                className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm font-medium text-amber-400 hover:bg-amber-500/20 transition-all disabled:opacity-50"
-              >
-                <Briefcase size={28} />
-                <span>Entrar como Prestador</span>
-                <span className="text-xs text-[#64748B]">Gestionar mis servicios</span>
-              </button>
-            </div>
           </div>
         )}
 
