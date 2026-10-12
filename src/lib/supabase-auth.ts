@@ -72,14 +72,50 @@ export type PerfilPrestador = {
   activo: boolean;
 };
 
-async function checkProfileExists(email: string, tipo: "usuario" | "prestador"): Promise<{ exists: boolean; userId?: string }> {
+export async function checkProfileExists(
+  email: string,
+  tipo: "usuario" | "prestador"
+): Promise<{
+  exists: boolean;
+  userId?: string;
+  error?: string;
+  existsInOtherRole?: boolean;
+  otherRole?: "usuario" | "prestador" | null;
+}> {
+  const lowerEmail = email.trim().toLowerCase();
+
+  try {
+    const res = await fetch("/api/auth/check-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: lowerEmail, tipo }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        exists: !!data.exists,
+        error: data.error,
+        existsInOtherRole: !!data.existsInOtherRole,
+        otherRole: data.otherRole || null,
+      };
+    }
+  } catch (err) {
+    console.warn("Fallo al consultar /api/auth/check-email, usando fallback local:", err);
+  }
+
+  // Fallback directo a supabase client
   const client = getSupabaseAuth();
   const table = tipo === "prestador" ? "prestador" : "usuario";
-  const { data, error } = await client.from(table).select("id").eq("email", email).single();
+  const { data, error } = await client.from(table).select("id").eq("email", lowerEmail).maybeSingle();
   if (error && error.code !== "PGRST116") {
     console.warn(`Error checking ${table}:`, error.message);
   }
-  return { exists: !!data, userId: data?.id };
+  return {
+    exists: !!data,
+    userId: data?.id,
+    error: data ? `Ese correo ya fue utilizado para crear una cuenta en ${tipo}` : undefined,
+  };
 }
 
 async function createProfile(
@@ -138,7 +174,11 @@ export async function signUpWithEmail(
 
   const profileCheck = await checkProfileExists(lowerEmail, tipo);
   if (profileCheck.exists) {
-    return { user: null, error: `Ya tienes cuenta como ${tipo}. Inicia sesión.`, needsEmailConfirmation: false };
+    return {
+      user: null,
+      error: profileCheck.error || `Ese correo ya fue utilizado para crear una cuenta en ${tipo}`,
+      needsEmailConfirmation: false,
+    };
   }
 
   const freshSignUp = await client.auth.signUp({

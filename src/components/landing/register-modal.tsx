@@ -9,7 +9,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { saveCustomService, categorias } from "@/lib/mock-services";
 import { validateRut, validateChileanPhone, compressImage } from "@/lib/validators";
 import { dbSaveService } from "@/lib/db";
-import { signUpWithEmail } from "@/lib/supabase-auth";
+import { signUpWithEmail, checkProfileExists, supabaseAuth } from "@/lib/supabase-auth";
 import { validateServiceContent } from "@/lib/content-moderation";
 
 interface RegisterModalProps {
@@ -53,6 +53,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   // Regla de oro: estrictamente mayores de 18 años
@@ -117,9 +118,50 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleProceedToStep3 = () => {
+  const handleProceedToStep3 = async () => {
     if (!validateStep2()) return;
-    setStep(3);
+    if (!userType) return;
+
+    setCheckingEmail(true);
+    try {
+      const result = await checkProfileExists(form.email, userType);
+
+      if (result.exists) {
+        setErrors((prev) => ({
+          ...prev,
+          email: result.error || `Ese correo ya fue utilizado para crear una cuenta en ${userType}`,
+        }));
+        setCheckingEmail(false);
+        return;
+      }
+
+      // Si el email ya está registrado bajo el otro rol, validar la contraseña ingresada
+      if (result.existsInOtherRole) {
+        const { error: signInError } = await supabaseAuth.auth.signInWithPassword({
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+        });
+
+        if (signInError) {
+          setErrors((prev) => ({
+            ...prev,
+            password: `Este correo ya tiene cuenta como ${result.otherRole}. Ingresa la contraseña de esa cuenta para vincular tu perfil de ${userType}.`,
+          }));
+          setCheckingEmail(false);
+          return;
+        }
+      }
+
+      setStep(3);
+    } catch (err) {
+      console.error("Error al validar email en paso 2:", err);
+      setErrors((prev) => ({
+        ...prev,
+        email: "No se pudo verificar el correo. Intenta nuevamente.",
+      }));
+    } finally {
+      setCheckingEmail(false);
+    }
   };
 
   const validateStep3 = (): boolean => {
@@ -351,6 +393,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     setFotoServicio(null);
     setErrors({});
     setSuccess(false);
+    setCheckingEmail(false);
     setNeedsConfirmation(false);
     onClose();
   };
@@ -590,11 +633,22 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                   Atrás
                 </button>
                 <button
+                  type="button"
                   onClick={handleProceedToStep3}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow flex items-center justify-center gap-2"
+                  disabled={checkingEmail}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Siguiente
-                  <ArrowRight size={16} />
+                  {checkingEmail ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Verificando...
+                    </>
+                  ) : (
+                    <>
+                      Siguiente
+                      <ArrowRight size={16} />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
