@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   User,
@@ -189,6 +189,20 @@ export default function PrestadorPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [jobs] = useState(getInitialJobs);
   const [dbReviews, setDbReviews] = useState<DbReview[]>([]);
+
+  const reviewsToShow = useMemo(() => {
+    if (dbReviews && dbReviews.length > 0) {
+      return dbReviews;
+    }
+    return jobs.map((j) => ({
+      id: j.servicioId,
+      tituloServicio: j.tituloServicio,
+      nombreCliente: j.nombreCliente,
+      calificacion: j.calificacion,
+      resena: j.resena,
+      fecha: j.fecha,
+    }));
+  }, [dbReviews, jobs]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -495,9 +509,8 @@ export default function PrestadorPage() {
                 <Star size={20} className="text-amber-400" fill="currentColor" />
                 <span className="text-2xl font-extrabold text-[#F1F5F9]">
                   {(() => {
-                    const all = [...jobs.map(j => j.calificacion), ...dbReviews.map(r => r.calificacion)];
-                    if (all.length === 0) return "5.0";
-                    return (all.reduce((a, b) => a + b, 0) / all.length).toFixed(1);
+                    if (reviewsToShow.length === 0) return "5.0";
+                    return (reviewsToShow.reduce((a, b) => a + b.calificacion, 0) / reviewsToShow.length).toFixed(1);
                   })()}
                 </span>
               </div>
@@ -505,13 +518,13 @@ export default function PrestadorPage() {
             </div>
             <div className="card-surface flex flex-col items-center justify-center p-5">
               <span className="text-2xl font-extrabold text-[#F1F5F9] mb-1">
-                {jobs.length + dbReviews.length}
+                {reviewsToShow.length}
               </span>
               <p className="text-xs text-[#64748B]">Trabajos</p>
             </div>
             <div className="card-surface flex flex-col items-center justify-center p-5">
               <span className="text-2xl font-extrabold text-[#F1F5F9] mb-1">
-                {dbReviews.filter(r => r.resena).length + jobs.filter(j => j.resena).length}
+                {reviewsToShow.filter((r) => r.resena).length}
               </span>
               <p className="text-xs text-[#64748B]">Reseñas</p>
             </div>
@@ -920,7 +933,7 @@ export default function PrestadorPage() {
               Trabajos calificados por clientes
             </p>
 
-            {jobs.length === 0 && dbReviews.length === 0 ? (
+            {reviewsToShow.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#0A0F1A] border border-[#1E293B]">
                   <Clock size={28} className="text-[#475569]" />
@@ -934,9 +947,9 @@ export default function PrestadorPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {dbReviews.map((review, idx) => (
+                {reviewsToShow.map((review, idx) => (
                   <div
-                    key={`db-${review.id || idx}`}
+                    key={`review-${review.id || idx}`}
                     className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] p-5"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -973,51 +986,6 @@ export default function PrestadorPage() {
                               month: "short",
                               day: "numeric",
                             }) : ""}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {jobs.map((job, idx) => (
-                  <div
-                    key={`local-${job.servicioId}-${idx}`}
-                    className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] p-5"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-[#F1F5F9] mb-1 truncate">
-                          {job.tituloServicio}
-                        </h4>
-                        <p className="text-xs text-[#64748B] mb-2">
-                          {job.nombreCliente} · {job.comuna}
-                        </p>
-                        <div className="flex items-center gap-1 mb-2">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <Star
-                              key={s}
-                              size={14}
-                              fill={s <= job.calificacion ? "currentColor" : "none"}
-                              className={s <= job.calificacion ? "text-amber-400" : "text-[#334155]"}
-                            />
-                          ))}
-                          <span className="text-xs font-semibold text-[#F1F5F9] ml-1">
-                            {job.calificacion}/5
-                          </span>
-                        </div>
-                        {job.resena && (
-                          <p className="text-sm text-[#94A3B8] italic mb-2">
-                            &ldquo;{job.resena}&rdquo;
-                          </p>
-                        )}
-                        <div className="flex items-center gap-1 text-xs text-[#64748B]">
-                          <Clock size={11} />
-                          <span>
-                            {new Date(job.fecha).toLocaleDateString("es-CL", {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })}
                           </span>
                         </div>
                       </div>
