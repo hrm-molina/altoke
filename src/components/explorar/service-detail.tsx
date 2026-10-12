@@ -42,54 +42,12 @@ function renderStars(rating: number, size = 16) {
   return stars;
 }
 
-// Lee las reseñas REALES guardadas en localStorage para este servicio
 interface RealReview {
   id: string;
   nombreCliente: string;
   calificacion: number;
   resena: string;
   fecha: string;
-}
-
-function getRealReviews(servicioId: string, titulo?: string, prestador?: string): RealReview[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const jobs: Record<string, unknown>[] = JSON.parse(
-      localStorage.getItem("altoke_prestador_jobs") || "[]"
-    );
-    const history: Record<string, unknown>[] = JSON.parse(
-      localStorage.getItem("altoke_history") || "[]"
-    );
-    const combined = [...jobs, ...history];
-
-    const seen = new Set<string>();
-    const filtered = combined.filter((j) => {
-      const matchId = j.servicioId === servicioId;
-      const matchTitle = titulo && j.tituloServicio && String(j.tituloServicio).toLowerCase() === titulo.toLowerCase();
-      const matchPrestador = prestador && j.nombrePrestador && String(j.nombrePrestador).toLowerCase() === prestador.toLowerCase();
-      if (matchId || (matchTitle && matchPrestador) || (matchTitle && !prestador)) {
-        const key = `${j.nombreCliente}-${j.calificacion}-${j.resena}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      }
-      return false;
-    });
-
-    return filtered
-      .map((j, idx) => ({
-        id: String(idx),
-        nombreCliente: (j.nombreCliente as string) || "Cliente",
-        calificacion: (j.calificacion as number) || 5,
-        resena: (j.resena as string) || "",
-        fecha: j.fecha
-          ? new Date(j.fecha as string).toLocaleDateString("es-CL")
-          : "",
-      }))
-      .reverse();
-  } catch {
-    return [];
-  }
 }
 
 // Modal flotante de reseñas
@@ -100,16 +58,18 @@ function ReviewsModal({
   servicio: Servicio;
   onClose: () => void;
 }) {
-  const [reviews, setReviews] = useState<RealReview[]>(() =>
-    getRealReviews(servicio.id, servicio.titulo, servicio.nombrePrestador)
-  );
+  const [reviews, setReviews] = useState<RealReview[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     dbFetchReviews().then((remote) => {
+      if (cancelled) return;
       const matched = remote.filter(
         (r) =>
           r.servicioId === servicio.id ||
-          (r.tituloServicio && servicio.titulo && r.tituloServicio.toLowerCase() === servicio.titulo.toLowerCase())
+          (servicio.emailPrestador && r.emailPrestador && r.emailPrestador.toLowerCase() === servicio.emailPrestador.toLowerCase()) ||
+          (r.tituloServicio && servicio.titulo && r.tituloServicio.toLowerCase() === servicio.titulo.toLowerCase() && r.nombrePrestador === servicio.nombrePrestador)
       );
       if (matched.length > 0) {
         const mappedRemote: RealReview[] = matched.map((r, idx) => ({
@@ -121,11 +81,23 @@ function ReviewsModal({
         }));
         setReviews(mappedRemote);
       } else {
-        const local = getRealReviews(servicio.id, servicio.titulo, servicio.nombrePrestador);
-        setReviews(local);
+        setReviews([]);
+      }
+      setLoading(false);
+    }).catch(() => {
+      if (!cancelled) {
+        setReviews([]);
+        setLoading(false);
       }
     });
+    return () => {
+      cancelled = true;
+    };
   }, [servicio]);
+
+  const avgRating = reviews.length > 0
+    ? Number((reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length).toFixed(1))
+    : Number(servicio.rating) || 5.0;
 
   return (
     <div
@@ -149,10 +121,10 @@ function ReviewsModal({
           </div>
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-0.5">
-              {renderStars(reviews.length > 0 ? Number((reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length).toFixed(1)) : 5, 14)}
+              {renderStars(avgRating, 14)}
             </div>
             <span className="text-sm font-bold text-[#F1F5F9]">
-              {reviews.length > 0 ? Number((reviews.reduce((acc, r) => acc + r.calificacion, 0) / reviews.length).toFixed(1)) : 5}
+              {avgRating}
             </span>
             <span className="text-xs text-[#64748B]">({reviews.length})</span>
           </div>
@@ -160,7 +132,12 @@ function ReviewsModal({
 
         {/* Reviews list */}
         <div className="overflow-y-auto flex-1 divide-y divide-[#1E293B]">
-          {reviews.length === 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <span className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mb-3" />
+              <p className="text-xs text-[#64748B]">Cargando reseñas...</p>
+            </div>
+          ) : reviews.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <MessageSquare size={36} className="text-[#334155] mb-3" />
               <p className="text-sm text-[#64748B]">Aún no hay reseñas</p>
