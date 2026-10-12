@@ -68,6 +68,20 @@ async function getUserFromSession(
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
+          // Limpieza de fragmentos huérfanos (.1 a .20) cuando el token se achica
+          const activeNames = new Set(cookiesToSet.map((c) => c.name));
+          cookiesToSet.forEach(({ name, options }) => {
+            if (name.includes("-auth-token")) {
+              const baseName = name.replace(/\.\d+$/, "");
+              for (let i = 1; i <= 20; i++) {
+                const chunkName = `${baseName}.${i}`;
+                if (!activeNames.has(chunkName) && request.cookies.has(chunkName)) {
+                  request.cookies.delete(chunkName);
+                  response.cookies.set(chunkName, "", { ...options, maxAge: 0, expires: new Date(0) });
+                }
+              }
+            }
+          });
         },
       },
     }

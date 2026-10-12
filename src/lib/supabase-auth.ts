@@ -1,6 +1,21 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+export function cleanupStaleAuthCookies() {
+  if (typeof document === "undefined") return;
+  try {
+    const cookies = document.cookie.split(";");
+    for (const c of cookies) {
+      const name = c.split("=")[0].trim();
+      if (/sb-[^=]+-auth-token\.[1-9]\d*/.test(name)) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+      }
+    }
+  } catch {}
+}
+
 function getSupabaseBrowserClient() {
+  cleanupStaleAuthCookies();
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -351,8 +366,10 @@ export async function getUserProfiles(userId: string): Promise<{ usuario: Perfil
 }
 
 export async function signOut(): Promise<{ error: string | null }> {
+  cleanupStaleAuthCookies();
   const client = getSupabaseAuth();
   const { error } = await client.auth.signOut();
+  cleanupStaleAuthCookies();
   return { error: error?.message || null };
 }
 
