@@ -22,7 +22,7 @@ import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { compressImage } from "@/lib/validators";
-import { supabaseAuth, signOut, type AuthUser, type PerfilUsuario } from "@/lib/supabase-auth";
+import { supabaseAuth, signOut, sanitizeAuthMetadata, type AuthUser, type PerfilUsuario } from "@/lib/supabase-auth";
 import { uploadFoto } from "@/lib/storage";
 
 interface UserData {
@@ -189,16 +189,16 @@ export default function PerfilPage() {
         return;
       }
 
-      // Actualizar metadata de auth para sincronización
+      // Actualizar metadata de auth para sincronización (solo campos livianos)
       await supabaseAuth.auth.updateUser({
-        data: {
+        data: sanitizeAuthMetadata({
           nombre: form.nombre.trim(),
           telefono: form.telefono.trim(),
           region: form.region,
           comuna: form.comuna.trim(),
           ciudadSector: form.ciudadSector.trim(),
           foto: fotoUrl,
-        },
+        }),
       }).catch(() => {});
 
       const updatedUser = { ...user, ...form, foto: fotoUrl };

@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     | undefined;
   const next = searchParams.get("next") ?? "/";
 
-  let supabaseResponse: NextResponse | undefined;
+  let supabaseResponse = NextResponse.redirect(`${origin}${next}`);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -71,9 +71,8 @@ export async function GET(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse!.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, options)
           );
         },
       },
@@ -110,6 +109,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Éxito: sesión creada, cookies seteadas. Redirigir al home.
-  return supabaseResponse ?? NextResponse.redirect(`${origin}${next}`);
+  // Éxito: sesión creada, cookies seteadas. Redirigir al destino.
+  return supabaseResponse;
 }

@@ -49,9 +49,10 @@ function checkRateLimit(ip: string, path: string): { allowed: boolean; retryAfte
   return { allowed: true };
 }
 
-async function getUserFromSession(request: NextRequest): Promise<{ id: string; tipo?: string } | null> {
-  const supabaseResponse = NextResponse.next({ request });
-  
+async function getUserFromSession(
+  request: NextRequest,
+  response: NextResponse
+): Promise<{ id: string; tipo?: string } | null> {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -65,20 +66,20 @@ async function getUserFromSession(request: NextRequest): Promise<{ id: string; t
             request.cookies.set(name, value)
           );
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            response.cookies.set(name, value, options)
           );
         },
       },
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
   
-  if (!session?.user) return null;
+  if (!user) return null;
   
   return {
-    id: session.user.id,
-    tipo: session.user.user_metadata?.tipo as string | undefined,
+    id: user.id,
+    tipo: user.user_metadata?.tipo as string | undefined,
   };
 }
 
@@ -116,7 +117,7 @@ export async function middleware(request: NextRequest) {
     response.headers.set("X-RateLimit-Reset", String(Math.ceil((record?.resetTime || Date.now() + config.windowMs) / 1000)));
   }
 
-  const user = await getUserFromSession(request);
+  const user = await getUserFromSession(request, response);
   if (user) {
     response.headers.set("x-user-id", user.id);
     if (user.tipo) {

@@ -180,6 +180,24 @@ async function createProfile(
   }
 }
 
+/**
+ * Sanitiza la metadata antes de enviarla a Supabase Auth (signUp o updateUser).
+ * NUNCA permite que cadenas base64 o campos de imágenes pesadas entren a raw_user_meta_data,
+ * previniendo el error 494 REQUEST_HEADER_TOO_LARGE en Vercel.
+ */
+export function sanitizeAuthMetadata(data: Record<string, unknown>): Record<string, unknown> {
+  const clean: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(data)) {
+    if (typeof val === "string") {
+      if (val.startsWith("data:") || val.length > 500) {
+        continue;
+      }
+    }
+    clean[key] = val;
+  }
+  return clean;
+}
+
 export async function signUpWithEmail(
   email: string,
   password: string,
@@ -198,11 +216,13 @@ export async function signUpWithEmail(
     };
   }
 
+  const safeMetadata = sanitizeAuthMetadata(metadata);
+
   const freshSignUp = await client.auth.signUp({
     email: lowerEmail,
     password,
     options: {
-      data: { tipo, ...metadata },
+      data: { tipo, ...safeMetadata },
       emailRedirectTo: `${window.location.origin}/auth/callback`,
     },
   });
@@ -245,7 +265,25 @@ export async function signUpWithEmail(
   // (auth.uid() = id) rechazaría el INSERT. En ese caso el perfil se crea
   // en /auth/callback tras confirmar el correo. Solo insertamos si hay sesión.
   if (authUserId && !needsEmailConfirmation) {
-    const profileResult = await createProfile(authUserId, lowerEmail, tipo, metadata);
+    let finalFotoUrl: string | null = null;
+    const rawFoto = metadata.foto;
+    if (typeof rawFoto === "string") {
+      if (rawFoto.startsWith("data:")) {
+        try {
+          const { uploadFoto } = await import("./storage");
+          finalFotoUrl = await uploadFoto(authUserId, rawFoto, "avatar");
+        } catch (e) {
+          console.warn("No se pudo subir avatar a storage:", e);
+        }
+      } else if (rawFoto.startsWith("http")) {
+        finalFotoUrl = rawFoto;
+      }
+    }
+
+    const profileResult = await createProfile(authUserId, lowerEmail, tipo, {
+      ...metadata,
+      foto: finalFotoUrl,
+    });
     if (profileResult.error) {
       console.error("Error creating profile:", profileResult.error);
       return { user: null, error: "Cuenta creada pero error guardando perfil. Contacta soporte.", needsEmailConfirmation: false };
@@ -253,7 +291,7 @@ export async function signUpWithEmail(
   }
 
   const { data: sessionData } = await client.auth.getSession();
-  const user = sessionData.session?.user || (newAuthUser ? { id: authUserId!, email: lowerEmail, user_metadata: { tipo, ...metadata }, app_metadata: {}, created_at: new Date().toISOString() } as AuthUser : null);
+  const user = sessionData.session?.user || (newAuthUser ? { id: authUserId!, email: lowerEmail, user_metadata: { tipo, ...safeMetadata }, app_metadata: {}, created_at: new Date().toISOString() } as AuthUser : null);
 
   return { user: user as AuthUser, error: null, needsEmailConfirmation };
 }
@@ -334,7 +372,8 @@ export async function updatePassword(newPassword: string): Promise<{ error: stri
 
 export async function updateUserMetadata(metadata: Record<string, unknown>): Promise<{ error: string | null }> {
   const client = getSupabaseAuth();
-  const { error } = await client.auth.updateUser({ data: metadata });
+  const safeData = sanitizeAuthMetadata(metadata);
+  const { error } = await client.auth.updateUser({ data: safeData });
   return { error: error?.message || null };
 }
 

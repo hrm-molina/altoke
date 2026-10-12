@@ -310,11 +310,36 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       }
 
       if (userType === "prestador") {
+        let finalFotoServicioUrl = "";
+        if (fotoServicio) {
+          if (fotoServicio.startsWith("data:")) {
+            try {
+              const { uploadFoto } = await import("@/lib/storage");
+              const uploaded = await uploadFoto(user.id, fotoServicio, "servicio");
+              if (uploaded) finalFotoServicioUrl = uploaded;
+            } catch (err) {
+              console.warn("No se pudo subir foto de servicio:", err);
+            }
+          } else if (fotoServicio.startsWith("http")) {
+            finalFotoServicioUrl = fotoServicio;
+          }
+        }
+
+        if (finalFotoServicioUrl) {
+          await supabaseAuth.from("prestador").update({ foto_servicio: finalFotoServicioUrl }).eq("id", user.id);
+        }
+
+        let finalFotoPerfilUrl = user.user_metadata?.foto || "";
+        if (!finalFotoPerfilUrl || finalFotoPerfilUrl.startsWith("data:")) {
+          const { data: pData } = await supabaseAuth.from("prestador").select("foto").eq("id", user.id).maybeSingle();
+          finalFotoPerfilUrl = pData?.foto || "";
+        }
+
         const initialServicio = {
           titulo: form.servicios.trim(),
           descripcion: `Servicio ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`,
           categoria: form.categoria || "Otros",
-          foto: fotoServicio || "",
+          foto: finalFotoServicioUrl,
         };
         localStorage.setItem(`altoke_servicio_${user.id}`, JSON.stringify(initialServicio));
 
@@ -329,10 +354,10 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
           comuna: form.comuna.trim(),
           region: form.region,
           sector: form.ciudadSector.trim() || form.comuna.trim(),
-          foto: fotoServicio || "",
+          foto: finalFotoServicioUrl,
           fechaPublicacion: new Date().toISOString().split("T")[0],
           nombrePrestador: form.nombre.trim(),
-          fotoPrestador: foto || "",
+          fotoPrestador: finalFotoPerfilUrl,
           telefono: form.telefono.trim(),
           emailPrestador: form.email.trim().toLowerCase(),
         };
@@ -343,6 +368,14 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
 
       // Si Supabase creó sesión activa, sincronizar con localStorage legacy (sin tipo)
       if (!needsEmailConfirmation) {
+        let savedFotoUrl = "";
+        const { data: profileCheck } = await supabaseAuth
+          .from(userType === "prestador" ? "prestador" : "usuario")
+          .select("foto")
+          .eq("id", user.id)
+          .maybeSingle();
+        savedFotoUrl = profileCheck?.foto || "";
+
         const legacySession = {
           id: user.id,
           email: user.email,
@@ -355,7 +388,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
           ciudadSector: form.ciudadSector.trim(),
           servicios: form.servicios.trim(),
           valorHora: form.valorHora.trim(),
-          foto: foto || "",
+          foto: savedFotoUrl,
           fechaRegistro: new Date().toISOString(),
         };
         localStorage.setItem("altoke_session", JSON.stringify(legacySession));

@@ -24,7 +24,7 @@ import { categorias, saveCustomService, getServiceById } from "@/lib/mock-servic
 import { compressImage } from "@/lib/validators";
 import { validateServiceContent } from "@/lib/content-moderation";
 import { dbFetchReviewsByPrestador, dbFetchServices, dbSaveService, type DbReview } from "@/lib/db";
-import { supabaseAuth, type PerfilPrestador } from "@/lib/supabase-auth";
+import { supabaseAuth, sanitizeAuthMetadata, type PerfilPrestador } from "@/lib/supabase-auth";
 import { uploadFoto, deleteFoto } from "@/lib/storage";
 
 interface UserData {
@@ -342,9 +342,9 @@ export default function PrestadorPage() {
         return;
       }
 
-      // Actualizar metadata de auth para sincronización
+      // Actualizar metadata de auth para sincronización (solo campos livianos)
       await supabaseAuth.auth.updateUser({
-        data: {
+        data: sanitizeAuthMetadata({
           nombre: profileForm.nombre.trim(),
           rut: profileForm.rut.trim(),
           telefono: profileForm.telefono.trim(),
@@ -352,7 +352,7 @@ export default function PrestadorPage() {
           comuna: profileForm.comuna,
           ciudadSector: profileForm.ciudadSector.trim(),
           foto: fotoUrl,
-        },
+        }),
       }).catch(() => {});
 
       const updated: UserData = { ...user, ...profileForm, foto: fotoUrl };
@@ -415,13 +415,13 @@ export default function PrestadorPage() {
     }
 
     await supabaseAuth.auth.updateUser({
-      data: {
+      data: sanitizeAuthMetadata({
         servicios: servicioForm.titulo.trim(),
         valorHora: user.valorHora,
         fotoServicio: fotoUrl,
         categoria: servicioForm.categoria,
         descripcion: servicioForm.descripcion.trim(),
-      },
+      }),
     }).catch(() => {});
 
     const serviceId = `provider-${user.id}`;
