@@ -27,23 +27,32 @@ export function Navbar() {
   useEffect(() => {
     const { data: { subscription } } = onAuthStateChange((user: AuthUser | null) => {
       if (user) {
+        // El rol activo (usuario/prestador) lo elige el usuario al iniciar
+        // sesión y queda en localStorage. La metadata solo refleja el primer
+        // registro, así que se usa solo como respaldo.
+        let sesionActual: { id?: string; tipo?: string; foto?: string } = {};
+        try {
+          sesionActual = JSON.parse(localStorage.getItem("altoke_session") || "{}");
+        } catch { /* noop */ }
+
+        const tipoActivo =
+          sesionActual.id === user.id && sesionActual.tipo
+            ? sesionActual.tipo
+            : user.user_metadata?.tipo || "usuario";
+
         setSession({
           id: user.id,
           nombre: user.user_metadata?.nombre,
           email: user.email,
-          tipo: user.user_metadata?.tipo,
+          tipo: tipoActivo,
         });
         // Sincronizar sesión legacy para páginas que usan localStorage
         const meta = user.user_metadata || {};
-        let fotoLocal = "";
-        try {
-          const sesionActual = JSON.parse(localStorage.getItem("altoke_session") || "{}");
-          fotoLocal = sesionActual.foto || "";
-        } catch { /* noop */ }
+        const fotoLocal = sesionActual.foto || "";
         localStorage.setItem("altoke_session", JSON.stringify({
           id: user.id,
           email: user.email,
-          tipo: meta.tipo || "usuario",
+          tipo: tipoActivo,
           nombre: meta.nombre || "",
           rut: meta.rut || "",
           telefono: meta.telefono || "",
@@ -84,6 +93,24 @@ export function Navbar() {
   }, []);
 
   const router = useRouter();
+
+  // onAuthStateChange puede leer el tipo de localStorage antes de que el
+  // login escriba el rol elegido. Al cambiar de ruta (el login navega justo
+  // después de escribir el tipo) se re-sincroniza el rol activo.
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (cancelled) return;
+      try {
+        const s = JSON.parse(localStorage.getItem("altoke_session") || "{}");
+        if (s.id === session.id && s.tipo && s.tipo !== session.tipo) {
+          setSession((prev) => (prev ? { ...prev, tipo: s.tipo } : prev));
+        }
+      } catch { /* noop */ }
+    });
+    return () => { cancelled = true; };
+  }, [pathname, session]);
 
   const handleLogout = async () => {
     await supabaseAuth.auth.signOut();
