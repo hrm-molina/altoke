@@ -7,8 +7,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Briefcase,
-  DollarSign,
   Camera,
   Save,
   ArrowLeft,
@@ -24,41 +22,48 @@ import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { compressImage } from "@/lib/validators";
-import { supabaseAuth, signOut, type AuthUser } from "@/lib/supabase-auth";
+import { supabaseAuth, signOut, type AuthUser, type PerfilUsuario } from "@/lib/supabase-auth";
+import { uploadFoto } from "@/lib/storage";
 
 interface UserData {
   id: string;
   email: string;
-  tipo: string;
   nombre: string;
-  rut: string;
   telefono: string;
   fechaNacimiento: string;
   region: string;
   comuna: string;
   ciudadSector: string;
-  servicios: string;
-  valorHora: string;
   foto: string;
   fechaRegistro: string;
 }
 
-function getInitialUserData(user: AuthUser): UserData {
+function getInitialUserData(user: AuthUser, perfil: PerfilUsuario | null): UserData {
+  if (perfil) {
+    return {
+      id: perfil.id,
+      email: perfil.email,
+      nombre: perfil.nombre,
+      telefono: perfil.telefono,
+      fechaNacimiento: perfil.fecha_nacimiento,
+      region: perfil.region,
+      comuna: perfil.comuna,
+      ciudadSector: perfil.ciudad_sector || "",
+      foto: perfil.foto || "",
+      fechaRegistro: perfil.fecha_registro,
+    };
+  }
   const metadata = user.user_metadata || {};
   return {
     id: user.id,
     email: user.email || "",
-    tipo: metadata.tipo || "usuario",
     nombre: metadata.nombre || "",
-    rut: metadata.rut || "",
     telefono: metadata.telefono || "",
     fechaNacimiento: metadata.fechaNacimiento || "",
     region: metadata.region || "",
     comuna: metadata.comuna || "",
     ciudadSector: metadata.ciudadSector || "",
-    servicios: metadata.servicios || "",
-    valorHora: metadata.valorHora || "",
-    foto: metadata.foto || "",
+    foto: "",
     fechaRegistro: metadata.fechaRegistro || user.created_at || new Date().toISOString(),
   };
 }
@@ -73,10 +78,9 @@ export default function PerfilPage() {
     region: "",
     comuna: "",
     ciudadSector: "",
-    servicios: "",
-    valorHora: "",
   });
   const [foto, setFoto] = useState<string>("");
+  const [fotoUploading, setFotoUploading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -92,12 +96,18 @@ export default function PerfilPage() {
         return;
       }
 
-      const userData = getInitialUserData(session.user as AuthUser);
-      // Solo redirigir si es EXCLUSIVAMENTE prestador (sin rol usuario)
-      if (userData.tipo === "prestador") {
-        router.push("/prestador");
-        return;
-      }
+      // Leer perfil de perfil_usuario
+      let perfil: PerfilUsuario | null = null;
+      try {
+        const { data } = await supabaseAuth
+          .from("perfil_usuario")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        perfil = data as PerfilUsuario;
+      } catch { /* noop */ }
+
+      const userData = getInitialUserData(session.user as AuthUser, perfil);
       setUser(userData);
       setForm({
         nombre: userData.nombre || "",
@@ -105,8 +115,6 @@ export default function PerfilPage() {
         region: userData.region || "",
         comuna: userData.comuna || "",
         ciudadSector: userData.ciudadSector || "",
-        servicios: userData.servicios || "",
-        valorHora: userData.valorHora || "",
       });
       setFoto(userData.foto || "");
       setLoading(false);
@@ -153,29 +161,52 @@ export default function PerfilPage() {
     }
 
     try {
-      const { error } = await supabaseAuth.auth.updateUser({
-        data: {
+      let fotoUrl = foto;
+      if (foto.startsWith("data:")) {
+        setFotoUploading(true);
+        const uploaded = await uploadFoto(user.id, foto, "avatar");
+        setFotoUploading(false);
+        if (uploaded) {
+          fotoUrl = uploaded;
+          setFoto(uploaded);
+        }
+      }
+
+      const { error } = await supabaseAuth
+        .from("perfil_usuario")
+        .update({
           nombre: form.nombre.trim(),
           telefono: form.telefono.trim(),
           region: form.region,
           comuna: form.comuna.trim(),
-          ciudadSector: form.ciudadSector.trim(),
-          servicios: form.servicios.trim(),
-          valorHora: form.valorHora.trim(),
-          foto,
-        },
-      });
+          ciudad_sector: form.ciudadSector.trim(),
+          foto: fotoUrl,
+        })
+        .eq("id", user.id);
 
       if (error) {
         setErrors({ general: error.message });
         return;
       }
 
-      const updatedUser = { ...user, ...form, foto };
+      // Actualizar metadata de auth para sincronización
+      await supabaseAuth.auth.updateUser({
+        data: {
+          nombre: form.nombre.trim(),
+          telefono: form.telefono.trim(),
+          region: form.region,
+          comuna: form.comuna.trim(),
+          ciudadSector: form.ciudadSector.trim(),
+          foto: fotoUrl,
+        },
+      }).catch(() => {});
+
+      const updatedUser = { ...user, ...form, foto: fotoUrl };
       setUser(updatedUser);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
+      setFotoUploading(false);
       setErrors({ general: "Error al guardar. Intenta nuevamente." });
     }
   };
@@ -212,7 +243,6 @@ export default function PerfilPage() {
   if (loading || !user) return null;
 
   const comunasDisponibles = form.region ? comunasPorRegion[form.region] || [] : [];
-  const isPrestador = user.tipo === "prestador";
 
   const inputClass = (field: string) =>
     `w-full rounded-xl border px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors bg-[#0A0F1A] ${
@@ -282,7 +312,7 @@ export default function PerfilPage() {
                 </h2>
                 <p className="text-sm text-[#64748B]">{user.email}</p>
                 <span className="mt-1 inline-flex items-center rounded-lg border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-400">
-                  {isPrestador ? "Prestador" : "Usuario"}
+                  Usuario
                 </span>
               </div>
             </div>
@@ -414,48 +444,26 @@ export default function PerfilPage() {
                   className={inputClass("ciudadSector")}
                 />
               </div>
-
-              {/* Servicios (solo prestador) */}
-              {isPrestador && (
-                <>
-                  <div>
-                    <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
-                      <Briefcase size={14} />
-                      Servicios que ofreces
-                    </label>
-                    <textarea
-                      value={form.servicios}
-                      onChange={(e) => updateForm("servicios", e.target.value)}
-                      placeholder="Ej: Hago fila, paseo perros, armo muebles..."
-                      rows={3}
-                      className={`${inputClass("servicios")} resize-none`}
-                    />
-                  </div>
-                  <div>
-                    <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
-                      <DollarSign size={14} />
-                      Valor por hora ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={form.valorHora}
-                      onChange={(e) => updateForm("valorHora", e.target.value)}
-                      placeholder="Ej: 5000"
-                      className={inputClass("valorHora")}
-                    />
-                  </div>
-                </>
-              )}
             </div>
 
             {/* Save button */}
             <div className="mt-8 flex items-center gap-4">
               <button
                 onClick={handleSave}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                disabled={fotoUploading}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow disabled:opacity-50"
               >
-                <Save size={16} />
-                Guardar cambios
+                {fotoUploading ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Subiendo foto...
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} />
+                    Guardar cambios
+                  </>
+                )}
               </button>
 
               {saved && (
@@ -481,8 +489,7 @@ export default function PerfilPage() {
             </h3>
             <div className="space-y-2 text-sm text-[#64748B]">
               <p>
-                <span className="text-[#94A3B8]">Tipo:</span>{" "}
-                {isPrestador ? "Prestador de servicios" : "Usuario"}
+                <span className="text-[#94A3B8]">Tipo:</span> Usuario
               </p>
               <p>
                 <span className="text-[#94A3B8]">Miembro desde:</span>{" "}
@@ -492,11 +499,6 @@ export default function PerfilPage() {
                   day: "numeric",
                 })}
               </p>
-              {isPrestador && user.rut && (
-                <p>
-                  <span className="text-[#94A3B8]">RUT:</span> {user.rut}
-                </p>
-              )}
             </div>
           </div>
 
@@ -530,7 +532,7 @@ export default function PerfilPage() {
               <div className="pt-4 border-t border-[#1E293B]/50">
                 <p className="mb-3 text-xs text-[#64748B]">
                   La eliminación de tu cuenta es <strong className="text-red-400">irreversible</strong>.
-                  Se borrarán permanentemente: tu perfil, servicios publicados, reseñas, alertas y datos personales.
+                  Se borrarán permanentemente: tu perfil, reseñas, alertas y datos personales.
                   Esta acción cumple con el derecho a la <strong>Cancelación</strong> (Ley 19.628 Art. 11).
                 </p>
                 <button
@@ -590,8 +592,7 @@ export default function PerfilPage() {
                     <AlertCircle size={16} className="mt-0.5 shrink-0" />
                     <ul className="space-y-1 list-disc list-inside">
                       <li>Tu perfil y datos personales</li>
-                      <li>Tus servicios publicados y reseñas</li>
-                      <li>Historial de alertas y contrataciones</li>
+                      <li>Tus reseñas y alertas</li>
                       <li>Preferencias y configuraciones</li>
                     </ul>
                   </div>

@@ -35,6 +35,11 @@ export function Navbar() {
         });
         // Sincronizar sesión legacy para páginas que usan localStorage
         const meta = user.user_metadata || {};
+        let fotoLocal = "";
+        try {
+          const sesionActual = JSON.parse(localStorage.getItem("altoke_session") || "{}");
+          fotoLocal = sesionActual.foto || "";
+        } catch { /* noop */ }
         localStorage.setItem("altoke_session", JSON.stringify({
           id: user.id,
           email: user.email,
@@ -48,7 +53,7 @@ export function Navbar() {
           ciudadSector: meta.ciudadSector || "",
           servicios: meta.servicios || "",
           valorHora: meta.valorHora || "",
-          foto: meta.foto || "",
+          foto: fotoLocal || meta.foto || "",
           fechaRegistro: user.created_at || new Date().toISOString(),
         }));
       } else {

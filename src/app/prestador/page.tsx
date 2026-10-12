@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Check,
   Clock,
-  Info,
   Star,
   Image as ImageIcon,
   Upload,
@@ -25,13 +24,12 @@ import { categorias, saveCustomService, getServiceById } from "@/lib/mock-servic
 import { compressImage } from "@/lib/validators";
 import { validateServiceContent } from "@/lib/content-moderation";
 import { dbFetchReviewsByPrestador, dbFetchServices, dbSaveService, type DbReview } from "@/lib/db";
-import { supabaseAuth } from "@/lib/supabase-auth";
-import Link from "next/link";
+import { supabaseAuth, type PerfilPrestador } from "@/lib/supabase-auth";
+import { uploadFoto, deleteFoto } from "@/lib/storage";
 
 interface UserData {
   id: string;
   email: string;
-  tipo: string;
   nombre: string;
   rut: string;
   telefono: string;
@@ -42,6 +40,9 @@ interface UserData {
   servicios: string;
   valorHora: string;
   foto: string;
+  fotoServicio: string;
+  categoria: string;
+  descripcion: string;
   fechaRegistro: string;
 }
 
@@ -52,7 +53,7 @@ interface ServicioData {
   foto?: string;
 }
 
-function getSession(): UserData | null {
+function getInitialSession(): UserData | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem("altoke_session");
@@ -112,27 +113,17 @@ function getPrestadorJobs(): PrestadorJob[] {
   }
 }
 
-function getInitialSession(): UserData | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem("altoke_session");
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
 function getInitialProfileForm(): {
   nombre: string;
   telefono: string;
   region: string;
   comuna: string;
   ciudadSector: string;
+  rut: string;
 } {
   const session = getInitialSession();
   if (!session) {
-    return { nombre: "", telefono: "", region: "", comuna: "", ciudadSector: "" };
+    return { nombre: "", telefono: "", region: "", comuna: "", ciudadSector: "", rut: "" };
   }
   return {
     nombre: session.nombre || "",
@@ -140,12 +131,12 @@ function getInitialProfileForm(): {
     region: session.region || "",
     comuna: session.comuna || "",
     ciudadSector: session.ciudadSector || "",
+    rut: session.rut || "",
   };
 }
 
 function getInitialFoto(): string {
-  const session = getInitialSession();
-  return session?.foto || "";
+  return "";
 }
 
 function getInitialServicioForm(): ServicioData {
@@ -188,44 +179,107 @@ function getInitialJobs(): PrestadorJob[] {
 
 export default function PrestadorPage() {
   const router = useRouter();
-  const [user, setUser] = useState<UserData | null>(getInitialSession);
+  const [user, setUser] = useState<UserData | null>(null);
   const [profileForm, setProfileForm] = useState(getInitialProfileForm);
   const [foto, setFoto] = useState(getInitialFoto);
+  const [fotoUploading, setFotoUploading] = useState(false);
   const [servicioForm, setServicioForm] = useState(getInitialServicioForm);
   const [saved, setSaved] = useState(false);
+  const [servicioSaved, setServicioSaved] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [jobs, _setJobs] = useState(getInitialJobs);
+  const [jobs] = useState(getInitialJobs);
   const [dbReviews, setDbReviews] = useState<DbReview[]>([]);
 
   useEffect(() => {
-    const session = getSession();
-    if (!session) {
-      router.push("/");
-      return;
-    }
-    if (session.tipo !== "prestador" && session.tipo !== "ambos") {
-      router.push("/explorar");
-      return;
-    }
-    // Cargar reseñas desde Supabase
-    if (session.email) {
-      dbFetchReviewsByPrestador(session.email).then(setDbReviews).catch(() => {});
-    }
-    // Cargar servicio desde Supabase y actualizar formulario
-    if (session.id) {
-      dbFetchServices().then((services) => {
-        const svc = services.find((s) => s.id === `provider-${session.id}`);
-        if (svc) {
-          setServicioForm((prev) => ({
-            ...prev,
-            titulo: svc.titulo || prev.titulo,
-            descripcion: svc.descripcion || prev.descripcion,
-            categoria: svc.categoria || prev.categoria,
-            foto: svc.foto || prev.foto,
-          }));
-        }
-      }).catch(() => {});
-    }
+    const initAuth = async () => {
+      const { data: { session } } = await supabaseAuth.auth.getSession();
+      if (!session?.user) {
+        router.push("/");
+        return;
+      }
+
+      // Leer perfil de perfil_prestador
+      let perfil: PerfilPrestador | null = null;
+      try {
+        const { data } = await supabaseAuth
+          .from("perfil_prestador")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        perfil = data as PerfilPrestador;
+      } catch { /* noop */ }
+
+      if (!perfil) {
+        router.push("/explorar");
+        return;
+      }
+
+      const userData: UserData = {
+        id: perfil.id,
+        email: perfil.email,
+        nombre: perfil.nombre,
+        rut: perfil.rut || "",
+        telefono: perfil.telefono,
+        fechaNacimiento: perfil.fecha_nacimiento,
+        region: perfil.region,
+        comuna: perfil.comuna,
+        ciudadSector: perfil.ciudad_sector || "",
+        servicios: perfil.servicios || "",
+        valorHora: String(perfil.valor_hora || 0),
+        foto: perfil.foto || "",
+        fotoServicio: perfil.foto_servicio || "",
+        categoria: perfil.categoria || "",
+        descripcion: perfil.descripcion || "",
+        fechaRegistro: perfil.fecha_registro,
+      };
+
+      setUser(userData);
+      setProfileForm({
+        nombre: userData.nombre || "",
+        telefono: userData.telefono || "",
+        region: userData.region || "",
+        comuna: userData.comuna || "",
+        ciudadSector: userData.ciudadSector || "",
+        rut: userData.rut || "",
+      });
+      setFoto(userData.foto || "");
+      setServicioForm({
+        titulo: userData.servicios || "",
+        descripcion: userData.descripcion || "",
+        categoria: userData.categoria || "",
+        foto: userData.fotoServicio || "",
+      });
+
+      // Cargar reseñas desde Supabase
+      if (session.user.email) {
+        dbFetchReviewsByPrestador(session.user.email).then(setDbReviews).catch(() => {});
+      }
+      // Cargar servicio desde Supabase y actualizar formulario
+      if (session.user.id) {
+        dbFetchServices().then((services) => {
+          const svc = services.find((s) => s.id === `provider-${session.user.id}`);
+          if (svc) {
+            setServicioForm((prev) => ({
+              ...prev,
+              titulo: svc.titulo || prev.titulo,
+              descripcion: svc.descripcion || prev.descripcion,
+              categoria: svc.categoria || prev.categoria,
+              foto: svc.foto || prev.foto,
+            }));
+          }
+        }).catch(() => {});
+      }
+    };
+
+    initAuth();
+
+    const { data: { subscription } } = supabaseAuth.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        router.push("/");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [router]);
 
   const updateProfile = (field: string, value: string) => {
@@ -243,7 +297,7 @@ export default function PrestadorPage() {
     }
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (!user) return;
 
     const newErrors: Record<string, string> = {};
@@ -251,69 +305,69 @@ export default function PrestadorPage() {
     if (!profileForm.telefono.trim()) newErrors.telefono = "El telefono es obligatorio";
     if (!profileForm.region) newErrors.region = "Selecciona una region";
     if (!profileForm.comuna) newErrors.comuna = "Selecciona una comuna";
+    if (!profileForm.rut.trim()) newErrors.rut = "El RUT es obligatorio";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    const updated: UserData = {
-      ...user,
-      nombre: profileForm.nombre.trim(),
-      telefono: profileForm.telefono.trim(),
-      region: profileForm.region,
-      comuna: profileForm.comuna,
-      ciudadSector: profileForm.ciudadSector.trim(),
-      servicios: servicioForm.titulo.trim(),
-      foto,
-    };
+    try {
+      let fotoUrl = foto;
+      if (foto.startsWith("data:")) {
+        setFotoUploading(true);
+        const uploaded = await uploadFoto(user.id, foto, "avatar");
+        setFotoUploading(false);
+        if (uploaded) {
+          fotoUrl = uploaded;
+          setFoto(uploaded);
+        }
+      }
 
-    updateSession(updated);
-    setUser(updated);
+      const { error } = await supabaseAuth
+        .from("perfil_prestador")
+        .update({
+          nombre: profileForm.nombre.trim(),
+          rut: profileForm.rut.trim(),
+          telefono: profileForm.telefono.trim(),
+          region: profileForm.region,
+          comuna: profileForm.comuna,
+          ciudad_sector: profileForm.ciudadSector.trim(),
+          foto: fotoUrl,
+        })
+        .eq("id", user.id);
 
-    // Persistir en Supabase auth metadata (trigger sync a public.usuarios)
-    supabaseAuth.auth.updateUser({
-      data: {
-        nombre: updated.nombre,
-        telefono: updated.telefono,
-        region: updated.region,
-        comuna: updated.comuna,
-        ciudadSector: updated.ciudadSector,
-        servicios: updated.servicios,
-        valorHora: updated.valorHora,
-        foto: updated.foto,
-      },
-    }).catch(() => {});
+      if (error) {
+        setErrors({ general: error.message });
+        return;
+      }
 
-    // Sync to public catalog
-    const serviceId = `provider-${user.id}`;
-    const existing = getServiceById(serviceId);
-    const profileServiceData = {
-      id: serviceId,
-      titulo: existing?.titulo || servicioForm.titulo || updated.servicios || "Servicios profesionales",
-      descripcion: existing?.descripcion || servicioForm.descripcion || `Servicio ofrecido por ${updated.nombre} en ${updated.comuna}.`,
-      categoria: existing?.categoria || servicioForm.categoria || "Otros",
-      precio: Number(updated.valorHora) || existing?.precio || 5000,
-      rating: existing?.rating || 5.0,
-      resenas: existing?.resenas || 0,
-      comuna: updated.comuna,
-      region: updated.region,
-      sector: updated.ciudadSector || updated.comuna,
-      foto: servicioForm.foto || existing?.foto || "",
-      fechaPublicacion: existing?.fechaPublicacion || new Date().toISOString().split("T")[0],
-      nombrePrestador: updated.nombre,
-      fotoPrestador: updated.foto || "",
-      telefono: updated.telefono,
-      emailPrestador: (updated.email as string || "").toLowerCase(),
-    };
-    saveCustomService(profileServiceData);
-    dbSaveService(profileServiceData, user.id).catch(() => {});
+      // Actualizar metadata de auth para sincronización
+      await supabaseAuth.auth.updateUser({
+        data: {
+          nombre: profileForm.nombre.trim(),
+          rut: profileForm.rut.trim(),
+          telefono: profileForm.telefono.trim(),
+          region: profileForm.region,
+          comuna: profileForm.comuna,
+          ciudadSector: profileForm.ciudadSector.trim(),
+          foto: fotoUrl,
+        },
+      }).catch(() => {});
 
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+      const updated: UserData = { ...user, ...profileForm, foto: fotoUrl };
+      updateSession(updated);
+      setUser(updated);
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setFotoUploading(false);
+      setErrors({ general: "Error al guardar. Intenta nuevamente." });
+    }
   };
 
-  const handleSaveServicio = () => {
+  const handleSaveServicio = async () => {
     if (!user) return;
 
     const newErrors: Record<string, string> = {};
@@ -321,7 +375,6 @@ export default function PrestadorPage() {
     if (!servicioForm.descripcion.trim()) newErrors.descripcion = "La descripcion es obligatoria";
     if (!servicioForm.categoria) newErrors.categoria = "Selecciona una categoria";
 
-    // Validación de contenido prohibido
     const contentValidation = validateServiceContent(
       servicioForm.titulo,
       servicioForm.descripcion,
@@ -336,24 +389,41 @@ export default function PrestadorPage() {
       return;
     }
 
-    saveServicioPrestador(user.id, servicioForm);
+    let fotoUrl = servicioForm.foto || "";
+    if (fotoUrl.startsWith("data:")) {
+      setFotoUploading(true);
+      const uploaded = await uploadFoto(user.id, fotoUrl, "servicio");
+      setFotoUploading(false);
+      if (uploaded) fotoUrl = uploaded;
+    }
 
-    const updated: UserData = {
-      ...user,
-      servicios: servicioForm.titulo.trim(),
-    };
-    updateSession(updated);
-    setUser(updated);
+    saveServicioPrestador(user.id, { ...servicioForm, foto: fotoUrl });
 
-    // Persistir en Supabase auth metadata (trigger sync a public.usuarios)
-    supabaseAuth.auth.updateUser({
+    const { error } = await supabaseAuth
+      .from("perfil_prestador")
+      .update({
+        servicios: servicioForm.titulo.trim(),
+        descripcion: servicioForm.descripcion.trim(),
+        categoria: servicioForm.categoria,
+        valor_hora: Number(user.valorHora) || 0,
+        foto_servicio: fotoUrl,
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      console.warn("Error actualizando servicio en perfil_prestador:", error.message);
+    }
+
+    await supabaseAuth.auth.updateUser({
       data: {
-        servicios: updated.servicios,
+        servicios: servicioForm.titulo.trim(),
         valorHora: user.valorHora,
+        fotoServicio: fotoUrl,
+        categoria: servicioForm.categoria,
+        descripcion: servicioForm.descripcion.trim(),
       },
     }).catch(() => {});
 
-    // Sync to public catalog
     const serviceId = `provider-${user.id}`;
     const existing = getServiceById(serviceId);
     const serviceData = {
@@ -367,7 +437,7 @@ export default function PrestadorPage() {
       comuna: user.comuna,
       region: user.region,
       sector: user.ciudadSector || user.comuna,
-      foto: servicioForm.foto || existing?.foto || "",
+      foto: fotoUrl || existing?.foto || "",
       fechaPublicacion: existing?.fechaPublicacion || new Date().toISOString().split("T")[0],
       nombrePrestador: user.nombre,
       fotoPrestador: user.foto || "",
@@ -377,8 +447,19 @@ export default function PrestadorPage() {
     saveCustomService(serviceData);
     dbSaveService(serviceData, user.id).catch(() => {});
 
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    const updated: UserData = {
+      ...user,
+      servicios: servicioForm.titulo.trim(),
+      descripcion: servicioForm.descripcion.trim(),
+      categoria: servicioForm.categoria,
+      valorHora: user.valorHora,
+      fotoServicio: fotoUrl,
+    };
+    updateSession(updated);
+    setUser(updated);
+
+    setServicioSaved(true);
+    setTimeout(() => setServicioSaved(false), 3000);
   };
 
   if (!user) return null;
@@ -397,46 +478,6 @@ export default function PrestadorPage() {
       <Navbar />
       <main className="flex-1 pt-24 pb-16">
         <div className="mx-auto w-full max-w-2xl px-6 sm:px-10">
-          {/* Advisory banner */}
-          {user.tipo === "prestador" && (
-            <div className="mb-8 flex items-start gap-4 rounded-2xl border-2 border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-6">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/20">
-                <Info size={24} className="text-amber-400" />
-              </div>
-              <div>
-                <p className="text-lg font-bold text-[#F1F5F9] mb-1">
-                  ¿Quieres contratar servicios?
-                </p>
-                <p className="text-base text-[#94A3B8]">
-                  Crea tu cuenta de <span className="font-semibold text-amber-400">usuario</span> desde la landing para buscar y calificar servicios.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Banner perfil incompleto para tipo ambos */}
-          {user.tipo === "ambos" && (!user.region || !user.comuna || !servicioForm.titulo) && (
-            <div className="mb-8 flex items-start gap-4 rounded-2xl border-2 border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 p-6">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-500/20">
-                <Info size={24} className="text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-lg font-bold text-[#F1F5F9] mb-1">
-                  Completa tu perfil de prestador
-                </p>
-                <p className="text-base text-[#94A3B8]">
-                  Para que los clientes te encuentren, completa tu ubicación y publica tu servicio.
-                </p>
-              </div>
-              <Link
-                href="/perfil"
-                className="shrink-0 rounded-xl border border-blue-500/40 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-400 hover:bg-blue-500/20 transition-all"
-              >
-                Completar
-              </Link>
-            </div>
-          )}
-
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl font-extrabold text-[#F1F5F9]">
@@ -514,7 +555,7 @@ export default function PrestadorPage() {
                 </h2>
                 <p className="text-sm text-[#64748B]">{user.email}</p>
                 <span className="mt-1 inline-flex items-center rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400">
-                  {user.tipo === "ambos" ? "Usuario y prestador" : "Prestador de servicios"}
+                  Prestador de servicios
                 </span>
               </div>
             </div>
@@ -627,15 +668,45 @@ export default function PrestadorPage() {
                   className={inputClass("ciudadSector")}
                 />
               </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                  <User size={14} />
+                  RUT
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.rut}
+                  onChange={(e) => updateProfile("rut", e.target.value)}
+                  placeholder="12.345.678-9"
+                  className={inputClass("rut")}
+                />
+                {errors.rut && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-400">
+                    <AlertCircle size={12} />
+                    {errors.rut}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="mt-8 flex items-center gap-4">
               <button
                 onClick={handleSaveProfile}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                disabled={fotoUploading}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow disabled:opacity-50"
               >
-                <Save size={16} />
-                Guardar perfil
+                {fotoUploading ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Subiendo foto...
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} />
+                    Guardar perfil
+                  </>
+                )}
               </button>
               {saved && (
                 <div className="flex items-center gap-2 text-sm text-green-400">
@@ -767,7 +838,12 @@ export default function PrestadorPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => setServicioForm((prev) => ({ ...prev, foto: "" }))}
+                        onClick={() => {
+                          if (servicioForm.foto && !servicioForm.foto.startsWith("data:")) {
+                            deleteFoto(user.id, "servicio").catch(() => {});
+                          }
+                          setServicioForm((prev) => ({ ...prev, foto: "" }));
+                        }}
                         className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs font-semibold text-red-400 transition-opacity"
                       >
                         Quitar foto
@@ -808,14 +884,30 @@ export default function PrestadorPage() {
               </div>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8 flex items-center gap-4">
               <button
                 onClick={handleSaveServicio}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                disabled={fotoUploading}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow disabled:opacity-50"
               >
-                <Save size={16} />
-                Guardar servicio
+                {fotoUploading ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Subiendo foto...
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} />
+                    Guardar servicio
+                  </>
+                )}
               </button>
+              {servicioSaved && (
+                <div className="flex items-center gap-2 text-sm text-green-400">
+                  <Check size={16} />
+                  Guardado exitosamente Mi servicio
+                </div>
+              )}
             </div>
           </div>
 
@@ -943,8 +1035,7 @@ export default function PrestadorPage() {
             </h3>
             <div className="space-y-2 text-sm text-[#64748B]">
               <p>
-                <span className="text-[#94A3B8]">Tipo:</span>{" "}
-                {user.tipo === "ambos" ? "Usuario y prestador" : "Prestador de servicios"}
+                <span className="text-[#94A3B8]">Tipo:</span> Prestador de servicios
               </p>
               <p>
                 <span className="text-[#94A3B8]">Miembro desde:</span>{" "}

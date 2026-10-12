@@ -221,7 +221,6 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     setSubmitting(true);
     try {
       const metadata = {
-        tipo: userType,
         nombre: form.nombre.trim(),
         rut: form.rut.trim(),
         telefono: form.telefono.trim(),
@@ -231,6 +230,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
         ciudadSector: form.ciudadSector.trim(),
         servicios: form.servicios.trim(),
         valorHora: form.valorHora.trim(),
+        categoria: form.categoria || "",
         foto: foto || "",
       };
 
@@ -242,11 +242,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       );
 
       if (error) {
-        if (error.toLowerCase().includes("already registered") || error.toLowerCase().includes("ya registrado")) {
-          setErrors({ email: "Este email ya está registrado. Inicia sesión y podrás agregar el rol desde ahí." });
-        } else {
-          setErrors({ email: error });
-        }
+        setErrors({ email: error });
         return;
       }
 
@@ -303,12 +299,11 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
         await dbSaveService(serviceObj, user.id);
       }
 
-      // Si Supabase creó sesión activa, sincronizar con localStorage legacy
+      // Si Supabase creó sesión activa, sincronizar con localStorage legacy (sin tipo)
       if (!needsEmailConfirmation) {
         const legacySession = {
           id: user.id,
           email: user.email,
-          tipo: userType,
           nombre: form.nombre.trim(),
           rut: form.rut.trim(),
           telefono: form.telefono.trim(),

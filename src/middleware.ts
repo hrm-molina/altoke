@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
 interface RateLimitConfig {
   windowMs: number;
@@ -48,7 +49,40 @@ function checkRateLimit(ip: string, path: string): { allowed: boolean; retryAfte
   return { allowed: true };
 }
 
-export function middleware(request: NextRequest) {
+async function getUserFromSession(request: NextRequest): Promise<{ id: string; tipo?: string } | null> {
+  const supabaseResponse = NextResponse.next({ request });
+  
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session?.user) return null;
+  
+  return {
+    id: session.user.id,
+    tipo: session.user.user_metadata?.tipo as string | undefined,
+  };
+}
+
+export async function middleware(request: NextRequest) {
   const ip = getClientIp(request);
   const path = request.nextUrl.pathname;
 
@@ -70,19 +104,27 @@ export function middleware(request: NextRequest) {
   }
 
   const config = rateLimitConfigs[path];
+  const response = NextResponse.next();
+  
   if (config) {
     const key = `${ip}:${path}`;
     const record = ipCache.get(key);
     const remaining = config.maxRequests - (record?.count || 0);
     
-    const response = NextResponse.next();
     response.headers.set("X-RateLimit-Limit", String(config.maxRequests));
     response.headers.set("X-RateLimit-Remaining", String(Math.max(0, remaining)));
     response.headers.set("X-RateLimit-Reset", String(Math.ceil((record?.resetTime || Date.now() + config.windowMs) / 1000)));
-    return response;
   }
 
-  return NextResponse.next();
+  const user = await getUserFromSession(request);
+  if (user) {
+    response.headers.set("x-user-id", user.id);
+    if (user.tipo) {
+      response.headers.set("x-user-tipo", user.tipo);
+    }
+  }
+
+  return response;
 }
 
 export const config = {
@@ -91,6 +133,8 @@ export const config = {
     "/api/servicios/:path*",
     "/api/contacto/:path*",
     "/api/calificaciones/:path*",
+    "/api/terms-acceptance/:path*",
+    "/auth/callback/:path*",
   ],
   runtime: "nodejs",
 };

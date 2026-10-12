@@ -42,23 +42,24 @@ export interface DbAlert {
 export function mapRowToServicio(row: Record<string, unknown>): Servicio {
   const resenasCount = Number(row.resenas || 0);
   const ratingVal = resenasCount === 0 ? 5.0 : Number(row.rating || 5.0);
+  const fecha = row.fecha_registro ? String(row.fecha_registro).split("T")[0] : new Date().toISOString().split("T")[0];
   return {
-    id: String(row.id),
-    titulo: String(row.titulo || ""),
+    id: `provider-${String(row.id)}`,
+    titulo: String(row.servicios || ""),
     descripcion: String(row.descripcion || ""),
     categoria: String(row.categoria || "Otros"),
-    precio: Number(row.precio || 0),
+    precio: Number(row.valor_hora || 0),
     rating: ratingVal,
     resenas: resenasCount,
     comuna: String(row.comuna || ""),
     region: String(row.region || ""),
-    sector: String(row.sector || ""),
-    foto: String(row.foto || ""),
-    fechaPublicacion: String(row.fecha_publicacion || new Date().toISOString().split("T")[0]),
-    nombrePrestador: String(row.nombre_prestador || ""),
-    fotoPrestador: String(row.foto_prestador || ""),
+    sector: String(row.ciudad_sector || row.comuna || ""),
+    foto: String(row.foto_servicio || ""),
+    fechaPublicacion: fecha,
+    nombrePrestador: String(row.nombre || ""),
+    fotoPrestador: String(row.foto || ""),
     telefono: String(row.telefono || ""),
-    emailPrestador: row.email_prestador ? String(row.email_prestador).trim().toLowerCase() : undefined,
+    emailPrestador: row.email ? String(row.email).trim().toLowerCase() : undefined,
   };
 }
 
@@ -66,10 +67,10 @@ export async function dbFetchServices(): Promise<Servicio[]> {
   if (supabase && isSupabaseConfigured) {
     try {
       const { data, error } = await supabase
-        .from("servicios")
+        .from("perfil_prestador")
         .select("*")
         .eq("activo", true)
-        .order("created_at", { ascending: false });
+        .order("fecha_registro", { ascending: false });
 
       if (!error && data) {
         const mapped = data.map(mapRowToServicio);
@@ -113,38 +114,29 @@ export async function dbSaveService(service: Servicio, prestadorId?: string): Pr
     } catch {}
   }
 
-  if (supabase && isSupabaseConfigured) {
+  if (supabase && isSupabaseConfigured && prestadorId && prestadorId.includes("-")) {
     try {
-      const validPrestadorId = prestadorId && prestadorId.includes("-") ? prestadorId : null;
-
-      const { error } = await supabase.from("servicios").upsert({
-        id: serviceId,
-        prestador_id: validPrestadorId,
-        titulo: validService.titulo,
-        descripcion: validService.descripcion,
-        categoria: validService.categoria,
-        precio: validService.precio,
-        rating: validService.rating || 5.0,
-        resenas: validService.resenas || 0,
-        comuna: validService.comuna,
-        region: validService.region,
-        sector: validService.sector || validService.comuna,
-        foto: validService.foto || null,
-        fecha_publicacion: validService.fechaPublicacion || new Date().toISOString().split("T")[0],
-        nombre_prestador: validService.nombrePrestador,
-        foto_prestador: validService.fotoPrestador || null,
-        telefono: validService.telefono,
-        email_prestador: validService.emailPrestador || "",
-        activo: true,
-      }, { onConflict: "id" });
+      const { error } = await supabase
+        .from("perfil_prestador")
+        .update({
+          servicios: validService.titulo,
+          descripcion: validService.descripcion,
+          categoria: validService.categoria,
+          valor_hora: validService.precio,
+          foto_servicio: validService.foto || null,
+          comuna: validService.comuna,
+          region: validService.region,
+          ciudad_sector: validService.sector || validService.comuna,
+        })
+        .eq("id", prestadorId);
 
       if (error) {
-        console.warn("Error guardando servicio en Supabase:", error.message);
+        console.warn("Error guardando servicio en perfil_prestador:", error.message);
         return false;
       }
       return true;
     } catch (e) {
-      console.warn("Excepción guardando servicio en Supabase:", e);
+      console.warn("Excepción guardando servicio en perfil_prestador:", e);
       return false;
     }
   }
@@ -161,9 +153,9 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
 
       if (!targetServiceId || !targetServiceId.includes("-") || targetServiceId.startsWith("provider-")) {
         const { data: svcFound } = await supabase
-          .from("servicios")
+          .from("perfil_prestador")
           .select("id")
-          .eq("titulo", review.titulo_servicio || review.tituloServicio || "")
+          .eq("servicios", review.titulo_servicio || review.tituloServicio || "")
           .limit(1);
         if (svcFound && svcFound.length > 0) {
           targetServiceId = svcFound[0].id;
@@ -193,7 +185,7 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
         if (allReviews && allReviews.length > 0) {
           const total = allReviews.length;
           const avg = Number((allReviews.reduce((acc, curr) => acc + curr.calificacion, 0) / total).toFixed(1));
-          await supabase.from("servicios").update({ rating: avg, resenas: total }).eq("id", targetServiceId);
+          await supabase.from("perfil_prestador").update({ rating: avg, resenas: total }).eq("id", targetServiceId);
         }
       }
     } catch (e) {
