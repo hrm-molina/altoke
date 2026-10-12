@@ -162,7 +162,7 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
         }
       }
 
-      await supabase.from("calificaciones").insert({
+      const { error: insertErr } = await supabase.from("calificaciones").insert({
         id: reviewId,
         servicio_id: targetServiceId && targetServiceId.includes("-") ? targetServiceId : null,
         cliente_id: review.cliente_id || review.clienteId || null,
@@ -176,20 +176,18 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
         fecha: review.fecha || new Date().toISOString(),
       });
 
-      if (targetServiceId && targetServiceId.includes("-")) {
-        const { data: allReviews } = await supabase
-          .from("calificaciones")
-          .select("calificacion")
-          .eq("servicio_id", targetServiceId);
-
-        if (allReviews && allReviews.length > 0) {
-          const total = allReviews.length;
-          const avg = Number((allReviews.reduce((acc, curr) => acc + curr.calificacion, 0) / total).toFixed(1));
-          await supabase.from("prestador").update({ rating: avg, resenas: total }).eq("id", targetServiceId);
-        }
+      if (insertErr) {
+        console.error("Error guardando calificación en Supabase:", insertErr.message);
+        return false;
       }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("storage"));
+      }
+      return true;
     } catch (e) {
       console.warn("Error guardando calificación en Supabase:", e);
+      return false;
     }
   }
 

@@ -50,7 +50,7 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
   const isSelfRating = isSelfRatingCheck(servicio);
   const sessionEmail = getSessionUserEmail();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isSelfRating || isSelfRatingCheck(servicio)) {
       onClose();
       return;
@@ -58,11 +58,15 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
     if (rating === 0) return;
 
     let clienteName = "Cliente";
+    let clienteEmail = "";
+    let clienteId = "";
     try {
       const sessionRaw = localStorage.getItem("altoke_session");
       if (sessionRaw) {
         const session = JSON.parse(sessionRaw);
         if (session.nombre) clienteName = session.nombre;
+        if (session.email) clienteEmail = session.email;
+        if (session.id) clienteId = session.id;
       }
     } catch {}
 
@@ -93,10 +97,12 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
     savePrestadorJob(prestadorJob);
 
     // Save to Supabase in cloud
-    dbAddReview({
+    await dbAddReview({
       servicioId: servicio.id,
+      clienteId: clienteId || undefined,
       tituloServicio: servicio.titulo,
       nombreCliente: clienteName,
+      emailCliente: clienteEmail || undefined,
       nombrePrestador: servicio.nombrePrestador,
       emailPrestador: servicio.emailPrestador,
       calificacion: rating,
