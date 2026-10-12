@@ -83,7 +83,28 @@ export async function checkProfileExists(
   otherRole?: "usuario" | "prestador" | null;
 }> {
   const lowerEmail = email.trim().toLowerCase();
+  const client = getSupabaseAuth();
 
+  // 1. Llamada directa por RPC en Supabase (rápido y seguro con SECURITY DEFINER)
+  try {
+    const { data, error } = await client.rpc("check_user_email_exists", {
+      p_email: lowerEmail,
+      p_tipo: tipo,
+    });
+
+    if (!error && data) {
+      return {
+        exists: Boolean(data.exists),
+        error: data.error || undefined,
+        existsInOtherRole: Boolean(data.exists_in_other_role),
+        otherRole: data.other_role || null,
+      };
+    }
+  } catch (rpcErr) {
+    console.warn("Fallo en RPC check_user_email_exists:", rpcErr);
+  }
+
+  // 2. Fallback a endpoint de Next.js
   try {
     const res = await fetch("/api/auth/check-email", {
       method: "POST",
@@ -94,25 +115,21 @@ export async function checkProfileExists(
     if (res.ok) {
       const data = await res.json();
       return {
-        exists: !!data.exists,
+        exists: Boolean(data.exists),
         error: data.error,
-        existsInOtherRole: !!data.existsInOtherRole,
+        existsInOtherRole: Boolean(data.existsInOtherRole),
         otherRole: data.otherRole || null,
       };
     }
   } catch (err) {
-    console.warn("Fallo al consultar /api/auth/check-email, usando fallback local:", err);
+    console.warn("Fallo al consultar /api/auth/check-email:", err);
   }
 
-  // Fallback directo a supabase client
-  const client = getSupabaseAuth();
+  // 3. Fallback directo a consulta por tabla
   const table = tipo === "prestador" ? "prestador" : "usuario";
-  const { data, error } = await client.from(table).select("id").eq("email", lowerEmail).maybeSingle();
-  if (error && error.code !== "PGRST116") {
-    console.warn(`Error checking ${table}:`, error.message);
-  }
+  const { data } = await client.from(table).select("id").eq("email", lowerEmail).maybeSingle();
   return {
-    exists: !!data,
+    exists: Boolean(data),
     userId: data?.id,
     error: data ? `Ese correo ya fue utilizado para crear una cuenta en ${tipo}` : undefined,
   };

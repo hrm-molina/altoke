@@ -16,97 +16,42 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    let hasPrestador = false;
-    let hasUsuario = false;
-
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+    const apiKey =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      "";
 
-    // 1. En producción (Vercel): usar SUPABASE_SERVICE_ROLE_KEY para consulta directa segura a la API
-    if (supabaseUrl && serviceRoleKey) {
-      try {
-        const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-          auth: { persistSession: false },
-        });
-
-        const [pRes, uRes] = await Promise.all([
-          supabaseAdmin.from("prestador").select("id").ilike("email", normalizedEmail).limit(1),
-          supabaseAdmin.from("usuario").select("id").ilike("email", normalizedEmail).limit(1),
-        ]);
-
-        if (pRes.data && pRes.data.length > 0) hasPrestador = true;
-        if (uRes.data && uRes.data.length > 0) hasUsuario = true;
-      } catch (sbErr) {
-        console.warn("[check-email] Error con service_role:", sbErr);
-      }
+    if (!supabaseUrl || !apiKey) {
+      return NextResponse.json(
+        { error: "Configuración de Supabase no disponible" },
+        { status: 500 }
+      );
     }
 
-    // 2. Si no se resolvió con service_role, intentar conexión directa PostgreSQL con DATABASE_URL
-    if (!hasPrestador && !hasUsuario && process.env.DATABASE_URL) {
-      try {
-        const { Client } = await import("pg");
-        const pgClient = new Client({
-          connectionString: process.env.DATABASE_URL,
-          ssl: { rejectUnauthorized: false },
-        });
+    const supabase = createClient(supabaseUrl, apiKey, {
+      auth: { persistSession: false },
+    });
 
-        await pgClient.connect();
+    const { data, error } = await supabase.rpc("check_user_email_exists", {
+      p_email: normalizedEmail,
+      p_tipo: tipo,
+    });
 
-        try {
-          const resPrestador = await pgClient.query(
-            "SELECT id FROM public.prestador WHERE LOWER(email) = LOWER($1) LIMIT 1",
-            [normalizedEmail]
-          );
-          if (resPrestador.rows.length > 0) hasPrestador = true;
-
-          const resUsuario = await pgClient.query(
-            "SELECT id FROM public.usuario WHERE LOWER(email) = LOWER($1) LIMIT 1",
-            [normalizedEmail]
-          );
-          if (resUsuario.rows.length > 0) hasUsuario = true;
-        } finally {
-          await pgClient.end().catch(() => {});
-        }
-      } catch (dbErr) {
-        console.warn("[check-email] Error en consulta pg directa:", dbErr);
-      }
-    }
-
-    // 3. Fallback con ANON_KEY si aún no se detectó
-    if (!hasPrestador && !hasUsuario && supabaseUrl && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      try {
-        const supabase = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-        const [pRes, uRes] = await Promise.all([
-          supabase.from("prestador").select("id").ilike("email", normalizedEmail).limit(1),
-          supabase.from("usuario").select("id").ilike("email", normalizedEmail).limit(1),
-        ]);
-
-        if (pRes.data && pRes.data.length > 0) hasPrestador = true;
-        if (uRes.data && uRes.data.length > 0) hasUsuario = true;
-      } catch (anonErr) {
-        console.warn("[check-email] Error con anon client:", anonErr);
-      }
-    }
-
-    const existsInCurrentRole = tipo === "prestador" ? hasPrestador : hasUsuario;
-    const existsInOtherRole = tipo === "prestador" ? hasUsuario : hasPrestador;
-    const otherRole = tipo === "prestador" ? "usuario" : "prestador";
-
-    if (existsInCurrentRole) {
-      return NextResponse.json({
-        exists: true,
-        role: tipo,
-        error: `Ese correo ya fue utilizado para crear una cuenta en ${tipo}`,
-        existsInOtherRole,
-        otherRole,
-      });
+    if (error) {
+      console.error("[check-email] Error en rpc check_user_email_exists:", error.message);
+      return NextResponse.json(
+        { error: "Error al verificar correo" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
-      exists: false,
+      exists: Boolean(data?.exists),
       role: tipo,
-      existsInOtherRole,
-      otherRole: existsInOtherRole ? otherRole : null,
+      existsInOtherRole: Boolean(data?.exists_in_other_role),
+      otherRole: data?.other_role || null,
+      error: data?.error || (data?.exists ? `Ese correo ya fue utilizado para crear una cuenta en ${tipo}` : null),
     });
   } catch (error) {
     console.error("[check-email] Error general:", error);
