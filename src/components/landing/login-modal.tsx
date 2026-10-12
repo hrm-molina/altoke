@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2, User, Briefcase } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signInWithEmail, getUserProfiles, supabaseAuth } from "@/lib/supabase-auth";
+import { signInWithEmail, getUserProfiles, ensureProfileForSession, supabaseAuth } from "@/lib/supabase-auth";
 import { PasswordInput } from "@/components/ui/password-input";
 
 interface LoginModalProps {
@@ -60,8 +60,10 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
       const hasUsuario = !!profiles.usuario;
       const hasPrestador = !!profiles.prestador;
 
-      // Si no tiene ningún perfil (datos legacy), crear uno básico
+      // Si no tiene ningún perfil (datos legacy o Confirm email ON sin callback),
+      // crear el registro en la base de datos desde la metadata y continuar.
       if (!hasUsuario && !hasPrestador) {
+        ensureProfileForSession().catch(() => {});
         const meta = res.user.user_metadata || {};
         const fallbackTipo = (meta.tipo || "usuario") as "usuario" | "prestador";
         localStorage.setItem("altoke_session", JSON.stringify({

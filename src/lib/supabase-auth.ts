@@ -184,7 +184,10 @@ export async function signUpWithEmail(
     needsEmailConfirmation = false;
   }
 
-  if (authUserId) {
+  // Con "Confirm email" ON no hay sesión al registrarse, por lo que RLS
+  // (auth.uid() = id) rechazaría el INSERT. En ese caso el perfil se crea
+  // en /auth/callback tras confirmar el correo. Solo insertamos si hay sesión.
+  if (authUserId && !needsEmailConfirmation) {
     const profileResult = await createProfile(authUserId, lowerEmail, tipo, metadata);
     if (profileResult.error) {
       console.error("Error creating profile:", profileResult.error);
@@ -213,6 +216,29 @@ export async function signInWithEmail(
   }
 
   return { user: data.user as AuthUser, error: null };
+}
+
+/**
+ * Red de seguridad: si la sesión activa no tiene fila de perfil en la base de
+ * datos (p. ej. "Confirm email" ON y /auth/callback no corrió), la crea desde
+ * la metadata del usuario de autenticación.
+ */
+export async function ensureProfileForSession(): Promise<void> {
+  const client = getSupabaseAuth();
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) return;
+
+  const meta = (user.user_metadata || {}) as Record<string, unknown>;
+  const tipo: "usuario" | "prestador" = meta.tipo === "prestador" ? "prestador" : "usuario";
+
+  const { data: existing } = await client
+    .from(tipo)
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (existing) return;
+
+  await createProfile(user.id, (user.email || "").toLowerCase(), tipo, meta);
 }
 
 export async function getUserProfiles(userId: string): Promise<{ usuario: PerfilUsuario | null; prestador: PerfilPrestador | null }> {
