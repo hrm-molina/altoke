@@ -74,7 +74,7 @@ export type PerfilPrestador = {
 
 async function checkProfileExists(email: string, tipo: "usuario" | "prestador"): Promise<{ exists: boolean; userId?: string }> {
   const client = getSupabaseAuth();
-  const table = tipo === "prestador" ? "perfil_prestador" : "perfil_usuario";
+  const table = tipo === "prestador" ? "prestador" : "usuario";
   const { data, error } = await client.from(table).select("id").eq("email", email).single();
   if (error && error.code !== "PGRST116") {
     console.warn(`Error checking ${table}:`, error.message);
@@ -89,7 +89,7 @@ async function createProfile(
   metadata: Record<string, unknown>
 ): Promise<{ error: string | null }> {
   const client = getSupabaseAuth();
-  const table = tipo === "prestador" ? "perfil_prestador" : "perfil_usuario";
+  const table = tipo === "prestador" ? "prestador" : "usuario";
   
   if (tipo === "prestador") {
     const { error } = await client.from(table).insert({
@@ -219,8 +219,8 @@ export async function getUserProfiles(userId: string): Promise<{ usuario: Perfil
   const client = getSupabaseAuth();
   
   const [uRes, pRes] = await Promise.all([
-    client.from("perfil_usuario").select("*").eq("id", userId).single(),
-    client.from("perfil_prestador").select("*").eq("id", userId).single(),
+    client.from("usuario").select("*").eq("id", userId).single(),
+    client.from("prestador").select("*").eq("id", userId).single(),
   ]);
 
   return {

@@ -1,19 +1,19 @@
 -- ========================================================================
 -- CONSOLIDACIÓN: Todo el perfil del prestador (incluido su servicio) vive
--- en la única tabla public.perfil_prestador. Se elimina public.servicios.
+-- en la única tabla public.prestador. Se elimina public.servicios.
 --
 -- ORDEN DE EJECUCIÓN:
---   1) profiles-migration.sql       (crea perfil_usuario / perfil_prestador)
+--   1) profiles-migration.sql       (crea usuario / prestador)
 --   2) prestador-consolidation.sql  (este archivo)
 -- ========================================================================
 
--- 1. Columnas de catálogo/reseñas que faltaban en perfil_prestador
-ALTER TABLE public.perfil_prestador
+-- 1. Columnas de catálogo/reseñas que faltaban en prestador
+ALTER TABLE public.prestador
     ADD COLUMN IF NOT EXISTS rating NUMERIC DEFAULT 5.0,
     ADD COLUMN IF NOT EXISTS resenas INTEGER DEFAULT 0;
 
--- 2. Migrar datos del catálogo viejo (servicios) hacia perfil_prestador
-UPDATE public.perfil_prestador pp
+-- 2. Migrar datos del catálogo viejo (servicios) hacia prestador
+UPDATE public.prestador pp
 SET
     servicios      = COALESCE(pp.servicios, s.titulo),
     descripcion    = COALESCE(pp.descripcion, s.descripcion),
@@ -31,15 +31,15 @@ SET
 FROM public.servicios s
 WHERE s.prestador_id = pp.id;
 
--- 3. Eliminar la tabla servicios (todo quedó en perfil_prestador)
+-- 3. Eliminar la tabla servicios (todo quedó en prestador)
 DROP TABLE IF EXISTS public.servicios CASCADE;
 
 -- 4. Asegurar RLS/perfil activo visible en el catálogo (idempotente)
-ALTER TABLE public.perfil_prestador ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.prestador ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Perfiles prestadores activos visibles públicamente" ON public.perfil_prestador;
-CREATE POLICY "Perfiles prestadores activos visibles públicamente" ON public.perfil_prestador
+DROP POLICY IF EXISTS "Perfiles prestadores activos visibles públicamente" ON public.prestador;
+CREATE POLICY "Perfiles prestadores activos visibles públicamente" ON public.prestador
   FOR SELECT USING (activo = TRUE);
 
-GRANT SELECT ON public.perfil_prestador TO anon;
-GRANT SELECT, INSERT, UPDATE ON public.perfil_prestador TO authenticated;
+GRANT SELECT ON public.prestador TO anon;
+GRANT SELECT, INSERT, UPDATE ON public.prestador TO authenticated;

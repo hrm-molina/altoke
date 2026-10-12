@@ -10,7 +10,7 @@ async function ensureProfile(
   const tipo = meta.tipo;
   if (tipo !== "usuario" && tipo !== "prestador") return;
 
-  const table = tipo === "prestador" ? "perfil_prestador" : "perfil_usuario";
+  const table = tipo === "prestador" ? "prestador" : "usuario";
 
   const { data: existing } = await supabase
     .from(table)
@@ -32,7 +32,7 @@ async function ensureProfile(
   };
 
   if (tipo === "prestador") {
-    await supabase.from("perfil_prestador").insert({
+    await supabase.from("prestador").insert({
       ...base,
       rut: (meta.rut as string) || null,
       servicios: (meta.servicios as string) || null,
@@ -41,7 +41,7 @@ async function ensureProfile(
       activo: true,
     });
   } else {
-    await supabase.from("perfil_usuario").insert(base);
+    await supabase.from("usuario").insert(base);
   }
 }
 

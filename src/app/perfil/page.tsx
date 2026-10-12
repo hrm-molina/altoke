@@ -96,11 +96,11 @@ export default function PerfilPage() {
         return;
       }
 
-      // Leer perfil de perfil_usuario
+      // Leer perfil de usuario
       let perfil: PerfilUsuario | null = null;
       try {
         const { data } = await supabaseAuth
-          .from("perfil_usuario")
+          .from("usuario")
           .select("*")
           .eq("id", session.user.id)
           .single();
@@ -173,7 +173,7 @@ export default function PerfilPage() {
       }
 
       const { error } = await supabaseAuth
-        .from("perfil_usuario")
+        .from("usuario")
         .update({
           nombre: form.nombre.trim(),
           telefono: form.telefono.trim(),

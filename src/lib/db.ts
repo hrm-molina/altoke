@@ -67,7 +67,7 @@ export async function dbFetchServices(): Promise<Servicio[]> {
   if (supabase && isSupabaseConfigured) {
     try {
       const { data, error } = await supabase
-        .from("perfil_prestador")
+        .from("prestador")
         .select("*")
         .eq("activo", true)
         .order("fecha_registro", { ascending: false });
@@ -117,7 +117,7 @@ export async function dbSaveService(service: Servicio, prestadorId?: string): Pr
   if (supabase && isSupabaseConfigured && prestadorId && prestadorId.includes("-")) {
     try {
       const { error } = await supabase
-        .from("perfil_prestador")
+        .from("prestador")
         .update({
           servicios: validService.titulo,
           descripcion: validService.descripcion,
@@ -131,12 +131,12 @@ export async function dbSaveService(service: Servicio, prestadorId?: string): Pr
         .eq("id", prestadorId);
 
       if (error) {
-        console.warn("Error guardando servicio en perfil_prestador:", error.message);
+        console.warn("Error guardando servicio en prestador:", error.message);
         return false;
       }
       return true;
     } catch (e) {
-      console.warn("Excepción guardando servicio en perfil_prestador:", e);
+      console.warn("Excepción guardando servicio en prestador:", e);
       return false;
     }
   }
@@ -153,7 +153,7 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
 
       if (!targetServiceId || !targetServiceId.includes("-") || targetServiceId.startsWith("provider-")) {
         const { data: svcFound } = await supabase
-          .from("perfil_prestador")
+        .from("prestador")
           .select("id")
           .eq("servicios", review.titulo_servicio || review.tituloServicio || "")
           .limit(1);
@@ -185,7 +185,7 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
         if (allReviews && allReviews.length > 0) {
           const total = allReviews.length;
           const avg = Number((allReviews.reduce((acc, curr) => acc + curr.calificacion, 0) / total).toFixed(1));
-          await supabase.from("perfil_prestador").update({ rating: avg, resenas: total }).eq("id", targetServiceId);
+          await supabase.from("prestador").update({ rating: avg, resenas: total }).eq("id", targetServiceId);
         }
       }
     } catch (e) {

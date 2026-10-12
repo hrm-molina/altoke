@@ -198,11 +198,11 @@ export default function PrestadorPage() {
         return;
       }
 
-      // Leer perfil de perfil_prestador
+      // Leer perfil de prestador
       let perfil: PerfilPrestador | null = null;
       try {
         const { data } = await supabaseAuth
-          .from("perfil_prestador")
+          .from("prestador")
           .select("*")
           .eq("id", session.user.id)
           .single();
@@ -325,7 +325,7 @@ export default function PrestadorPage() {
       }
 
       const { error } = await supabaseAuth
-        .from("perfil_prestador")
+        .from("prestador")
         .update({
           nombre: profileForm.nombre.trim(),
           rut: profileForm.rut.trim(),
@@ -400,7 +400,7 @@ export default function PrestadorPage() {
     saveServicioPrestador(user.id, { ...servicioForm, foto: fotoUrl });
 
     const { error } = await supabaseAuth
-      .from("perfil_prestador")
+      .from("prestador")
       .update({
         servicios: servicioForm.titulo.trim(),
         descripcion: servicioForm.descripcion.trim(),
@@ -411,7 +411,7 @@ export default function PrestadorPage() {
       .eq("id", user.id);
 
     if (error) {
-      console.warn("Error actualizando servicio en perfil_prestador:", error.message);
+      console.warn("Error actualizando servicio en prestador:", error.message);
     }
 
     await supabaseAuth.auth.updateUser({
