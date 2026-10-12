@@ -1,24 +1,35 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 
-export function cleanupStaleAuthCookies() {
+export function purgeAllAuthCookies() {
   if (typeof document === "undefined") return;
   try {
     const cookies = document.cookie.split(";");
     for (const c of cookies) {
-      const name = c.split("=")[0].trim();
-      if (/sb-[^=]+-auth-token\.[1-9]\d*/.test(name)) {
+      const eqPos = c.indexOf("=");
+      const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+      if (name.startsWith("sb-") || name.includes("auth-token")) {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+        document.cookie = `${name}=; Max-Age=0; path=/;`;
       }
     }
   } catch {}
 }
 
+export const cleanupStaleAuthCookies = purgeAllAuthCookies;
+
 function getSupabaseBrowserClient() {
-  cleanupStaleAuthCookies();
-  return createBrowserClient(
+  purgeAllAuthCookies();
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: "altoke_sb_auth",
+      },
+    }
   );
 }
 

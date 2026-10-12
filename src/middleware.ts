@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 
 interface RateLimitConfig {
   windowMs: number;
@@ -49,54 +48,6 @@ function checkRateLimit(ip: string, path: string): { allowed: boolean; retryAfte
   return { allowed: true };
 }
 
-async function getUserFromSession(
-  request: NextRequest,
-  response: NextResponse
-): Promise<{ id: string; tipo?: string } | null> {
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-          // Limpieza de fragmentos huérfanos (.1 a .20) cuando el token se achica
-          const activeNames = new Set(cookiesToSet.map((c) => c.name));
-          cookiesToSet.forEach(({ name, options }) => {
-            if (name.includes("-auth-token")) {
-              const baseName = name.replace(/\.\d+$/, "");
-              for (let i = 1; i <= 20; i++) {
-                const chunkName = `${baseName}.${i}`;
-                if (!activeNames.has(chunkName) && request.cookies.has(chunkName)) {
-                  request.cookies.delete(chunkName);
-                  response.cookies.set(chunkName, "", { ...options, maxAge: 0, expires: new Date(0) });
-                }
-              }
-            }
-          });
-        },
-      },
-    }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) return null;
-  
-  return {
-    id: user.id,
-    tipo: user.user_metadata?.tipo as string | undefined,
-  };
-}
-
 export async function middleware(request: NextRequest) {
   const ip = getClientIp(request);
   const path = request.nextUrl.pathname;
@@ -129,14 +80,6 @@ export async function middleware(request: NextRequest) {
     response.headers.set("X-RateLimit-Limit", String(config.maxRequests));
     response.headers.set("X-RateLimit-Remaining", String(Math.max(0, remaining)));
     response.headers.set("X-RateLimit-Reset", String(Math.ceil((record?.resetTime || Date.now() + config.windowMs) / 1000)));
-  }
-
-  const user = await getUserFromSession(request, response);
-  if (user) {
-    response.headers.set("x-user-id", user.id);
-    if (user.tipo) {
-      response.headers.set("x-user-tipo", user.tipo);
-    }
   }
 
   return response;

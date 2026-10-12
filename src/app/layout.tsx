@@ -44,10 +44,12 @@ export default function RootLayout({
                 try {
                   var cookies = document.cookie.split(";");
                   for (var i = 0; i < cookies.length; i++) {
-                    var name = cookies[i].trim().split("=")[0];
-                    if (/sb-[^=]+-auth-token\\.[1-9]\\d*/.test(name)) {
+                    var c = cookies[i];
+                    var eq = c.indexOf("=");
+                    var name = eq > -1 ? c.substr(0, eq).trim() : c.trim();
+                    if (name.indexOf("sb-") === 0 || name.indexOf("auth-token") > -1) {
                       document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                      document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
+                      document.cookie = name + "=; Max-Age=0; path=/;";
                     }
                   }
                 } catch(e) {}
