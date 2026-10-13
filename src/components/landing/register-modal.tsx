@@ -215,6 +215,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       }
       if (!form.categoria) newErrors.categoria = "Selecciona una categoría";
       if (!form.servicios.trim()) newErrors.servicios = "Este campo es obligatorio";
+      if (!form.descripcion.trim()) newErrors.descripcion = "La descripción de tu trabajo es obligatoria";
       if (!form.valorHora.trim()) newErrors.valorHora = "Este campo es obligatorio";
     }
 
@@ -230,7 +231,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     if (userType === "prestador") {
       const contentValidation = validateServiceContent(
         form.servicios,
-        `Servicio ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`,
+        form.descripcion.trim() || `Servicio ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`,
         form.categoria
       );
       if (!contentValidation.valid) {
@@ -265,6 +266,44 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
 
     setSubmitting(true);
     try {
+      let finalAvatarUrl = foto || "";
+      let finalServicioUrl = fotoServicio || "";
+
+      // Subir fotos a Supabase Storage mediante la API del servidor antes del registro.
+      // Esto asegura que la URL pública real quede guardada en auth.users.user_metadata
+      // para que al confirmar el correo y acceder, la foto ya esté en su perfil.
+      if (finalAvatarUrl.startsWith("data:")) {
+        try {
+          const res = await fetch("/api/upload-foto", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dataUrl: finalAvatarUrl, kind: "avatar" }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.publicUrl) finalAvatarUrl = data.publicUrl;
+          }
+        } catch (e) {
+          console.warn("No se pudo subir avatar preliminar:", e);
+        }
+      }
+
+      if (finalServicioUrl.startsWith("data:")) {
+        try {
+          const res = await fetch("/api/upload-foto", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dataUrl: finalServicioUrl, kind: "servicio" }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.publicUrl) finalServicioUrl = data.publicUrl;
+          }
+        } catch (e) {
+          console.warn("No se pudo subir foto de servicio preliminar:", e);
+        }
+      }
+
       const defaultDesc =
         form.descripcion.trim() ||
         (form.servicios.trim()
@@ -283,12 +322,14 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
         descripcion: defaultDesc,
         valorHora: form.valorHora.trim(),
         categoria: form.categoria || "",
-        foto: foto || "",
+        foto: finalAvatarUrl,
+        foto_servicio: finalServicioUrl,
+        fotoServicio: finalServicioUrl,
       };
 
       if (typeof window !== "undefined") {
         try {
-          if (fotoServicio) localStorage.setItem("altoke_temp_foto_servicio", fotoServicio);
+          if (finalServicioUrl) localStorage.setItem("altoke_temp_foto_servicio", finalServicioUrl);
           if (defaultDesc) localStorage.setItem("altoke_temp_descripcion", defaultDesc);
         } catch { /* noop */ }
       }
@@ -997,7 +1038,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
 
                     <div>
                       <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
-                        Descripción de tu trabajo (opcional)
+                        Descripción de tu trabajo *
                       </label>
                       <textarea
                         value={form.descripcion}
@@ -1009,6 +1050,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                       <p className="mt-1 text-[11px] text-[#64748B]">
                         No uses palabras relacionadas con: contenido sexual, menores de edad, venta de productos, actividades ilegales.
                       </p>
+                      <FieldError field="descripcion" errors={errors} />
                     </div>
 
                     <div>

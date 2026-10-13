@@ -112,9 +112,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         region: meta.region || "",
         comuna: meta.comuna || "",
         ciudadSector: meta.ciudadSector || "",
-        servicios: meta.servicios || "",
-        valorHora: meta.valorHora || "",
-        foto: fotoLocal || meta.foto || "",
+        servicios: meta.servicios || profiles.prestador?.servicios || "",
+        valorHora: meta.valorHora || profiles.prestador?.valor_hora || "",
+        descripcion: meta.descripcion || profiles.prestador?.descripcion || "",
+        fotoServicio: meta.foto_servicio || meta.fotoServicio || profiles.prestador?.foto_servicio || "",
+        foto: fotoLocal || meta.foto || profiles.prestador?.foto || "",
         fechaRegistro: res.user.created_at || new Date().toISOString(),
       }));
 

@@ -258,19 +258,24 @@ export default function PrestadorPage() {
       });
       setFoto(userData.foto || "");
 
-      // Recuperar datos locales si en la base de datos están vacíos
+      // Recuperar datos de metadata o locales si en la base de datos están vacíos
+      const meta = session.user.user_metadata || {};
+      const metaFoto = (meta.foto_servicio as string) || (meta.fotoServicio as string) || "";
+      const metaDesc = (meta.descripcion as string) || "";
+
       const localServicio = getServicioPrestador(userData.id);
       const tempDesc = typeof window !== "undefined" ? localStorage.getItem("altoke_temp_descripcion") || "" : "";
       const tempFoto = typeof window !== "undefined" ? localStorage.getItem("altoke_temp_foto_servicio") || "" : "";
 
-      const initialTitulo = userData.servicios || localServicio?.titulo || "";
+      const initialTitulo = userData.servicios || (meta.servicios as string) || localServicio?.titulo || "";
       const initialDesc =
         userData.descripcion ||
+        metaDesc ||
         localServicio?.descripcion ||
         tempDesc ||
         (initialTitulo ? `Servicio profesional y responsable de ${initialTitulo} ofrecido por ${userData.nombre} en ${userData.comuna}.` : "");
-      const initialCat = userData.categoria || localServicio?.categoria || "";
-      const initialFoto = userData.fotoServicio || localServicio?.foto || tempFoto || "";
+      const initialCat = userData.categoria || (meta.categoria as string) || localServicio?.categoria || "";
+      const initialFoto = userData.fotoServicio || metaFoto || localServicio?.foto || tempFoto || "";
 
       setServicioForm({
         titulo: initialTitulo,
@@ -278,6 +283,14 @@ export default function PrestadorPage() {
         categoria: initialCat,
         foto: initialFoto,
       });
+
+      // Sincronizar de inmediato con la tabla prestador si no estaban persistidos
+      if ((!userData.fotoServicio && initialFoto && !initialFoto.startsWith("data:")) || (!userData.descripcion && initialDesc)) {
+        supabaseAuth.from("prestador").update({
+          ...(initialFoto && !userData.fotoServicio && !initialFoto.startsWith("data:") ? { foto_servicio: initialFoto } : {}),
+          ...(initialDesc && !userData.descripcion ? { descripcion: initialDesc } : {}),
+        }).eq("id", userData.id).catch(() => {});
+      }
 
       // Si teníamos una foto local temporal (en base64) y el usuario ya está autenticado, subirla a Storage
       if (initialFoto && initialFoto.startsWith("data:") && !userData.fotoServicio) {
