@@ -96,6 +96,16 @@ export default function PerfilPage() {
         return;
       }
 
+      let sesionActual: { tipo?: string } = {};
+      try {
+        sesionActual = JSON.parse(localStorage.getItem("altoke_session") || "{}");
+      } catch { /* noop */ }
+
+      if (sesionActual.tipo === "prestador") {
+        router.push("/prestador");
+        return;
+      }
+
       // Leer perfil de usuario
       let perfil: PerfilUsuario | null = null;
       try {

@@ -224,7 +224,7 @@ export default function PrestadorPage() {
       } catch { /* noop */ }
 
       if (!perfil) {
-        router.push("/explorar");
+        router.push("/");
         return;
       }
 
