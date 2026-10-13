@@ -128,22 +128,33 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
   };
 
   const handleResendConfirmation = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setError("Ingresa tu email para reenviar el correo de confirmación.");
+      return;
+    }
     setLoading(true);
+    setError("");
     try {
-      const { error } = await signInWithEmail(email, password);
-      if (error && error.toLowerCase().includes("email not confirmed")) {
-        const { error: resendError } = await supabaseAuth.auth.resend({
-          type: "signup",
-          email,
-        });
-        if (resendError) {
-          setError("Error reenviando email. Intenta más tarde.");
+      const { error: resendError } = await supabaseAuth.auth.resend({
+        type: "signup",
+        email: cleanEmail,
+        options: {
+          emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined,
+        },
+      });
+      if (resendError) {
+        const msg = resendError.message?.toLowerCase() || "";
+        if (msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("over_email_send_rate_limit")) {
+          setError("Límite de envíos alcanzado en Supabase (máx 3-4 por hora). Espera unos minutos antes de reintentar.");
         } else {
-          setError("Email de confirmación reenviado. Revisa tu bandeja de entrada.");
+          setError(resendError.message || "Error al reenviar el correo. Intenta más tarde.");
         }
+      } else {
+        setError(`Email de confirmación reenviado a ${cleanEmail}. Revisa tu bandeja de entrada y la carpeta de Correo no deseado (Spam).`);
       }
     } catch {
-      setError("Error reenviando email.");
+      setError("Error al reenviar el correo. Verifica tu conexión.");
     } finally {
       setLoading(false);
     }
@@ -234,13 +245,16 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         )}
 
         {emailNotConfirmed && (
-          <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-4 text-sm text-blue-400">
-            <p className="mb-2">¿No recibiste el email de confirmación?</p>
+          <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-xs text-blue-300 space-y-2">
+            <p className="font-semibold text-blue-200">¿No recibiste el email de confirmación?</p>
+            <p className="text-[#94A3B8] leading-relaxed">
+              Revisa la carpeta de <strong>Correo no deseado (Spam)</strong> o la pestaña <strong>Otros</strong> en tu correo (común en Hotmail/Outlook). Si no aparece, puedes reenviarlo a continuación:
+            </p>
             <button
               type="button"
               onClick={handleResendConfirmation}
               disabled={loading}
-              className="w-full rounded-xl border border-blue-500/50 bg-transparent py-2 text-sm font-medium text-blue-400 hover:bg-blue-500/10 transition-all disabled:opacity-50"
+              className="w-full rounded-xl border border-blue-500/50 bg-blue-500/20 py-2.5 text-xs font-semibold text-blue-300 hover:bg-blue-500/30 transition-all disabled:opacity-50"
             >
               {loading ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Reenviar email de confirmación"}
             </button>

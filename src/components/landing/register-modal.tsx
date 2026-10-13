@@ -55,6 +55,8 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
   const [submitting, setSubmitting] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendStatus, setResendStatus] = useState<string | null>(null);
 
   // Regla de oro: estrictamente mayores de 18 años
   const today = new Date();
@@ -403,6 +405,36 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     }
   };
 
+  const handleResendConfirmation = async () => {
+    const cleanEmail = form.email.trim().toLowerCase();
+    if (!cleanEmail) return;
+    setResending(true);
+    setResendStatus(null);
+    try {
+      const { error: resendError } = await supabaseAuth.auth.resend({
+        type: "signup",
+        email: cleanEmail,
+        options: {
+          emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined,
+        },
+      });
+      if (resendError) {
+        const msg = resendError.message?.toLowerCase() || "";
+        if (msg.includes("rate limit") || msg.includes("too many requests") || msg.includes("over_email_send_rate_limit")) {
+          setResendStatus("Límite de envíos alcanzado en Supabase (máx 3-4 por hora). Espera unos minutos antes de reintentar.");
+        } else {
+          setResendStatus(resendError.message || "Error al reenviar el correo.");
+        }
+      } else {
+        setResendStatus("¡Correo de confirmación reenviado! Revisa tu bandeja de entrada y la carpeta Spam.");
+      }
+    } catch {
+      setResendStatus("Error de conexión al reenviar correo.");
+    } finally {
+      setResending(false);
+    }
+  };
+
   const resetAndClose = () => {
     setStep(defaultTipo ? 2 : 1);
     setUserType(defaultTipo || null);
@@ -428,6 +460,8 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     setSuccess(false);
     setCheckingEmail(false);
     setNeedsConfirmation(false);
+    setResending(false);
+    setResendStatus(null);
     onClose();
   };
 
@@ -489,19 +523,47 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                   <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">
                     Revisa tu correo
                   </h2>
-                  <p className="text-sm text-[#94A3B8] text-center mb-4 leading-relaxed">
+                  <p className="text-sm text-[#94A3B8] text-center mb-2 leading-relaxed">
                     Te enviamos un email de confirmación a <strong className="text-[#F1F5F9]">{form.email}</strong>.
                   </p>
-                  <p className="text-sm text-[#64748B] text-center mb-8 leading-relaxed">
+                  <p className="text-xs text-[#64748B] text-center mb-5 leading-relaxed max-w-sm">
                     Haz clic en el enlace del email para activar tu cuenta.
                     Luego vuelve aquí e inicia sesión para comenzar.
                   </p>
-                  <button
-                    onClick={resetAndClose}
-                    className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
-                  >
-                    Entendido, ir al inicio
-                  </button>
+
+                  <div className="w-full max-w-md rounded-xl bg-[#0A0F1A] border border-[#1E293B] p-4 text-xs text-[#94A3B8] space-y-2 mb-6 text-left">
+                    <p className="font-semibold text-amber-400 flex items-center gap-1.5">
+                      <AlertCircle size={14} /> ¿No te llegó el correo?
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-[#94A3B8]">
+                      <li>Revisa la carpeta de <strong>Correo no deseado (Spam)</strong> o la pestaña <strong>Otros</strong> en Hotmail / Outlook.</li>
+                      <li>Verifica que tu correo esté bien escrito (<span className="text-[#F1F5F9]">{form.email}</span>).</li>
+                      <li>El remitente oficial es de Supabase Auth.</li>
+                    </ul>
+                    {resendStatus && (
+                      <p className={`pt-2 text-xs font-medium ${resendStatus.includes("éxito") || resendStatus.includes("reenviado") ? "text-green-400" : "text-amber-400"}`}>
+                        {resendStatus}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+                    <button
+                      type="button"
+                      onClick={handleResendConfirmation}
+                      disabled={resending}
+                      className="flex-1 rounded-xl border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-xs font-semibold text-blue-400 hover:bg-blue-500/20 transition-all disabled:opacity-50 text-center"
+                    >
+                      {resending ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Reenviar correo de confirmación"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetAndClose}
+                      className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 text-xs font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow text-center"
+                    >
+                      Entendido, ir al inicio
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
