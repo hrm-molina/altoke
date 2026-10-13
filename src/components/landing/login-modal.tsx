@@ -95,7 +95,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
           : hasPrestador
             ? "prestador"
             : "usuario";
-      const meta = res.user.user_metadata || {};
+      const meta = (res.user.user_metadata || {}) as Record<string, unknown>;
       let fotoLocal = "";
       try {
         const sesionActual = JSON.parse(localStorage.getItem("altoke_session") || "{}");
@@ -105,18 +105,18 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         id: res.user.id,
         email: res.user.email,
         tipo: currentRole,
-        nombre: meta.nombre || "",
-        rut: meta.rut || "",
-        telefono: meta.telefono || "",
-        fechaNacimiento: meta.fechaNacimiento || "",
-        region: meta.region || "",
-        comuna: meta.comuna || "",
-        ciudadSector: meta.ciudadSector || "",
-        servicios: meta.servicios || profiles.prestador?.servicios || "",
-        valorHora: meta.valorHora || profiles.prestador?.valor_hora || "",
-        descripcion: meta.descripcion || profiles.prestador?.descripcion || "",
-        fotoServicio: meta.foto_servicio || meta.fotoServicio || profiles.prestador?.foto_servicio || "",
-        foto: fotoLocal || meta.foto || profiles.prestador?.foto || "",
+        nombre: (meta.nombre as string) || "",
+        rut: (meta.rut as string) || "",
+        telefono: (meta.telefono as string) || "",
+        fechaNacimiento: (meta.fechaNacimiento as string) || "",
+        region: (meta.region as string) || "",
+        comuna: (meta.comuna as string) || "",
+        ciudadSector: (meta.ciudadSector as string) || "",
+        servicios: (meta.servicios as string) || profiles.prestador?.servicios || "",
+        valorHora: (meta.valorHora as string) || profiles.prestador?.valor_hora || "",
+        descripcion: (meta.descripcion as string) || profiles.prestador?.descripcion || "",
+        fotoServicio: (meta.foto_servicio as string) || (meta.fotoServicio as string) || profiles.prestador?.foto_servicio || "",
+        foto: fotoLocal || (meta.foto as string) || profiles.prestador?.foto || "",
         fechaRegistro: res.user.created_at || new Date().toISOString(),
       }));
 

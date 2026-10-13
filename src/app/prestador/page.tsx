@@ -286,10 +286,10 @@ export default function PrestadorPage() {
 
       // Sincronizar de inmediato con la tabla prestador si no estaban persistidos
       if ((!userData.fotoServicio && initialFoto && !initialFoto.startsWith("data:")) || (!userData.descripcion && initialDesc)) {
-        supabaseAuth.from("prestador").update({
+        void supabaseAuth.from("prestador").update({
           ...(initialFoto && !userData.fotoServicio && !initialFoto.startsWith("data:") ? { foto_servicio: initialFoto } : {}),
           ...(initialDesc && !userData.descripcion ? { descripcion: initialDesc } : {}),
-        }).eq("id", userData.id).catch(() => {});
+        }).eq("id", userData.id).then(() => {});
       }
 
       // Si teníamos una foto local temporal (en base64) y el usuario ya está autenticado, subirla a Storage
@@ -298,7 +298,7 @@ export default function PrestadorPage() {
           uploadFoto(userData.id, initialFoto, "servicio").then((uploadedUrl) => {
             if (uploadedUrl) {
               setServicioForm((prev) => ({ ...prev, foto: uploadedUrl }));
-              supabaseAuth.from("prestador").update({ foto_servicio: uploadedUrl }).eq("id", userData.id).catch(() => {});
+              void supabaseAuth.from("prestador").update({ foto_servicio: uploadedUrl }).eq("id", userData.id).then(() => {});
             }
           }).catch(() => {});
         }).catch(() => {});
