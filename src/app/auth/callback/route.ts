@@ -38,6 +38,8 @@ async function ensureProfile(
       servicios: (meta.servicios as string) || null,
       valor_hora: Number(meta.valorHora) || 0,
       categoria: (meta.categoria as string) || null,
+      descripcion: (meta.descripcion as string) || null,
+      foto_servicio: (meta.fotoServicio as string) || (meta.foto_servicio as string) || null,
       activo: true,
     });
   } else {

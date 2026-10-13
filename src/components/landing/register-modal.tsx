@@ -44,6 +44,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     comuna: "",
     ciudadSector: "",
     servicios: "",
+    descripcion: "",
     categoria: "",
     valorHora: "",
     aceptaTerminos: false,
@@ -264,6 +265,12 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
 
     setSubmitting(true);
     try {
+      const defaultDesc =
+        form.descripcion.trim() ||
+        (form.servicios.trim()
+          ? `Servicio profesional y responsable de ${form.servicios.trim()} ofrecido por ${form.nombre.trim()} en ${form.comuna.trim()}.`
+          : "");
+
       const metadata = {
         nombre: form.nombre.trim(),
         rut: form.rut.trim(),
@@ -273,10 +280,18 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
         comuna: form.comuna.trim(),
         ciudadSector: form.ciudadSector.trim(),
         servicios: form.servicios.trim(),
+        descripcion: defaultDesc,
         valorHora: form.valorHora.trim(),
         categoria: form.categoria || "",
         foto: foto || "",
       };
+
+      if (typeof window !== "undefined") {
+        try {
+          if (fotoServicio) localStorage.setItem("altoke_temp_foto_servicio", fotoServicio);
+          if (defaultDesc) localStorage.setItem("altoke_temp_descripcion", defaultDesc);
+        } catch { /* noop */ }
+      }
 
       const { user, error, needsEmailConfirmation } = await signUpWithEmail(
         form.email.toLowerCase(),
@@ -450,6 +465,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       comuna: "",
       ciudadSector: "",
       servicios: "",
+      descripcion: "",
       categoria: "",
       valorHora: "",
       aceptaTerminos: false,
@@ -977,6 +993,22 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                         No uses palabras relacionadas con: contenido sexual, menores de edad, venta de productos, actividades ilegales.
                       </p>
                       <FieldError field="servicios" errors={errors} />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+                        Descripción de tu trabajo (opcional)
+                      </label>
+                      <textarea
+                        value={form.descripcion}
+                        onChange={(e) => updateForm("descripcion", e.target.value)}
+                        placeholder="Describe qué haces, experiencia, qué incluye el servicio..."
+                        rows={3}
+                        className={`${inputClass("descripcion")} resize-none`}
+                      />
+                      <p className="mt-1 text-[11px] text-[#64748B]">
+                        No uses palabras relacionadas con: contenido sexual, menores de edad, venta de productos, actividades ilegales.
+                      </p>
                     </div>
 
                     <div>

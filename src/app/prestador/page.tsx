@@ -257,12 +257,39 @@ export default function PrestadorPage() {
         rut: userData.rut || "",
       });
       setFoto(userData.foto || "");
+
+      // Recuperar datos locales si en la base de datos están vacíos
+      const localServicio = getServicioPrestador(userData.id);
+      const tempDesc = typeof window !== "undefined" ? localStorage.getItem("altoke_temp_descripcion") || "" : "";
+      const tempFoto = typeof window !== "undefined" ? localStorage.getItem("altoke_temp_foto_servicio") || "" : "";
+
+      const initialTitulo = userData.servicios || localServicio?.titulo || "";
+      const initialDesc =
+        userData.descripcion ||
+        localServicio?.descripcion ||
+        tempDesc ||
+        (initialTitulo ? `Servicio profesional y responsable de ${initialTitulo} ofrecido por ${userData.nombre} en ${userData.comuna}.` : "");
+      const initialCat = userData.categoria || localServicio?.categoria || "";
+      const initialFoto = userData.fotoServicio || localServicio?.foto || tempFoto || "";
+
       setServicioForm({
-        titulo: userData.servicios || "",
-        descripcion: userData.descripcion || "",
-        categoria: userData.categoria || "",
-        foto: userData.fotoServicio || "",
+        titulo: initialTitulo,
+        descripcion: initialDesc,
+        categoria: initialCat,
+        foto: initialFoto,
       });
+
+      // Si teníamos una foto local temporal (en base64) y el usuario ya está autenticado, subirla a Storage
+      if (initialFoto && initialFoto.startsWith("data:") && !userData.fotoServicio) {
+        import("@/lib/storage").then(({ uploadFoto }) => {
+          uploadFoto(userData.id, initialFoto, "servicio").then((uploadedUrl) => {
+            if (uploadedUrl) {
+              setServicioForm((prev) => ({ ...prev, foto: uploadedUrl }));
+              supabaseAuth.from("prestador").update({ foto_servicio: uploadedUrl }).eq("id", userData.id).catch(() => {});
+            }
+          }).catch(() => {});
+        }).catch(() => {});
+      }
 
       // Cargar reseñas desde Supabase
       if (session.user.email) {

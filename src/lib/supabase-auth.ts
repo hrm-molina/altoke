@@ -184,9 +184,9 @@ async function createProfile(
       servicios: metadata.servicios || null,
       valor_hora: Number(metadata.valorHora) || 0,
       foto: metadata.foto || null,
-      foto_servicio: null,
+      foto_servicio: (metadata.fotoServicio as string) || (metadata.foto_servicio as string) || null,
       categoria: metadata.categoria || null,
-      descripcion: null,
+      descripcion: (metadata.descripcion as string) || null,
       activo: true,
     });
     return { error: error?.message || null };
