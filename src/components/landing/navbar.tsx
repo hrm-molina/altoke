@@ -283,13 +283,6 @@ export function Navbar() {
                 </div>
             ) : (
               <div className="flex items-center gap-3 ml-4">
-                <Link
-                  href="/explorar"
-                  className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                >
-                  <Compass size={15} />
-                  Explorar
-                </Link>
                 <button
                   onClick={() => { setLoginTipo("prestador"); setRegisterTipo("prestador"); setLoginOpen(true); }}
                   className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
@@ -448,14 +441,6 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/explorar"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                  >
-                    <Compass size={15} />
-                    Explorar servicios
-                  </Link>
                   <button
                     onClick={() => {
                       setMobileOpen(false);
