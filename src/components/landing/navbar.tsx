@@ -67,8 +67,11 @@ export function Navbar() {
           sesionActual = JSON.parse(localStorage.getItem("altoke_session") || "{}");
         } catch { /* noop */ }
 
+        const isPrestadorPath = typeof window !== "undefined" && window.location.pathname === "/prestador";
         const tipoActivo =
-          sesionActual.id === user.id && sesionActual.tipo
+          isPrestadorPath
+            ? "prestador"
+            : sesionActual.id === user.id && sesionActual.tipo
             ? sesionActual.tipo
             : user.user_metadata?.tipo || "usuario";
 
@@ -136,8 +139,12 @@ export function Navbar() {
       if (cancelled) return;
       try {
         const s = JSON.parse(localStorage.getItem("altoke_session") || "{}");
-        if (s.id === session.id && s.tipo && s.tipo !== session.tipo) {
-          setSession((prev) => (prev ? { ...prev, tipo: s.tipo } : prev));
+        const targetTipo = pathname === "/prestador" ? "prestador" : s.tipo || session.tipo;
+        if (targetTipo && targetTipo !== session.tipo) {
+          setSession((prev) => (prev ? { ...prev, tipo: targetTipo } : prev));
+          if (s.id === session.id) {
+            localStorage.setItem("altoke_session", JSON.stringify({ ...s, tipo: targetTipo }));
+          }
         }
       } catch { /* noop */ }
     });
@@ -172,114 +179,72 @@ export function Navbar() {
           <div className="hidden items-center gap-8 md:flex">
             {session ? (
               <div className="flex items-center gap-5 ml-4">
-                  {session.tipo === "prestador" ? (
-                    <>
-                      {pathname !== "/prestador" && (
-                        <Link
-                          href="/prestador"
-                          className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                        >
-                          Mi servicio
-                        </Link>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
-                          {session.nombre?.charAt(0) || "U"}
-                        </div>
-                        <span className="text-sm text-[#94A3B8]">
-                          {session.nombre || session.email}
-                        </span>
+                {pathname === "/prestador" || session.tipo === "prestador" ? (
+                  <>
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-xs font-bold text-white shadow-sm">
+                        {session.nombre?.charAt(0) || "P"}
                       </div>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                      >
-                        <LogOut size={15} />
-                        Cerrar sesión
-                      </button>
-                    </>
-                  ) : session.tipo === "ambos" ? (
-                    <>
-                      {pathname !== "/prestador" && (
-                        <Link
-                          href="/explorar"
-                          className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                        >
-                          Explorar
-                        </Link>
-                      )}
-                      {pathname !== "/prestador" && (
-                        <Link
-                          href="/prestador"
-                          className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                        >
-                          Mi servicio
-                        </Link>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
-                          {session.nombre?.charAt(0) || "U"}
-                        </div>
-                        <span className="text-sm text-[#94A3B8]">
-                          {session.nombre || session.email}
+                      <span className="text-sm font-semibold text-[#F1F5F9]">
+                        {session.nombre || session.email}
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                    >
+                      <LogOut size={15} />
+                      Cerrar sesión
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/explorar"
+                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                    >
+                      <Compass size={15} />
+                      Explorar
+                    </Link>
+                    <Link
+                      href="/explorar?tab=alertas"
+                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all relative"
+                    >
+                      <Bell size={15} />
+                      Alertas
+                      {alertCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                          {alertCount}
                         </span>
+                      )}
+                    </Link>
+                    <Link
+                      href="/explorar?tab=historial"
+                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                    >
+                      <History size={15} />
+                      Historial
+                    </Link>
+                    <Link
+                      href="/perfil"
+                      className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                    >
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
+                        {session.nombre?.charAt(0) || "U"}
                       </div>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                      >
-                        <LogOut size={15} />
-                        Cerrar sesión
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        href="/explorar"
-                        className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                      >
-                        <Compass size={15} />
-                        Explorar
-                      </Link>
-                      <Link
-                        href="/explorar?tab=alertas"
-                        className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all relative"
-                      >
-                        <Bell size={15} />
-                        Alertas
-                        {alertCount > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                            {alertCount}
-                          </span>
-                        )}
-                      </Link>
-                      <Link
-                        href="/explorar?tab=historial"
-                        className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                      >
-                        <History size={15} />
-                        Historial
-                      </Link>
-                      <Link
-                        href="/perfil"
-                        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                      >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
-                          {session.nombre?.charAt(0) || "U"}
-                        </div>
-                        <span className="text-sm text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">
-                          {session.nombre || session.email}
-                        </span>
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                      >
-                        <LogOut size={15} />
-                        Cerrar sesión
-                      </button>
-                    </>
-                  )}
+                      <span className="text-sm text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">
+                        {session.nombre || session.email}
+                      </span>
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                    >
+                      <LogOut size={15} />
+                      Cerrar sesión
+                    </button>
+                  </>
+                )}
                 </div>
             ) : (
               <div className="flex items-center gap-3 ml-4">
@@ -308,63 +273,15 @@ export function Navbar() {
             <div className="flex flex-col gap-3">
               {session ? (
                 <>
-                  {session.tipo === "prestador" ? (
+                  {pathname === "/prestador" || session.tipo === "prestador" ? (
                     <>
                       <div className="flex items-center gap-3 px-1 py-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1E293B] text-sm font-bold text-[#94A3B8]">
-                          {session.nombre?.charAt(0) || "U"}
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-sm font-bold text-white shadow-sm">
+                          {session.nombre?.charAt(0) || "P"}
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-[#F1F5F9]">
-                            {session.nombre || "Usuario"}
-                          </p>
-                          <p className="text-xs text-[#64748B]">{session.email}</p>
-                        </div>
-                      </div>
-                      {pathname !== "/prestador" && (
-                        <Link
-                          href="/prestador"
-                          onClick={() => setMobileOpen(false)}
-                          className="flex items-center justify-center rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                        >
-                          Mi servicio
-                        </Link>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all"
-                      >
-                        <LogOut size={15} />
-                        Cerrar sesión
-                      </button>
-                    </>
-                  ) : session.tipo === "ambos" ? (
-                    <>
-                      {pathname !== "/prestador" && (
-                        <Link
-                          href="/explorar"
-                          onClick={() => setMobileOpen(false)}
-                          className="flex items-center justify-center rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                        >
-                          Explorar servicios
-                        </Link>
-                      )}
-                      {pathname !== "/prestador" && (
-                        <Link
-                          href="/prestador"
-                          onClick={() => setMobileOpen(false)}
-                          className="flex items-center justify-center rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                        >
-                          Mi servicio
-                        </Link>
-                      )}
-                      <div className="flex items-center gap-3 px-1 py-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1E293B] text-sm font-bold text-[#94A3B8]">
-                          {session.nombre?.charAt(0) || "U"}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-[#F1F5F9]">
-                            {session.nombre || "Usuario"}
+                            {session.nombre || "Prestador"}
                           </p>
                           <p className="text-xs text-[#64748B]">{session.email}</p>
                         </div>
