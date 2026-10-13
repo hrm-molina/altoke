@@ -284,16 +284,10 @@ export function Navbar() {
             ) : (
               <div className="flex items-center gap-3 ml-4">
                 <button
-                  onClick={() => { setLoginTipo("prestador"); setRegisterTipo("prestador"); setLoginOpen(true); }}
-                  className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                >
-                  Iniciar como prestador
-                </button>
-                <button
                   onClick={() => { setLoginTipo("usuario"); setRegisterTipo("usuario"); setLoginOpen(true); }}
-                  className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                  className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
                 >
-                  Iniciar como usuario
+                  Iniciar sesión
                 </button>
               </div>
             )}
@@ -440,30 +434,17 @@ export function Navbar() {
                   )}
                 </>
               ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      setMobileOpen(false);
-                      setLoginTipo("prestador");
-                      setRegisterTipo("prestador");
-                      setLoginOpen(true);
-                    }}
-                    className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                  >
-                    Iniciar como prestador
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileOpen(false);
-                      setLoginTipo("usuario");
-                      setRegisterTipo("usuario");
-                      setLoginOpen(true);
-                    }}
-                    className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
-                  >
-                    Iniciar como usuario
-                  </button>
-                </>
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setLoginTipo("usuario");
+                    setRegisterTipo("usuario");
+                    setLoginOpen(true);
+                  }}
+                  className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-center text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                >
+                  Iniciar sesión
+                </button>
               )}
             </div>
           </div>
