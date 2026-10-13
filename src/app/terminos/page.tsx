@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Zap, ArrowLeft, Shield, FileText, CheckCircle2 } from "lucide-react";
+import { Zap, ArrowLeft, Shield, CheckCircle2 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Términos y Condiciones de Uso | AlToke Chile (altokechile.cl)",

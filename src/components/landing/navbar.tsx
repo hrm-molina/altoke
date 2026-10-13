@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X, Zap, LogOut, History, Bell } from "lucide-react";
+import { Menu, X, Zap, LogOut, History, Bell, Compass } from "lucide-react";
 import { LoginModal } from "./login-modal";
 import { RegisterModal } from "./register-modal";
 import { supabaseAuth, onAuthStateChange, type AuthUser } from "@/lib/supabase-auth";
@@ -21,10 +21,42 @@ export function Navbar() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [loginTipo, setLoginTipo] = useState<"usuario" | "prestador">("usuario");
   const [registerOpen, setRegisterOpen] = useState(false);
-  const [session, setSession] = useState<Session | null>(null);
+  const [registerTipo, setRegisterTipo] = useState<"usuario" | "prestador">("usuario");
+  const [session, setSession] = useState<Session | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const s = JSON.parse(localStorage.getItem("altoke_session") || "null");
+      if (s && s.id) return { id: s.id, nombre: s.nombre, email: s.email, tipo: s.tipo || "usuario" };
+    } catch { /* noop */ }
+    return null;
+  });
   const [alertCount, setAlertCount] = useState(0);
 
   useEffect(() => {
+    // Consulta inmediata de sesión en Supabase para sincronización rápida
+    supabaseAuth.auth.getSession().then(({ data }) => {
+      if (data?.session?.user) {
+        const u = data.session.user;
+        const meta = (u.user_metadata || {}) as Record<string, unknown>;
+        let sesionActual: { id?: string; tipo?: string } = {};
+        try {
+          sesionActual = JSON.parse(localStorage.getItem("altoke_session") || "{}");
+        } catch { /* noop */ }
+
+        const tipoActivo =
+          sesionActual.id === u.id && sesionActual.tipo
+            ? sesionActual.tipo
+            : (meta.tipo as string) || "usuario";
+
+        setSession({
+          id: u.id,
+          nombre: (meta.nombre as string) || "",
+          email: u.email,
+          tipo: tipoActivo,
+        });
+      }
+    });
+
     const { data: { subscription } } = onAuthStateChange((user: AuthUser | null) => {
       if (user) {
         // El rol activo (usuario/prestador) lo elige el usuario al iniciar
@@ -142,6 +174,14 @@ export function Navbar() {
               <div className="flex items-center gap-5 ml-4">
                   {session.tipo === "prestador" ? (
                     <>
+                      {pathname !== "/prestador" && (
+                        <Link
+                          href="/prestador"
+                          className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                        >
+                          Mi servicio
+                        </Link>
+                      )}
                       <div className="flex items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
                           {session.nombre?.charAt(0) || "U"}
@@ -195,6 +235,13 @@ export function Navbar() {
                   ) : (
                     <>
                       <Link
+                        href="/explorar"
+                        className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      >
+                        <Compass size={15} />
+                        Explorar
+                      </Link>
+                      <Link
                         href="/explorar?tab=alertas"
                         className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all relative"
                       >
@@ -236,17 +283,24 @@ export function Navbar() {
                 </div>
             ) : (
               <div className="flex items-center gap-3 ml-4">
+                <Link
+                  href="/explorar"
+                  className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                >
+                  <Compass size={15} />
+                  Explorar
+                </Link>
                 <button
-                  onClick={() => { setLoginOpen(true); setLoginTipo("prestador"); }}
+                  onClick={() => { setLoginTipo("prestador"); setRegisterTipo("prestador"); setLoginOpen(true); }}
                   className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
                 >
-                  Iniciar servicios
+                  Iniciar como prestador
                 </button>
                 <button
-                  onClick={() => { setLoginOpen(true); setLoginTipo("usuario"); }}
+                  onClick={() => { setLoginTipo("usuario"); setRegisterTipo("usuario"); setLoginOpen(true); }}
                   className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
                 >
-                  Iniciar usuario
+                  Iniciar como usuario
                 </button>
               </div>
             )}
@@ -280,6 +334,15 @@ export function Navbar() {
                           <p className="text-xs text-[#64748B]">{session.email}</p>
                         </div>
                       </div>
+                      {pathname !== "/prestador" && (
+                        <Link
+                          href="/prestador"
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center justify-center rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                        >
+                          Mi servicio
+                        </Link>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all"
@@ -345,6 +408,14 @@ export function Navbar() {
                         </div>
                       </Link>
                       <Link
+                        href="/explorar"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      >
+                        <Compass size={15} />
+                        Explorar
+                      </Link>
+                      <Link
                         href="/explorar?tab=alertas"
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all relative"
@@ -377,25 +448,35 @@ export function Navbar() {
                 </>
               ) : (
                 <>
+                  <Link
+                    href="/explorar"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                  >
+                    <Compass size={15} />
+                    Explorar servicios
+                  </Link>
                   <button
                     onClick={() => {
                       setMobileOpen(false);
                       setLoginTipo("prestador");
+                      setRegisterTipo("prestador");
                       setLoginOpen(true);
                     }}
                     className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
                   >
-                    Iniciar servicios
+                    Iniciar como prestador
                   </button>
                   <button
                     onClick={() => {
                       setMobileOpen(false);
                       setLoginTipo("usuario");
+                      setRegisterTipo("usuario");
                       setLoginOpen(true);
                     }}
                     className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-semibold text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
                   >
-                    Iniciar usuario
+                    Iniciar como usuario
                   </button>
                 </>
               )}
@@ -405,25 +486,27 @@ export function Navbar() {
       </nav>
 
       <LoginModal
+        key={`${loginTipo}-${loginOpen ? "open" : "closed"}`}
         isOpen={loginOpen}
         onClose={() => {
           setLoginOpen(false);
           handleLoginSuccess();
         }}
-        onSwitchToRegister={() => {
+        onSwitchToRegister={(tipo) => {
           setLoginOpen(false);
+          setRegisterTipo(tipo || "usuario");
           setRegisterOpen(true);
         }}
         defaultTipo={loginTipo}
       />
       <RegisterModal
-        key={loginTipo}
+        key={`${registerTipo}-${registerOpen ? "open" : "closed"}`}
         isOpen={registerOpen}
         onClose={() => {
           setRegisterOpen(false);
           handleLoginSuccess();
         }}
-        defaultTipo={loginTipo}
+        defaultTipo={registerTipo}
       />
     </>
   );

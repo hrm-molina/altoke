@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { Client } from "pg";
-for (const line of readFileSync("E:/Al toke/altoke/.env.local", "utf8").replace(/^\uFEFF/, "").split(/\r?\n/)) {
+for (const line of readFileSync(new URL("../.env.local", import.meta.url), "utf8").replace(/^\uFEFF/, "").split(/\r?\n/)) {
   const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
   if (m) process.env[m[1]] = m[2];
 }

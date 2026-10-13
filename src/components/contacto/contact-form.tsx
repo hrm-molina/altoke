@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, ArrowLeft, Mail, Clock, MapPin, ShieldAlert, CheckCircle2, AlertCircle, Loader2, Check } from "lucide-react";
+import { Mail, AlertCircle, Loader2, Check } from "lucide-react";
 
 export function ContactForm() {
   const [formData, setFormData] = useState({

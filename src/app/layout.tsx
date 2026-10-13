@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { CookieBanner } from "@/components/cookie-banner";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "AlTokeChile (altokechile.cl) - Publica o Contrata Cualquier Servicio",
@@ -33,9 +27,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: LayoutProps<"/">) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="es" className={`${inter.variable} dark`}>
+    <html lang="es" className="dark">
       <head>
         <script
           dangerouslySetInnerHTML={{

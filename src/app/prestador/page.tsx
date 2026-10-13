@@ -537,6 +537,7 @@ export default function PrestadorPage() {
               <label className="relative group cursor-pointer">
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1E293B] overflow-hidden">
                   {foto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={foto} alt="Perfil" className="h-full w-full object-cover" />
                   ) : (
                     <User size={32} className="text-[#64748B]" />
@@ -844,6 +845,7 @@ export default function PrestadorPage() {
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                   {servicioForm.foto ? (
                     <div className="relative h-28 w-44 rounded-xl overflow-hidden border border-[#1E293B] group shrink-0 bg-[#0A0F1A]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={servicioForm.foto}
                         alt="Foto del servicio"

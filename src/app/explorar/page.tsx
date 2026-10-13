@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Compass } from "lucide-react";
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 import { SearchBar } from "@/components/explorar/search-bar";
@@ -90,13 +90,14 @@ function ExplorarContent() {
           <div className="flex items-center gap-2 mb-8 border-b border-[#1E293B] pb-4 overflow-x-auto">
             <button
               onClick={() => router.push("/explorar")}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all shrink-0 ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all shrink-0 ${
                 !showHistorial && !showAlertas
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
                   : "text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#0A0F1A]"
               }`}
             >
-              Servicios
+              <Compass size={16} />
+              Explorar
             </button>
             <button
               onClick={() => router.push("/explorar?tab=alertas")}
@@ -161,7 +162,7 @@ function ExplorarContent() {
                   Servicios que desbloqueaste y puedes calificar
                 </p>
               </div>
-              <AlertsList key={alertsKey} />
+              <AlertsList key={alertsKey} onRated={handleRated} />
             </>
           ) : (
             <>

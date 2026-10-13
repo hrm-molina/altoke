@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Star, MapPin, Phone, Clock, MessageSquare, ChevronLeft, ShieldAlert } from "lucide-react";
+import { X, Star, MapPin, Phone, Clock, MessageSquare, ChevronLeft } from "lucide-react";
 import { type Servicio, isSelfRatingCheck } from "@/lib/mock-services";
 import { dbFetchReviews } from "@/lib/db";
 
@@ -238,6 +238,7 @@ export function ServiceDetail({ servicio, onClose }: ServiceDetailProps) {
           {/* Header image */}
           <div className="flex h-52 items-center justify-center bg-[#0A0F1A] border-b border-[#1E293B] overflow-hidden">
             {servicio.foto ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={servicio.foto}
                 alt={servicio.titulo}
@@ -302,6 +303,7 @@ export function ServiceDetail({ servicio, onClose }: ServiceDetailProps) {
             {/* Provider */}
             <div className="flex items-center gap-3 p-4 rounded-xl bg-[#0A0F1A] border border-[#1E293B] mb-5">
               {servicio.fotoPrestador ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={servicio.fotoPrestador}
                   alt={servicio.nombrePrestador}

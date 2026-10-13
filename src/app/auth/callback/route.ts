@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     | undefined;
   const next = searchParams.get("next") ?? "/";
 
-  let supabaseResponse = NextResponse.redirect(`${origin}${next}`);
+  const supabaseResponse = NextResponse.redirect(`${origin}${next}`);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

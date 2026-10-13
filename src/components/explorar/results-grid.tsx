@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { SearchX } from "lucide-react";
 import { type Servicio } from "@/lib/mock-services";
 import { dbFetchServices } from "@/lib/db";
-import { isSupabaseConfigured } from "@/lib/supabase";
 import type { SortOption } from "./sort-bar";
 import { ServiceCard } from "./service-card";
 

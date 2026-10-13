@@ -281,6 +281,7 @@ export default function PerfilPage() {
               <label className="relative group cursor-pointer">
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1E293B] overflow-hidden">
                   {foto ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={foto} alt="Perfil" className="h-full w-full object-cover" />
                   ) : (
                     <User size={32} className="text-[#64748B]" />

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Users, Dog, Car, Wrench, Package, ShoppingBag } from "lucide-react";
-import Link from "next/link";
 import { RegisterModal } from "./register-modal";
 
 const examples = [
@@ -112,7 +111,11 @@ export function Hero() {
         </div>
       </div>
 
-      <RegisterModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <RegisterModal
+        key={modalOpen ? "open" : "closed"}
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </section>
   );
 }

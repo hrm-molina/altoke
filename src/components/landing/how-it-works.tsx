@@ -1,17 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Briefcase, 
-  User, 
-  CheckCircle2, 
-  Sparkles, 
-  MapPin, 
-  ShieldCheck, 
-  PhoneCall, 
-  ArrowRight,
-  Star
-} from "lucide-react";
+import { Briefcase, User, ArrowRight } from "lucide-react";
 import { RegisterModal } from "./register-modal";
 
 export function HowItWorks() {
@@ -211,7 +201,7 @@ export function HowItWorks() {
       </div>
 
       <RegisterModal
-        key={registerTipo}
+        key={`${registerTipo}-${registerOpen ? "open" : "closed"}`}
         isOpen={registerOpen}
         onClose={() => setRegisterOpen(false)}
         defaultTipo={registerTipo}

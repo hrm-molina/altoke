@@ -73,6 +73,7 @@ export function ServiceCard({ servicio, onClick }: ServiceCardProps) {
       {/* Image / Photo */}
       <div className="mb-4 flex h-40 items-center justify-center rounded-xl bg-[#0A0F1A] border border-[#1E293B] overflow-hidden">
         {servicio.foto ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={servicio.foto}
             alt={servicio.titulo}

@@ -45,7 +45,7 @@ const categoryEmojis: Record<string, string> = {
   Otros: "⚡",
 };
 
-export function AlertsList() {
+export function AlertsList({ onRated }: { onRated?: () => void } = {}) {
   const [alerts, setAlerts] = useState<AlertEntry[]>(() => getAlerts());
   const [mounted] = useState(() => typeof window !== "undefined");
   const [confirmedAlerts, setConfirmedAlerts] = useState<Record<string, boolean>>({});
@@ -120,6 +120,7 @@ export function AlertsList() {
   const handleRated = () => {
     setAlerts(getAlerts());
     window.dispatchEvent(new Event("storage"));
+    onRated?.();
   };
 
   const allServices = getAllServices();

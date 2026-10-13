@@ -9,12 +9,13 @@ import { PasswordInput } from "@/components/ui/password-input";
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToRegister?: () => void;
+  onSwitchToRegister?: (tipo?: "usuario" | "prestador") => void;
   defaultTipo?: "usuario" | "prestador";
 }
 
 export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }: LoginModalProps) {
   const router = useRouter();
+  const [tipo, setTipo] = useState<"usuario" | "prestador">(() => defaultTipo || "usuario");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -87,11 +88,10 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         return;
       }
 
-      // Si tiene ambos perfiles, entrar con el rol del modal desde el que
-      // inició sesión (si abrió "Iniciar sesión como prestador", entra a prestador).
+      // Si tiene ambos perfiles, entrar con el rol del modal seleccionado (tipo).
       const currentRole: "usuario" | "prestador" =
         hasUsuario && hasPrestador
-          ? defaultTipo || "usuario"
+          ? tipo
           : hasPrestador
             ? "prestador"
             : "usuario";
@@ -189,19 +189,41 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
           </div>
         </div>
 
-        <h2 id="login-title" className="text-xl font-bold text-[#F1F5F9] text-center mb-2">
-          {defaultTipo === "prestador"
+        {/* Role Toggle Selector */}
+        <div className="flex rounded-xl bg-[#0A0F1A] border border-[#1E293B] p-1 mb-5">
+          <button
+            type="button"
+            onClick={() => setTipo("usuario")}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+              tipo === "usuario"
+                ? "bg-blue-600 text-white shadow"
+                : "text-[#94A3B8] hover:text-[#F1F5F9]"
+            }`}
+          >
+            Soy Usuario
+          </button>
+          <button
+            type="button"
+            onClick={() => setTipo("prestador")}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+              tipo === "prestador"
+                ? "bg-blue-600 text-white shadow"
+                : "text-[#94A3B8] hover:text-[#F1F5F9]"
+            }`}
+          >
+            Soy Prestador
+          </button>
+        </div>
+
+        <h2 id="login-title" className="text-xl font-bold text-[#F1F5F9] text-center mb-1">
+          {tipo === "prestador"
             ? "Iniciar sesión como prestador"
-            : defaultTipo === "usuario"
-              ? "Iniciar sesión como usuario"
-              : "Iniciar sesión"}
+            : "Iniciar sesión como usuario"}
         </h2>
-        <p className="text-sm text-[#94A3B8] text-center mb-8">
-          {defaultTipo === "prestador"
-            ? "Ingresa para gestionar tu servicio"
-            : defaultTipo === "usuario"
-              ? "Ingresa para buscar y contratar servicios"
-              : "Ingresa a tu cuenta de AlTokeChile"}
+        <p className="text-sm text-[#94A3B8] text-center mb-6">
+          {tipo === "prestador"
+            ? "Ingresa para gestionar y ofrecer tus servicios"
+            : "Ingresa para buscar y contratar servicios"}
         </p>
 
         {error && (
@@ -292,11 +314,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
             type="button"
             onClick={() => {
               resetAndClose();
-              onSwitchToRegister?.();
+              onSwitchToRegister?.(tipo);
             }}
-            className="text-blue-400 hover:underline"
+            className="text-blue-400 hover:underline font-semibold"
           >
-            Regístrate acá
+            Regístrate como {tipo === "prestador" ? "prestador" : "usuario"}
           </button>
         </p>
 

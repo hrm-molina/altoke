@@ -606,14 +606,36 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
           {/* PASO 2: Email y contraseña */}
           {!success && step === 2 && (
             <div>
-              <h2 className="text-xl font-bold text-[#F1F5F9] text-center mb-2">
+              <h2 className="text-xl font-bold text-[#F1F5F9] text-center mb-1">
                 Crear cuenta
               </h2>
-              <p className="text-sm text-[#94A3B8] text-center mb-8">
+              <p className="text-sm text-[#94A3B8] text-center mb-6">
                 {userType === "prestador"
-                  ? "Registrate para ofrecer tus servicios"
-                  : "Registrate para buscar servicios"}
+                  ? "Regístrate para ofrecer tus servicios en AlTokeChile"
+                  : "Regístrate para buscar y contratar servicios"}
               </p>
+
+              {/* Role Indicator and Toggle */}
+              <div className="flex items-center justify-between mb-6 px-4 py-3 rounded-xl bg-[#0A0F1A] border border-[#1E293B]">
+                <div className="flex items-center gap-2.5">
+                  <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${userType === "prestador" ? "bg-blue-600/20 text-blue-400" : "bg-cyan-500/20 text-cyan-400"}`}>
+                    {userType === "prestador" ? <Briefcase size={14} /> : <User size={14} />}
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-[#64748B] block">Rol seleccionado</span>
+                    <span className="text-xs font-bold text-[#F1F5F9]">
+                      {userType === "prestador" ? "Prestador de servicios" : "Usuario (contratar servicios)"}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUserType((prev) => (prev === "prestador" ? "usuario" : "prestador"))}
+                  className="text-xs font-semibold text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                >
+                  Cambiar a {userType === "prestador" ? "Usuario" : "Prestador"}
+                </button>
+              </div>
 
               <div className="space-y-4">
                 <div>
