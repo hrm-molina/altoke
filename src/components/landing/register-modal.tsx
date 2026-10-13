@@ -139,16 +139,23 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       }
 
       // Si el email ya está registrado bajo el otro rol, validar la contraseña ingresada
+      // USANDO el endpoint del servidor (aislado) para NO iniciar sesión en el navegador
+      // antes de que el usuario decida completar y confirmar el registro.
       if (result.existsInOtherRole) {
-        const { error: signInError } = await supabaseAuth.auth.signInWithPassword({
-          email: form.email.trim().toLowerCase(),
-          password: form.password,
+        const verifyRes = await fetch("/api/auth/verify-credentials", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: form.email.trim().toLowerCase(),
+            password: form.password,
+          }),
         });
+        const verifyData = await verifyRes.json();
 
-        if (signInError) {
+        if (!verifyRes.ok || !verifyData.valid) {
           setErrors((prev) => ({
             ...prev,
-            password: `Este correo ya tiene cuenta como ${result.otherRole}. Ingresa la contraseña de esa cuenta para vincular tu perfil de ${userType}.`,
+            password: `Este correo ya tiene cuenta como ${result.otherRole}. Ingresa la contraseña correcta de esa cuenta para vincular tu perfil de ${userType}.`,
           }));
           setCheckingEmail(false);
           return;
