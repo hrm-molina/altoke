@@ -224,29 +224,47 @@ export async function dbFetchReviews(servicioId?: string): Promise<DbReview[]> {
   return [];
 }
 
-export async function dbFetchReviewsByPrestador(emailPrestador: string): Promise<DbReview[]> {
+export async function dbFetchReviewsByPrestador(emailPrestador?: string, prestadorId?: string): Promise<DbReview[]> {
   if (supabase && isSupabaseConfigured) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("calificaciones")
         .select("*")
-        .ilike("email_prestador", emailPrestador)
         .order("fecha", { ascending: false });
 
+      if (emailPrestador && prestadorId) {
+        query = query.or(`email_prestador.ilike.${emailPrestador.trim()},servicio_id.eq.${prestadorId}`);
+      } else if (emailPrestador) {
+        query = query.ilike("email_prestador", emailPrestador.trim());
+      } else if (prestadorId) {
+        query = query.eq("servicio_id", prestadorId);
+      }
+
+      const { data, error } = await query;
+
       if (!error && data) {
-        return data.map((r) => ({
-          id: r.id,
-          servicioId: r.servicio_id,
-          clienteId: r.cliente_id,
-          tituloServicio: r.titulo_servicio,
-          nombreCliente: r.nombre_cliente,
-          emailCliente: r.email_cliente,
-          nombrePrestador: r.nombre_prestador,
-          emailPrestador: r.email_prestador,
-          calificacion: r.calificacion,
-          resena: r.resena,
-          fecha: r.fecha,
-        }));
+        const seen = new Set<string>();
+        const unique: DbReview[] = [];
+        for (const r of data) {
+          const key = r.id || `${r.email_cliente || r.nombre_cliente}-${r.titulo_servicio}-${r.calificacion}-${r.resena}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            unique.push({
+              id: r.id,
+              servicioId: r.servicio_id,
+              clienteId: r.cliente_id,
+              tituloServicio: r.titulo_servicio,
+              nombreCliente: r.nombre_cliente,
+              emailCliente: r.email_cliente,
+              nombrePrestador: r.nombre_prestador,
+              emailPrestador: r.email_prestador,
+              calificacion: r.calificacion,
+              resena: r.resena,
+              fecha: r.fecha,
+            });
+          }
+        }
+        return unique;
       }
     } catch (e) {
       console.warn("Error consultando calificaciones del prestador:", e);

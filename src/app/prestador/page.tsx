@@ -107,7 +107,21 @@ interface PrestadorJob {
 function getPrestadorJobs(): PrestadorJob[] {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem("altoke_prestador_jobs") || "[]");
+    const raw = JSON.parse(localStorage.getItem("altoke_prestador_jobs") || "[]");
+    if (!Array.isArray(raw)) return [];
+    const seen = new Set<string>();
+    const unique: PrestadorJob[] = [];
+    for (const j of raw) {
+      const key = `${(j.nombreCliente || "").toLowerCase().trim()}-${(j.tituloServicio || "").toLowerCase().trim()}-${j.calificacion}-${(j.resena || "").trim()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(j);
+      }
+    }
+    if (unique.length !== raw.length) {
+      localStorage.setItem("altoke_prestador_jobs", JSON.stringify(unique));
+    }
+    return unique;
   } catch {
     return [];
   }
@@ -191,17 +205,45 @@ export default function PrestadorPage() {
   const [dbReviews, setDbReviews] = useState<DbReview[]>([]);
 
   const reviewsToShow = useMemo(() => {
-    if (dbReviews && dbReviews.length > 0) {
-      return dbReviews;
+    interface DisplayReview {
+      id?: string;
+      tituloServicio?: string;
+      nombreCliente?: string;
+      calificacion: number;
+      resena?: string;
+      fecha?: string;
     }
-    return jobs.map((j) => ({
-      id: j.servicioId,
-      tituloServicio: j.tituloServicio,
-      nombreCliente: j.nombreCliente,
-      calificacion: j.calificacion,
-      resena: j.resena,
-      fecha: j.fecha,
-    }));
+
+    const rawList: DisplayReview[] = dbReviews && dbReviews.length > 0
+      ? dbReviews.map((r) => ({
+          id: r.id,
+          tituloServicio: r.tituloServicio || r.titulo_servicio,
+          nombreCliente: r.nombreCliente || r.nombre_cliente,
+          calificacion: r.calificacion,
+          resena: r.resena,
+          fecha: r.fecha,
+        }))
+      : jobs.map((j, idx) => ({
+          id: `job-${j.servicioId || idx}-${j.fecha || idx}`,
+          tituloServicio: j.tituloServicio,
+          nombreCliente: j.nombreCliente,
+          calificacion: j.calificacion,
+          resena: j.resena,
+          fecha: j.fecha,
+        }));
+
+    const seen = new Set<string>();
+    const unique: DisplayReview[] = [];
+    for (const r of rawList) {
+      const key = r.id && !r.id.startsWith("job-")
+        ? r.id
+        : `${(r.nombreCliente || "").toLowerCase().trim()}-${(r.tituloServicio || "").toLowerCase().trim()}-${r.calificacion}-${(r.resena || "").trim()}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(r);
+      }
+    }
+    return unique;
   }, [dbReviews, jobs]);
 
   useEffect(() => {
@@ -304,9 +346,11 @@ export default function PrestadorPage() {
         }).catch(() => {});
       }
 
-      // Cargar reseñas desde Supabase
-      if (session.user.email) {
-        dbFetchReviewsByPrestador(session.user.email).then(setDbReviews).catch(() => {});
+      // Cargar reseñas desde Supabase deduplicadas
+      if (session.user.email || userData.id) {
+        dbFetchReviewsByPrestador(session.user.email, userData.id)
+          .then(setDbReviews)
+          .catch(() => {});
       }
       // Cargar servicio desde Supabase y actualizar formulario
       if (session.user.id) {
@@ -991,7 +1035,7 @@ export default function PrestadorPage() {
               <div className="space-y-4">
                 {reviewsToShow.map((review, idx) => (
                   <div
-                    key={`review-${review.id || idx}`}
+                    key={`prestador-review-${review.id || `${idx}-${review.fecha || ""}-${review.calificacion}`}`}
                     className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] p-5"
                   >
                     <div className="flex items-start justify-between gap-4">

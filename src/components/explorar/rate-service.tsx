@@ -21,7 +21,16 @@ function getHistory(): Record<string, unknown>[] {
 
 function saveHistory(entry: Record<string, unknown>) {
   const history = getHistory();
-  history.push(entry);
+  const idx = history.findIndex(
+    (h) =>
+      h.servicioId === entry.servicioId ||
+      (h.tituloServicio === entry.tituloServicio && h.nombrePrestador === entry.nombrePrestador)
+  );
+  if (idx !== -1) {
+    history[idx] = entry;
+  } else {
+    history.unshift(entry);
+  }
   localStorage.setItem("altoke_history", JSON.stringify(history));
 }
 
@@ -36,7 +45,17 @@ function getPrestadorJobs(): Record<string, unknown>[] {
 
 function savePrestadorJob(entry: Record<string, unknown>) {
   const jobs = getPrestadorJobs();
-  jobs.push(entry);
+  const idx = jobs.findIndex(
+    (j) =>
+      (j.servicioId === entry.servicioId || j.tituloServicio === entry.tituloServicio) &&
+      j.nombreCliente === entry.nombreCliente &&
+      j.nombrePrestador === entry.nombrePrestador
+  );
+  if (idx !== -1) {
+    jobs[idx] = entry;
+  } else {
+    jobs.unshift(entry);
+  }
   localStorage.setItem("altoke_prestador_jobs", JSON.stringify(jobs));
 }
 
