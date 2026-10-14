@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X, Zap, LogOut, History, Bell, Compass } from "lucide-react";
+import { Menu, X, Zap, LogOut, History, Bell, Compass, User, Briefcase, UserPlus } from "lucide-react";
 import { LoginModal } from "./login-modal";
 import { RegisterModal } from "./register-modal";
 import { supabaseAuth, onAuthStateChange, type AuthUser } from "@/lib/supabase-auth";
@@ -258,14 +258,45 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={mobileOpen ? "Cerrar menú principal" : "Abrir menú principal"}
-            className="text-[#94A3B8] hover:text-[#F1F5F9] md:hidden p-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          {/* Mobile Right Action Area */}
+          <div className="flex items-center gap-2 md:hidden">
+            {session ? (
+              <Link
+                href={session.tipo === "prestador" ? "/prestador" : "/perfil"}
+                className="flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 pl-1.5 pr-3 py-1 text-xs font-semibold text-[#F1F5F9] active:scale-95 transition-all"
+              >
+                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${session.tipo === "prestador" ? "bg-gradient-to-br from-blue-600 to-blue-500" : "bg-emerald-600"}`}>
+                  {session.nombre?.charAt(0).toUpperCase() || (session.tipo === "prestador" ? "P" : "U")}
+                </div>
+                <span className="max-w-[85px] truncate">
+                  {session.nombre ? session.nombre.split(" ")[0] : (session.tipo === "prestador" ? "Prestador" : "Mi cuenta")}
+                </span>
+              </Link>
+            ) : (
+              <button
+                onClick={() => {
+                  setLoginTipo("usuario");
+                  setRegisterTipo("usuario");
+                  setLoginOpen(true);
+                }}
+                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 active:scale-95 transition-all btn-glow"
+              >
+                <User size={13} />
+                <span>Ingresar</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Cerrar menú principal" : "Abrir menú principal"}
+              className="relative text-[#94A3B8] hover:text-[#F1F5F9] p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg active:bg-[#1E293B]/50 transition-colors"
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+              {alertCount > 0 && !mobileOpen && (
+                <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#06080F]" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Drawer */}
@@ -274,24 +305,51 @@ export function Navbar() {
             <div className="flex flex-col gap-3">
               {session ? (
                 <>
-                  {pathname === "/prestador" || session.tipo === "prestador" ? (
-                    <>
-                      <div className="flex items-center gap-3 px-1 py-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-sm font-bold text-white shadow-sm">
-                          {session.nombre?.charAt(0) || "P"}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-[#F1F5F9]">
-                            {session.nombre || "Prestador"}
-                          </p>
-                          <p className="text-xs text-[#64748B]">{session.email}</p>
+                  {/* Account Header Card */}
+                  <div className="rounded-2xl border border-[#1E293B] bg-[#0A0F1A] p-4 mb-1">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-bold text-white shadow-md ${session.tipo === "prestador" ? "bg-gradient-to-br from-blue-600 to-blue-500" : "bg-emerald-600"}`}>
+                        {session.nombre?.charAt(0).toUpperCase() || (session.tipo === "prestador" ? "P" : "U")}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-[#F1F5F9] truncate">
+                          {session.nombre || (session.tipo === "prestador" ? "Prestador" : "Usuario")}
+                        </p>
+                        <p className="text-xs text-[#64748B] truncate">{session.email}</p>
+                        <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                          {session.tipo === "prestador" ? "⭐ Prestador activo" : "👤 Usuario cliente"}
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {pathname === "/prestador" || session.tipo === "prestador" ? (
+                    <>
+                      <Link
+                        href="/prestador"
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-center text-sm font-semibold transition-all ${
+                          pathname === "/prestador"
+                            ? "bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/20"
+                            : "border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] hover:border-[#334155]"
+                        }`}
+                      >
+                        <Briefcase size={16} />
+                        Mi panel de prestador
+                      </Link>
+                      <Link
+                        href="/explorar"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      >
+                        <Compass size={16} />
+                        Explorar servicios
+                      </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all"
+                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all mt-1"
                       >
-                        <LogOut size={15} />
+                        <LogOut size={16} />
                         Cerrar sesión
                       </button>
                     </>
@@ -300,35 +358,32 @@ export function Navbar() {
                       <Link
                         href="/perfil"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center gap-3 px-1 py-2 hover:opacity-80 transition-opacity"
+                        className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-center text-sm font-semibold transition-all ${
+                          pathname === "/perfil"
+                            ? "bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/20"
+                            : "border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] hover:border-[#334155]"
+                        }`}
                       >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1E293B] text-sm font-bold text-[#94A3B8]">
-                          {session.nombre?.charAt(0) || "U"}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-[#F1F5F9]">
-                            {session.nombre || "Usuario"}
-                          </p>
-                          <p className="text-xs text-[#64748B]">{session.email}</p>
-                        </div>
+                        <User size={16} />
+                        Mi Perfil
                       </Link>
                       <Link
                         href="/explorar"
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
                       >
-                        <Compass size={15} />
-                        Explorar
+                        <Compass size={16} />
+                        Explorar servicios
                       </Link>
                       <Link
                         href="/explorar?tab=alertas"
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all relative"
                       >
-                        <Bell size={15} />
+                        <Bell size={16} />
                         Alertas
                         {alertCount > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ml-1">
                             {alertCount}
                           </span>
                         )}
@@ -338,31 +393,61 @@ export function Navbar() {
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
                       >
-                        <History size={15} />
+                        <History size={16} />
                         Historial
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all"
+                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all mt-1"
                       >
-                        <LogOut size={15} />
+                        <LogOut size={16} />
                         Cerrar sesión
                       </button>
                     </>
                   )}
                 </>
               ) : (
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    setLoginTipo("usuario");
-                    setRegisterTipo("usuario");
-                    setLoginOpen(true);
-                  }}
-                  className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-center text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
-                >
-                  Iniciar sesión
-                </button>
+                <>
+                  <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 text-center mb-1">
+                    <p className="text-sm font-semibold text-[#F1F5F9] mb-1">
+                      Accede a tu cuenta en AlToke
+                    </p>
+                    <p className="text-xs text-[#94A3B8]">
+                      Inicia sesión para contratar servicios o gestionar tus trabajos
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setLoginTipo("usuario");
+                      setRegisterTipo("usuario");
+                      setLoginOpen(true);
+                    }}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-blue-500/25 hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                  >
+                    <User size={16} />
+                    Iniciar sesión
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setRegisterTipo("usuario");
+                      setRegisterOpen(true);
+                    }}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#F1F5F9] hover:border-blue-500/50 hover:bg-blue-500/10 transition-all"
+                  >
+                    <UserPlus size={16} />
+                    Crear cuenta / Registrarse
+                  </button>
+                  <Link
+                    href="/explorar"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 py-2 text-center text-xs text-[#64748B] hover:text-[#94A3B8] transition-colors"
+                  >
+                    <Compass size={14} />
+                    Explorar servicios sin cuenta
+                  </Link>
+                </>
               )}
             </div>
           </div>
