@@ -152,7 +152,7 @@ export async function dbAddReview(review: DbReview): Promise<boolean> {
 
       if (!targetServiceId || !targetServiceId.includes("-") || targetServiceId.startsWith("provider-")) {
         const { data: svcFound } = await supabase
-        .from("prestador")
+          .from("prestadores_publicos")
           .select("id")
           .eq("servicios", review.titulo_servicio || review.tituloServicio || "")
           .limit(1);
