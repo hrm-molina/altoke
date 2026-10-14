@@ -67,9 +67,8 @@ export async function dbFetchServices(): Promise<Servicio[]> {
   if (supabase && isSupabaseConfigured) {
     try {
       const { data, error } = await supabase
-        .from("prestador")
+        .from("prestadores_publicos")
         .select("*")
-        .eq("activo", true)
         .order("fecha_registro", { ascending: false });
 
       if (!error && data) {
