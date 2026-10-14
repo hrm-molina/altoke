@@ -181,14 +181,17 @@ export function Navbar() {
               <div className="flex items-center gap-5 ml-4">
                 {pathname === "/prestador" || session.tipo === "prestador" ? (
                   <>
-                    <div className="flex items-center gap-2.5">
+                    <Link
+                      href="/prestador"
+                      className="flex items-center gap-2.5 hover:opacity-85 transition-opacity"
+                    >
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-xs font-bold text-white shadow-sm">
                         {session.nombre?.charAt(0) || "P"}
                       </div>
                       <span className="text-sm font-semibold text-[#F1F5F9]">
                         {session.nombre || session.email}
                       </span>
-                    </div>
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
@@ -226,7 +229,7 @@ export function Navbar() {
                       Historial
                     </Link>
                     <Link
-                      href="/perfil"
+                      href="/explorar"
                       className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                     >
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
@@ -262,14 +265,14 @@ export function Navbar() {
           <div className="flex items-center gap-2 md:hidden">
             {session ? (
               <Link
-                href={session.tipo === "prestador" ? "/prestador" : "/perfil"}
+                href={session.tipo === "prestador" ? "/prestador" : "/explorar"}
                 className="flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 pl-1.5 pr-3 py-1 text-xs font-semibold text-[#F1F5F9] active:scale-95 transition-all"
               >
                 <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${session.tipo === "prestador" ? "bg-gradient-to-br from-blue-600 to-blue-500" : "bg-emerald-600"}`}>
                   {session.nombre?.charAt(0).toUpperCase() || (session.tipo === "prestador" ? "P" : "U")}
                 </div>
                 <span className="max-w-[85px] truncate">
-                  {session.nombre ? session.nombre.split(" ")[0] : (session.tipo === "prestador" ? "Prestador" : "Mi cuenta")}
+                  {session.nombre ? session.nombre.split(" ")[0] : (session.tipo === "prestador" ? "Prestador" : "Explorar")}
                 </span>
               </Link>
             ) : (
@@ -306,7 +309,11 @@ export function Navbar() {
               {session ? (
                 <>
                   {/* Account Header Card */}
-                  <div className="rounded-2xl border border-[#1E293B] bg-[#0A0F1A] p-4 mb-1">
+                  <Link
+                    href={session.tipo === "prestador" ? "/prestador" : "/explorar"}
+                    onClick={() => setMobileOpen(false)}
+                    className="rounded-2xl border border-[#1E293B] bg-[#0A0F1A] p-4 mb-1 hover:border-blue-500/40 transition-colors block"
+                  >
                     <div className="flex items-center gap-3">
                       <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-bold text-white shadow-md ${session.tipo === "prestador" ? "bg-gradient-to-br from-blue-600 to-blue-500" : "bg-emerald-600"}`}>
                         {session.nombre?.charAt(0).toUpperCase() || (session.tipo === "prestador" ? "P" : "U")}
@@ -321,7 +328,7 @@ export function Navbar() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Link>
 
                   {pathname === "/prestador" || session.tipo === "prestador" ? (
                     <>
