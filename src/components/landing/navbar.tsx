@@ -189,6 +189,7 @@ export function Navbar() {
                         {session.nombre?.charAt(0) || "P"}
                       </div>
                       <span className="text-sm font-semibold text-[#F1F5F9]">
+                        <span className="text-[#94A3B8] font-normal">Bienvenido(a) </span>
                         {session.nombre || session.email}
                       </span>
                     </Link>
@@ -236,7 +237,7 @@ export function Navbar() {
                         {session.nombre?.charAt(0) || "U"}
                       </div>
                       <span className="text-sm text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">
-                        {session.nombre || session.email}
+                        Bienvenido(a) {session.nombre || session.email}
                       </span>
                     </Link>
                     <button
@@ -271,8 +272,8 @@ export function Navbar() {
                 <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${session.tipo === "prestador" ? "bg-gradient-to-br from-blue-600 to-blue-500" : "bg-emerald-600"}`}>
                   {session.nombre?.charAt(0).toUpperCase() || (session.tipo === "prestador" ? "P" : "U")}
                 </div>
-                <span className="max-w-[85px] truncate">
-                  {session.nombre ? session.nombre.split(" ")[0] : (session.tipo === "prestador" ? "Prestador" : "Explorar")}
+                <span className="max-w-[140px] truncate">
+                  Bienvenido(a) {session.nombre ? session.nombre.split(" ")[0] : (session.tipo === "prestador" ? "Prestador" : "Usuario")}
                 </span>
               </Link>
             ) : (
@@ -320,7 +321,7 @@ export function Navbar() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-[#F1F5F9] truncate">
-                          {session.nombre || (session.tipo === "prestador" ? "Prestador" : "Usuario")}
+                          Bienvenido(a) {session.nombre || (session.tipo === "prestador" ? "Prestador" : "Usuario")}
                         </p>
                         <p className="text-xs text-[#64748B] truncate">{session.email}</p>
                         <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
