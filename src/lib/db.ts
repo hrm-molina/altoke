@@ -231,12 +231,15 @@ export async function dbFetchReviewsByPrestador(emailPrestador?: string, prestad
         .select("*")
         .order("fecha", { ascending: false });
 
-      if (emailPrestador && prestadorId) {
-        query = query.or(`email_prestador.ilike.${emailPrestador.trim()},servicio_id.eq.${prestadorId}`);
-      } else if (emailPrestador) {
-        query = query.ilike("email_prestador", emailPrestador.trim());
-      } else if (prestadorId) {
-        query = query.eq("servicio_id", prestadorId);
+      const cleanEmail = emailPrestador ? emailPrestador.trim().toLowerCase() : undefined;
+      const cleanId = prestadorId ? prestadorId.replace("provider-", "").trim() : undefined;
+
+      if (cleanEmail && cleanId) {
+        query = query.or(`email_prestador.ilike.${cleanEmail},servicio_id.eq.${cleanId}`);
+      } else if (cleanEmail) {
+        query = query.ilike("email_prestador", cleanEmail);
+      } else if (cleanId) {
+        query = query.eq("servicio_id", cleanId);
       }
 
       const { data, error } = await query;
@@ -267,6 +270,60 @@ export async function dbFetchReviewsByPrestador(emailPrestador?: string, prestad
       }
     } catch (e) {
       console.warn("Error consultando calificaciones del prestador:", e);
+    }
+  }
+  return [];
+}
+
+export async function dbFetchReviewsByCliente(emailCliente?: string, clienteId?: string): Promise<DbReview[]> {
+  if (supabase && isSupabaseConfigured) {
+    try {
+      let query = supabase
+        .from("calificaciones")
+        .select("*")
+        .order("fecha", { ascending: false });
+
+      const cleanEmail = emailCliente ? emailCliente.trim().toLowerCase() : undefined;
+      const cleanId = clienteId ? clienteId.replace("provider-", "").trim() : undefined;
+
+      if (cleanEmail && cleanId) {
+        query = query.or(`email_cliente.ilike.${cleanEmail},cliente_id.eq.${cleanId}`);
+      } else if (cleanEmail) {
+        query = query.ilike("email_cliente", cleanEmail);
+      } else if (cleanId) {
+        query = query.eq("cliente_id", cleanId);
+      } else {
+        return [];
+      }
+
+      const { data, error } = await query;
+
+      if (!error && data) {
+        const seen = new Set<string>();
+        const unique: DbReview[] = [];
+        for (const r of data) {
+          const key = r.id || `${r.email_cliente || r.nombre_cliente}-${r.titulo_servicio}-${r.calificacion}-${r.resena}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            unique.push({
+              id: r.id,
+              servicioId: r.servicio_id,
+              clienteId: r.cliente_id,
+              tituloServicio: r.titulo_servicio,
+              nombreCliente: r.nombre_cliente,
+              emailCliente: r.email_cliente,
+              nombrePrestador: r.nombre_prestador,
+              emailPrestador: r.email_prestador,
+              calificacion: r.calificacion,
+              resena: r.resena,
+              fecha: r.fecha,
+            });
+          }
+        }
+        return unique;
+      }
+    } catch (e) {
+      console.warn("Error consultando calificaciones del cliente:", e);
     }
   }
   return [];

@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Star, Clock, Trash2, History } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Star, Clock, Trash2, History, Loader2 } from "lucide-react";
+import { dbFetchReviewsByCliente } from "@/lib/db";
+import { supabaseAuth } from "@/lib/supabase-auth";
+import { getAllServices } from "@/lib/mock-services";
 
 interface HistoryEntry {
   servicioId: string;
@@ -61,11 +64,103 @@ const categoryEmojis: Record<string, string> = {
 
 export function HistoryList() {
   const [history, setHistory] = useState<HistoryEntry[]>(() => getHistory());
+  const [loading, setLoading] = useState(true);
   const [mounted] = useState(() => typeof window !== "undefined");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRemote = async () => {
+      let email = "";
+      let id = "";
+      try {
+        const raw = localStorage.getItem("altoke_session");
+        if (raw) {
+          const s = JSON.parse(raw);
+          email = s.email || "";
+          id = s.id || "";
+        }
+      } catch {}
+
+      if (!email && supabaseAuth) {
+        try {
+          const { data } = await supabaseAuth.auth.getSession();
+          if (data.session?.user) {
+            email = data.session.user.email || "";
+            id = data.session.user.id || "";
+          }
+        } catch {}
+      }
+
+      if (email || id) {
+        try {
+          const remote = await dbFetchReviewsByCliente(email, id);
+          if (!cancelled && remote.length > 0) {
+            const allServices = getAllServices();
+            setHistory((prevLocal) => {
+              const mappedRemote: HistoryEntry[] = remote.map((r) => {
+                const matchedSvc = allServices.find(
+                  (s) =>
+                    s.id === r.servicioId ||
+                    s.id.replace("provider-", "") === (r.servicioId || "").replace("provider-", "") ||
+                    (s.titulo && r.tituloServicio && s.titulo.toLowerCase() === r.tituloServicio.toLowerCase())
+                );
+                return {
+                  servicioId: r.servicioId || r.id || "",
+                  tituloServicio: r.tituloServicio || "Servicio",
+                  nombrePrestador: r.nombrePrestador || matchedSvc?.nombrePrestador || "Prestador",
+                  categoria: matchedSvc?.categoria || "Otros",
+                  comuna: matchedSvc?.comuna || "",
+                  calificacion: r.calificacion,
+                  resena: r.resena || "",
+                  fecha: r.fecha || new Date().toISOString(),
+                };
+              });
+
+              const seen = new Set<string>();
+              const merged: HistoryEntry[] = [];
+
+              for (const item of mappedRemote) {
+                const key = `${(item.tituloServicio || "").toLowerCase().trim()}-${(item.nombrePrestador || "").toLowerCase().trim()}-${item.calificacion}-${(item.resena || "").trim()}`;
+                if (!seen.has(key)) {
+                  seen.add(key);
+                  merged.push(item);
+                }
+              }
+
+              for (const item of prevLocal) {
+                const key = `${(item.tituloServicio || "").toLowerCase().trim()}-${(item.nombrePrestador || "").toLowerCase().trim()}-${item.calificacion}-${(item.resena || "").trim()}`;
+                if (!seen.has(key)) {
+                  seen.add(key);
+                  merged.push(item);
+                }
+              }
+
+              try {
+                localStorage.setItem("altoke_history", JSON.stringify(merged));
+              } catch {}
+
+              return merged;
+            });
+          }
+        } catch {}
+      }
+
+      if (!cancelled) {
+        setLoading(false);
+      }
+    };
+
+    loadRemote();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!mounted) return null;
 
-  if (history.length === 0) {
+  if (history.length === 0 && !loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#0A0F1A] border border-[#1E293B]">
@@ -88,6 +183,12 @@ export function HistoryList() {
 
   return (
     <div className="space-y-4">
+      {loading && history.length === 0 && (
+        <div className="flex items-center justify-center py-12 text-[#94A3B8] gap-2">
+          <Loader2 size={18} className="animate-spin text-blue-400" />
+          <span className="text-sm">Cargando historial...</span>
+        </div>
+      )}
       {history.map((entry) => (
         <div
           key={`${entry.servicioId}-${entry.fecha}`}

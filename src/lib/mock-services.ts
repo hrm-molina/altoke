@@ -243,30 +243,17 @@ export function isSelfRatingCheck(servicio: {
           return true;
         }
         const cleanSvcPhone = String(matchingCustom.telefono || "").replace(/\D/g, "");
-        if (cleanSvcPhone && myPhones.has(cleanSvcPhone)) {
-          return true;
-        }
-        const cleanSvcName = String(matchingCustom.nombrePrestador || "").trim().toLowerCase();
-        if (cleanSvcName && myNames.has(cleanSvcName)) {
+        if (cleanSvcPhone && cleanSvcPhone.length >= 8 && myPhones.has(cleanSvcPhone)) {
           return true;
         }
       }
     }
   } catch {}
 
-  // 5. Coincidencia por teléfono (si tiene cuenta de prestador o coincide con cuenta)
+  // 5. Coincidencia por teléfono (estricto de al menos 8 dígitos coincidentes)
   const cleanPhone = String(servicio.telefono || "").replace(/\D/g, "");
-  if (cleanPhone && myPhones.has(cleanPhone)) {
+  if (cleanPhone && cleanPhone.length >= 8 && myPhones.has(cleanPhone)) {
     return true;
-  }
-
-  // 6. Coincidencia por nombre del prestador si el usuario tiene una cuenta de prestador con ese mismo correo
-  const sName = String(servicio.nombrePrestador || "").trim().toLowerCase();
-  if (sName && myNames.has(sName)) {
-    const hasPrestadorAccount = myAccounts.some((a) => a.tipo === "prestador");
-    if (hasPrestadorAccount) {
-      return true;
-    }
   }
 
   return false;

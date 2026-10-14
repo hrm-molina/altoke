@@ -65,12 +65,29 @@ function ReviewsModal({
     let cancelled = false;
     dbFetchReviews().then((remote) => {
       if (cancelled) return;
-      const matched = remote.filter(
-        (r) =>
-          r.servicioId === servicio.id ||
-          (servicio.emailPrestador && r.emailPrestador && r.emailPrestador.toLowerCase() === servicio.emailPrestador.toLowerCase()) ||
-          (r.tituloServicio && servicio.titulo && r.tituloServicio.toLowerCase() === servicio.titulo.toLowerCase() && r.nombrePrestador === servicio.nombrePrestador)
-      );
+      const cleanSvcId = (servicio.id || "").replace("provider-", "").trim().toLowerCase();
+      const matched = remote.filter((r) => {
+        const rCleanId = (r.servicioId || "").replace("provider-", "").trim().toLowerCase();
+        if (cleanSvcId && rCleanId && (cleanSvcId === rCleanId || r.servicioId === servicio.id)) {
+          return true;
+        }
+        if (
+          servicio.emailPrestador &&
+          r.emailPrestador &&
+          r.emailPrestador.trim().toLowerCase() === servicio.emailPrestador.trim().toLowerCase()
+        ) {
+          return true;
+        }
+        if (
+          r.tituloServicio &&
+          servicio.titulo &&
+          r.tituloServicio.trim().toLowerCase() === servicio.titulo.trim().toLowerCase() &&
+          r.nombrePrestador?.trim().toLowerCase() === servicio.nombrePrestador?.trim().toLowerCase()
+        ) {
+          return true;
+        }
+        return false;
+      });
       if (matched.length > 0) {
         const mappedRemote: RealReview[] = matched.map((r, idx) => ({
           id: r.id || String(idx),
