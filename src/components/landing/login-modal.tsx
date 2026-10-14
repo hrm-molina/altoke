@@ -60,41 +60,31 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
       const hasUsuario = !!profiles.usuario;
       const hasPrestador = !!profiles.prestador;
 
-      // Si no tiene ningún perfil (datos legacy o Confirm email ON sin callback),
-      // crear el registro en la base de datos desde la metadata y continuar.
-      if (!hasUsuario && !hasPrestador) {
-        ensureProfileForSession().catch(() => {});
-        const meta = res.user.user_metadata || {};
-        const fallbackTipo = (meta.tipo || "usuario") as "usuario" | "prestador";
-        localStorage.setItem("altoke_session", JSON.stringify({
-          id: res.user.id,
-          email: res.user.email,
-          tipo: fallbackTipo,
-          nombre: meta.nombre || "",
-          rut: meta.rut || "",
-          telefono: meta.telefono || "",
-          fechaNacimiento: meta.fechaNacimiento || "",
-          region: meta.region || "",
-          comuna: meta.comuna || "",
-          ciudadSector: meta.ciudadSector || "",
-          servicios: meta.servicios || "",
-          valorHora: meta.valorHora || "",
-          foto: meta.foto || "",
-          fechaRegistro: res.user.created_at || new Date().toISOString(),
-        }));
+      // Validación estricta del rol solicitado
+      if (tipo === "usuario" && !hasUsuario) {
+        await supabaseAuth.auth.signOut();
         setLoading(false);
-        onClose();
-        router.push(fallbackTipo === "prestador" ? "/prestador" : "/explorar");
+        if (hasPrestador) {
+          setError("Esta cuenta está registrada como Prestador de servicios. Cambia a la pestaña 'Soy Prestador' o crea una cuenta de Usuario.");
+        } else {
+          setError("No tienes una cuenta de usuario activa con este correo.");
+        }
         return;
       }
 
-      // Si tiene ambos perfiles, entrar con el rol del modal seleccionado (tipo).
-      const currentRole: "usuario" | "prestador" =
-        hasUsuario && hasPrestador
-          ? tipo
-          : hasPrestador
-            ? "prestador"
-            : "usuario";
+      if (tipo === "prestador" && !hasPrestador) {
+        await supabaseAuth.auth.signOut();
+        setLoading(false);
+        if (hasUsuario) {
+          setError("Esta cuenta está registrada como Usuario cliente. Cambia a la pestaña 'Soy Usuario' o regístrate como Prestador.");
+        } else {
+          setError("No tienes una cuenta de prestador activa con este correo.");
+        }
+        return;
+      }
+
+      // El usuario tiene el rol solicitado
+      const currentRole: "usuario" | "prestador" = tipo;
       const meta = (res.user.user_metadata || {}) as Record<string, unknown>;
       let fotoLocal = "";
       try {
@@ -105,18 +95,18 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         id: res.user.id,
         email: res.user.email,
         tipo: currentRole,
-        nombre: (meta.nombre as string) || "",
-        rut: (meta.rut as string) || "",
-        telefono: (meta.telefono as string) || "",
-        fechaNacimiento: (meta.fechaNacimiento as string) || "",
-        region: (meta.region as string) || "",
-        comuna: (meta.comuna as string) || "",
-        ciudadSector: (meta.ciudadSector as string) || "",
+        nombre: (meta.nombre as string) || (currentRole === "prestador" ? profiles.prestador?.nombre : profiles.usuario?.nombre) || "",
+        rut: (meta.rut as string) || (currentRole === "prestador" ? profiles.prestador?.rut : "") || "",
+        telefono: (meta.telefono as string) || (currentRole === "prestador" ? profiles.prestador?.telefono : profiles.usuario?.telefono) || "",
+        fechaNacimiento: (meta.fechaNacimiento as string) || (currentRole === "prestador" ? profiles.prestador?.fecha_nacimiento : profiles.usuario?.fecha_nacimiento) || "",
+        region: (meta.region as string) || (currentRole === "prestador" ? profiles.prestador?.region : profiles.usuario?.region) || "",
+        comuna: (meta.comuna as string) || (currentRole === "prestador" ? profiles.prestador?.comuna : profiles.usuario?.comuna) || "",
+        ciudadSector: (meta.ciudadSector as string) || (currentRole === "prestador" ? profiles.prestador?.ciudad_sector : profiles.usuario?.ciudad_sector) || "",
         servicios: (meta.servicios as string) || profiles.prestador?.servicios || "",
         valorHora: (meta.valorHora as string) || profiles.prestador?.valor_hora || "",
         descripcion: (meta.descripcion as string) || profiles.prestador?.descripcion || "",
         fotoServicio: (meta.foto_servicio as string) || (meta.fotoServicio as string) || profiles.prestador?.foto_servicio || "",
-        foto: fotoLocal || (meta.foto as string) || profiles.prestador?.foto || "",
+        foto: fotoLocal || (meta.foto as string) || (currentRole === "prestador" ? profiles.prestador?.foto : profiles.usuario?.foto) || "",
         fechaRegistro: res.user.created_at || new Date().toISOString(),
       }));
 
