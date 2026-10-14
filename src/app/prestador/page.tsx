@@ -236,9 +236,7 @@ export default function PrestadorPage() {
     const seen = new Set<string>();
     const unique: DisplayReview[] = [];
     for (const r of rawList) {
-      const key = r.id && !r.id.startsWith("job-")
-        ? r.id
-        : `${(r.nombreCliente || "").toLowerCase().trim()}-${(r.tituloServicio || "").toLowerCase().trim()}-${r.calificacion}-${(r.resena || "").trim()}`;
+      const key = `${(r.nombreCliente || "").toLowerCase().trim()}-${(r.tituloServicio || "").toLowerCase().trim()}-${r.calificacion}-${(r.resena || "").trim()}`;
       if (!seen.has(key)) {
         seen.add(key);
         unique.push(r);
@@ -350,7 +348,23 @@ export default function PrestadorPage() {
       // Cargar reseñas desde Supabase deduplicadas
       if (session.user.email || userData.id) {
         dbFetchReviewsByPrestador(session.user.email, userData.id)
-          .then(setDbReviews)
+          .then((reviews) => {
+            setDbReviews(reviews);
+            if (reviews.length > 0 && typeof window !== "undefined") {
+              const mapped: PrestadorJob[] = reviews.map((r) => ({
+                servicioId: r.servicioId || "",
+                tituloServicio: r.tituloServicio || "",
+                nombreCliente: r.nombreCliente || "Cliente",
+                categoria: "Otros",
+                comuna: "",
+                calificacion: r.calificacion,
+                resena: r.resena || "",
+                fecha: r.fecha || new Date().toISOString(),
+                nombrePrestador: r.nombrePrestador || "",
+              }));
+              localStorage.setItem("altoke_prestador_jobs", JSON.stringify(mapped));
+            }
+          })
           .catch(() => {});
       }
       // Cargar servicio desde Supabase y actualizar formulario
