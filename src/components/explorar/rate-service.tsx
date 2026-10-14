@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Star, ArrowLeft, Save, Check, ShieldX } from "lucide-react";
 import { type Servicio, isSelfRatingCheck, getSessionUserEmail } from "@/lib/mock-services";
 import { dbAddReview } from "@/lib/db";
+import { useModalBackHandler } from "@/hooks/use-modal-back-handler";
 
 interface RateServiceProps {
   servicio: Servicio;
@@ -60,6 +61,7 @@ function savePrestadorJob(entry: Record<string, unknown>) {
 }
 
 export function RateService({ servicio, onClose }: RateServiceProps) {
+  useModalBackHandler(true, onClose, `rate-${servicio.id}`);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [resena, setResena] = useState("");

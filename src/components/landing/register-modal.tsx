@@ -11,6 +11,7 @@ import { validateRut, validateChileanPhone, compressImage } from "@/lib/validato
 import { dbSaveService } from "@/lib/db";
 import { signUpWithEmail, checkProfileExists, supabaseAuth } from "@/lib/supabase-auth";
 import { validateServiceContent } from "@/lib/content-moderation";
+import { useModalBackHandler } from "@/hooks/use-modal-back-handler";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ function FieldError({ field, errors }: { field: string; errors: Record<string, s
 }
 
 export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalProps) {
+  useModalBackHandler(isOpen, onClose, "register");
   const router = useRouter();
   const [step, setStep] = useState(() => (defaultTipo ? 2 : 1));
   const [userType, setUserType] = useState<"usuario" | "prestador" | null>(() => defaultTipo || null);

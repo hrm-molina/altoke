@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Star, MapPin, Phone, Clock, MessageSquare, ChevronLeft } from "lucide-react";
 import { type Servicio, isSelfRatingCheck } from "@/lib/mock-services";
 import { dbFetchReviews } from "@/lib/db";
+import { useModalBackHandler } from "@/hooks/use-modal-back-handler";
 
 interface ServiceDetailProps {
   servicio: Servicio;
@@ -58,6 +59,7 @@ function ReviewsModal({
   servicio: Servicio;
   onClose: () => void;
 }) {
+  useModalBackHandler(true, onClose, `reviews-${servicio.id}`);
   const [reviews, setReviews] = useState<RealReview[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -202,6 +204,7 @@ function ReviewsModal({
 }
 
 export function ServiceDetail({ servicio, onClose }: ServiceDetailProps) {
+  useModalBackHandler(true, onClose, `service-detail-${servicio.id}`);
   const [phoneRevealed, setPhoneRevealed] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
 

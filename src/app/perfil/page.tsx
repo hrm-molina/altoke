@@ -23,6 +23,7 @@ import { Footer } from "@/components/landing/footer";
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { compressImage } from "@/lib/validators";
 import { supabaseAuth, signOut, sanitizeAuthMetadata, type AuthUser, type PerfilUsuario } from "@/lib/supabase-auth";
+import { useModalBackHandler } from "@/hooks/use-modal-back-handler";
 import { uploadFoto } from "@/lib/storage";
 
 interface UserData {
@@ -87,6 +88,12 @@ export default function PerfilPage() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  useModalBackHandler(showDeleteModal, () => {
+    setShowDeleteModal(false);
+    setDeleteConfirmText("");
+    setDeleteError("");
+  }, "delete-account");
 
   useEffect(() => {
     const initAuth = async () => {

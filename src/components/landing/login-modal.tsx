@@ -5,6 +5,7 @@ import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { signInWithEmail, getUserProfiles, ensureProfileForSession, supabaseAuth } from "@/lib/supabase-auth";
 import { PasswordInput } from "@/components/ui/password-input";
+import { useModalBackHandler } from "@/hooks/use-modal-back-handler";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }: LoginModalProps) {
+  useModalBackHandler(isOpen, onClose, "login");
   const router = useRouter();
   const [tipo, setTipo] = useState<"usuario" | "prestador">(() => defaultTipo || "usuario");
   const [email, setEmail] = useState("");
