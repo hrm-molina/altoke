@@ -261,7 +261,8 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="text-[#94A3B8] hover:text-[#F1F5F9] md:hidden"
+            aria-label={mobileOpen ? "Cerrar menú principal" : "Abrir menú principal"}
+            className="text-[#94A3B8] hover:text-[#F1F5F9] md:hidden p-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
           >
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
