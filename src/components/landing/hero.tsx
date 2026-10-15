@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Search,
   MapPin,
   Star,
   CheckCircle2,
@@ -15,7 +14,6 @@ import {
   Dog,
   Home as HomeIcon,
   Zap,
-  Truck,
   ShieldCheck,
   Clock,
 } from "lucide-react";
@@ -95,31 +93,9 @@ const featuredServices: FeaturedServiceItem[] = [
   },
 ];
 
-const quickCategories = [
-  { name: "Armar muebles", icon: Package, query: "muebles" },
-  { name: "Pasear perros", icon: Dog, query: "perros" },
-  { name: "Limpieza", icon: HomeIcon, query: "limpieza" },
-  { name: "Gasfitería", icon: Zap, query: "gasfiteria" },
-  { name: "Mudanzas", icon: Truck, query: "mudanza" },
-];
-
 export function Hero() {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [locationQuery, setLocationQuery] = useState("");
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchQuery.trim()) params.set("q", searchQuery.trim());
-    if (locationQuery.trim()) params.set("comuna", locationQuery.trim());
-    router.push(`/explorar?${params.toString()}`);
-  };
-
-  const handleQuickCategory = (query: string) => {
-    router.push(`/explorar?q=${encodeURIComponent(query)}`);
-  };
 
   const handleBookService = (service: FeaturedServiceItem) => {
     if (typeof window !== "undefined") {
@@ -173,67 +149,24 @@ export function Hero() {
             </p>
           </div>
 
-          {/* 2. Floating Search Bar Pill */}
-          <div className="relative z-20 mt-8 sm:mt-10 max-w-3xl mx-auto">
-            <form
-              onSubmit={handleSearch}
-              className="flex flex-col sm:flex-row items-center gap-2 p-2 rounded-2xl sm:rounded-full bg-white shadow-2xl border border-white/40"
-            >
-              {/* Service Input */}
-              <div className="flex items-center gap-3 w-full sm:flex-1 px-4 py-2.5 sm:py-2">
-                <Search size={18} className="text-[#FF5A36] shrink-0" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="¿Qué servicio buscas? (ej: Armar muebles)"
-                  className="w-full bg-transparent text-sm font-medium text-[#1E2022] placeholder:text-[#94A3B8] focus:outline-none"
-                />
-              </div>
-
-              <div className="hidden sm:block h-6 w-[1px] bg-[#E2DDD5]" />
-
-              {/* Location Input */}
-              <div className="flex items-center gap-3 w-full sm:flex-1 px-4 py-2.5 sm:py-2">
-                <MapPin size={18} className="text-[#FF5A36] shrink-0" />
-                <input
-                  type="text"
-                  value={locationQuery}
-                  onChange={(e) => setLocationQuery(e.target.value)}
-                  placeholder="Ubicación (ej: Ñuñoa, Providencia)"
-                  className="w-full bg-transparent text-sm font-medium text-[#1E2022] placeholder:text-[#94A3B8] focus:outline-none"
-                />
-              </div>
-
-              {/* Search Button */}
-              <button
-                type="submit"
-                className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl sm:rounded-full bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] px-7 py-3 text-sm font-bold text-white shadow-md shadow-[#FF5A36]/30 hover:from-[#FF4820] hover:to-[#FF6845] active:scale-95 transition-all"
+            {/* Action Buttons */}
+            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3.5">
+              <Link
+                href="/explorar"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-8 py-3.5 text-base font-bold text-[#FF5A36] shadow-lg shadow-black/10 hover:bg-white/95 active:scale-95 transition-all"
               >
-                <span>Buscar</span>
-                <Search size={15} />
+                <span>Explorar Servicios</span>
+                <ArrowRight size={18} />
+              </Link>
+              <button
+                onClick={() => setModalOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 px-8 py-3.5 text-base font-bold text-white active:scale-95 transition-all"
+              >
+                <span>Regístrate gratis</span>
               </button>
-            </form>
-
-            {/* Quick Pills */}
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              <span className="text-xs text-white/80 font-medium mr-1 hidden sm:inline">
-                Sugerencias:
-              </span>
-              {quickCategories.map((c) => (
-                <button
-                  key={c.name}
-                  onClick={() => handleQuickCategory(c.query)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 text-xs font-semibold text-white border border-white/25 active:scale-95 transition-all"
-                >
-                  <c.icon size={12} className="text-white" />
-                  <span>{c.name}</span>
-                </button>
-              ))}
             </div>
           </div>
         </div>
-      </div>
 
       {/* 3. Featured Services Section (Propuesta 5) */}
       <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl mt-14 sm:mt-18">
