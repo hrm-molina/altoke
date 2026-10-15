@@ -5,21 +5,21 @@ import { Zap } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-[#04060C] pt-16 pb-8">
-      <div className="mx-auto w-full px-6 sm:px-10 lg:px-16">
+    <footer className="bg-[#181A1D] text-[#A1A1AA] pt-16 pb-10 border-t border-[#27272A]">
+      <div className="mx-auto w-full px-6 sm:px-10 lg:px-16 max-w-7xl">
         {/* Main content */}
-        <div className="flex flex-col items-center text-center md:items-start md:text-left md:flex-row md:justify-between md:gap-16 pb-10 border-b border-[#1E293B]/50">
+        <div className="flex flex-col items-center text-center md:items-start md:text-left md:flex-row md:justify-between md:gap-16 pb-10 border-b border-[#27272A]">
           {/* Brand */}
           <div className="max-w-sm">
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#FF5A36] to-[#FF8A65] text-white shadow-md shadow-[#FF5A36]/20">
                 <Zap size={18} fill="currentColor" />
               </div>
-              <span className="text-xl font-bold text-[#F1F5F9]">
-                AlToke<span className="text-blue-400">Chile</span>
+              <span className="text-xl font-bold text-white tracking-tight">
+                AlToke<span className="text-[#FF5A36]">Chile</span>
               </span>
             </Link>
-            <p className="mt-4 text-sm text-[#64748B] leading-relaxed">
+            <p className="mt-4 text-sm text-[#A1A1AA] leading-relaxed">
               La plataforma chilena para conectar necesidades rápidas con colaboradores
               dispuestos a ayudar en tu comuna. 100% servicios lícitos.
             </p>
@@ -28,34 +28,34 @@ export function Footer() {
           {/* Links */}
           <div className="flex gap-16 mt-8 md:mt-0">
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8] mb-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
                 Legal y Normativa
               </h4>
               <ul className="space-y-2.5">
                 <li>
-                  <Link href="/terminos" className="text-sm text-[#64748B] hover:text-blue-400 transition-colors">
+                  <Link href="/terminos" className="text-sm text-[#A1A1AA] hover:text-[#FF5A36] transition-colors">
                     Términos y Condiciones
                   </Link>
                 </li>
                 <li>
-                  <Link href="/privacidad" className="text-sm text-[#64748B] hover:text-blue-400 transition-colors">
+                  <Link href="/privacidad" className="text-sm text-[#A1A1AA] hover:text-[#FF5A36] transition-colors">
                     Política de Privacidad
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8] mb-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
                 Atención y Reclamos
               </h4>
               <ul className="space-y-2.5">
                 <li>
-                  <Link href="/ayuda" className="text-sm text-[#64748B] hover:text-blue-400 transition-colors">
+                  <Link href="/ayuda" className="text-sm text-[#A1A1AA] hover:text-[#FF5A36] transition-colors">
                     Centro de Ayuda
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contacto" className="text-sm text-[#64748B] hover:text-blue-400 transition-colors">
+                  <Link href="/contacto" className="text-sm text-[#A1A1AA] hover:text-[#FF5A36] transition-colors">
                     Canal de Reclamos y Contacto
                   </Link>
                 </li>
@@ -66,10 +66,10 @@ export function Footer() {
 
         {/* Bottom */}
         <div className="flex flex-col items-center justify-between gap-3 pt-8 md:flex-row">
-          <p className="text-xs text-[#475569]">
+          <p className="text-xs text-[#71717A]">
             © {new Date().getFullYear()} AlToke Chile · altokechile.cl
           </p>
-          <p className="text-xs text-[#475569]">
+          <p className="text-xs text-[#71717A]">
             Conforme a la legislación de la República de Chile 🇨🇱
           </p>
         </div>

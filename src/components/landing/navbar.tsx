@@ -162,16 +162,34 @@ export function Navbar() {
     // Session will be updated via onAuthStateChange
   };
 
+  const isHome = pathname === "/";
+
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[#1E293B]/60 bg-[#06080F]/80 backdrop-blur-xl">
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl transition-colors ${
+          isHome
+            ? "border-[#F0ECE4] bg-[#FFFFFF]/92 shadow-sm"
+            : "border-[#1E293B]/60 bg-[#06080F]/80"
+        }`}
+      >
         <div className="mx-auto flex h-16 w-full items-center justify-between px-6 sm:px-10 lg:px-16">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
+            <div
+              className={`flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-md ${
+                isHome
+                  ? "bg-gradient-to-br from-[#FF5A36] to-[#FF8A65] shadow-[#FF5A36]/25"
+                  : "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/20"
+              }`}
+            >
               <Zap size={18} fill="currentColor" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-[#F1F5F9]">
-              AlToke<span className="text-blue-400">Chile</span>
+            <span
+              className={`text-xl font-bold tracking-tight ${
+                isHome ? "text-[#1E2022]" : "text-[#F1F5F9]"
+              }`}
+            >
+              AlToke<span className={isHome ? "text-[#FF5A36]" : "text-blue-400"}>Chile</span>
             </span>
           </Link>
 
@@ -254,7 +272,11 @@ export function Navbar() {
               <div className="flex items-center gap-3 ml-4">
                 <button
                   onClick={() => { setLoginTipo("usuario"); setRegisterTipo("usuario"); setLoginOpen(true); }}
-                  className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                  className={`rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-all ${
+                    isHome
+                      ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] shadow-md shadow-[#FF5A36]/25"
+                      : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 shadow-lg shadow-blue-500/20 btn-glow"
+                  }`}
                 >
                   Iniciar sesión
                 </button>
@@ -267,9 +289,21 @@ export function Navbar() {
             {session ? (
               <Link
                 href={session.tipo === "prestador" ? "/prestador" : "/explorar"}
-                className="flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 pl-1.5 pr-3 py-1 text-xs font-semibold text-[#F1F5F9] active:scale-95 transition-all"
+                className={`flex items-center gap-1.5 rounded-full pl-1.5 pr-3 py-1 text-xs font-semibold active:scale-95 transition-all ${
+                  isHome
+                    ? "border border-[#FF5A36]/30 bg-[#FF5A36]/10 text-[#1E2022]"
+                    : "border border-blue-500/30 bg-blue-500/10 text-[#F1F5F9]"
+                }`}
               >
-                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${session.tipo === "prestador" ? "bg-gradient-to-br from-blue-600 to-blue-500" : "bg-emerald-600"}`}>
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${
+                    session.tipo === "prestador"
+                      ? isHome
+                        ? "bg-gradient-to-br from-[#FF5A36] to-[#FF8A65]"
+                        : "bg-gradient-to-br from-blue-600 to-blue-500"
+                      : "bg-emerald-600"
+                  }`}
+                >
                   {session.nombre?.charAt(0).toUpperCase() || (session.tipo === "prestador" ? "P" : "U")}
                 </div>
                 <span className="max-w-[140px] truncate">
@@ -283,7 +317,11 @@ export function Navbar() {
                   setRegisterTipo("usuario");
                   setLoginOpen(true);
                 }}
-                className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 active:scale-95 transition-all btn-glow"
+                className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold text-white active:scale-95 transition-all ${
+                  isHome
+                    ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] shadow-md shadow-[#FF5A36]/25"
+                    : "bg-gradient-to-r from-blue-600 to-blue-500 shadow-md shadow-blue-500/25 btn-glow"
+                }`}
               >
                 <User size={13} />
                 <span>Ingresar</span>
@@ -293,7 +331,11 @@ export function Navbar() {
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? "Cerrar menú principal" : "Abrir menú principal"}
-              className="relative text-[#94A3B8] hover:text-[#F1F5F9] p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg active:bg-[#1E293B]/50 transition-colors"
+              className={`relative p-2 focus:outline-none focus:ring-2 focus:ring-[#FF5A36] rounded-lg transition-colors ${
+                isHome
+                  ? "text-[#475569] hover:text-[#1E2022] active:bg-[#F0ECE4]/60"
+                  : "text-[#94A3B8] hover:text-[#F1F5F9] active:bg-[#1E293B]/50"
+              }`}
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
               {alertCount > 0 && !mobileOpen && (
@@ -305,7 +347,13 @@ export function Navbar() {
 
         {/* Mobile Drawer */}
         {mobileOpen && (
-          <div className="border-b border-[#1E293B]/60 bg-[#06080F]/95 backdrop-blur-xl px-6 py-5 md:hidden">
+          <div
+            className={`border-b px-6 py-5 md:hidden backdrop-blur-xl ${
+              isHome
+                ? "border-[#F0ECE4] bg-[#FFFFFF]/98 text-[#1E2022]"
+                : "border-[#1E293B]/60 bg-[#06080F]/95 text-[#F1F5F9]"
+            }`}
+          >
             <div className="flex flex-col gap-3">
               {session ? (
                 <>
@@ -416,11 +464,21 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 text-center mb-1">
-                    <p className="text-sm font-semibold text-[#F1F5F9] mb-1">
+                  <div
+                    className={`rounded-2xl p-4 text-center mb-1 ${
+                      isHome
+                        ? "border border-[#FF5A36]/20 bg-[#FF5A36]/5"
+                        : "border border-blue-500/20 bg-blue-500/5"
+                    }`}
+                  >
+                    <p
+                      className={`text-sm font-semibold mb-1 ${
+                        isHome ? "text-[#1E2022]" : "text-[#F1F5F9]"
+                      }`}
+                    >
                       Accede a tu cuenta en AlToke
                     </p>
-                    <p className="text-xs text-[#94A3B8]">
+                    <p className={`text-xs ${isHome ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                       Inicia sesión para contratar servicios o gestionar tus trabajos
                     </p>
                   </div>
@@ -431,7 +489,11 @@ export function Navbar() {
                       setRegisterTipo("usuario");
                       setLoginOpen(true);
                     }}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-blue-500/25 hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                    className={`flex items-center justify-center gap-2 rounded-xl py-3.5 text-center text-sm font-bold text-white shadow-lg active:scale-95 transition-all ${
+                      isHome
+                        ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] shadow-[#FF5A36]/25"
+                        : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 shadow-blue-500/25 btn-glow"
+                    }`}
                   >
                     <User size={16} />
                     Iniciar sesión
@@ -442,7 +504,11 @@ export function Navbar() {
                       setRegisterTipo("usuario");
                       setRegisterOpen(true);
                     }}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#F1F5F9] hover:border-blue-500/50 hover:bg-blue-500/10 transition-all"
+                    className={`flex items-center justify-center gap-2 rounded-xl py-3 text-center text-sm font-medium transition-all ${
+                      isHome
+                        ? "border border-[#E2DDD5] bg-[#FAF7F2] text-[#1E2022] hover:bg-[#F5F0E8] hover:border-[#D1C9BE]"
+                        : "border border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] hover:border-blue-500/50 hover:bg-blue-500/10"
+                    }`}
                   >
                     <UserPlus size={16} />
                     Crear cuenta / Registrarse
