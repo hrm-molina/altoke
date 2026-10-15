@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,8 @@ import {
   Clock,
 } from "lucide-react";
 import { RegisterModal } from "./register-modal";
+import { dbFetchServices } from "@/lib/db";
+import { type Servicio } from "@/lib/mock-services";
 
 interface FeaturedServiceItem {
   id: string;
@@ -34,7 +36,15 @@ interface FeaturedServiceItem {
   badgeIcon: React.ElementType;
 }
 
-const featuredServices: FeaturedServiceItem[] = [
+function getCategoryInfo(categoria: string) {
+  const cat = (categoria || "").toLowerCase();
+  if (cat.includes("mueble")) return { icon: Package, image: "/services/armado-muebles.jpg", tag: "Armado de Muebles" };
+  if (cat.includes("perro") || cat.includes("mascota")) return { icon: Dog, image: "/services/paseo-mascotas.jpg", tag: "Mascotas & Paseo" };
+  if (cat.includes("limpi")) return { icon: HomeIcon, image: "/services/limpieza-hogar.jpg", tag: "Limpieza & Sanitizado" };
+  return { icon: Zap, image: "/services/electricidad-gas.jpg", tag: "Servicio Profesional" };
+}
+
+const featuredServicesFallback: FeaturedServiceItem[] = [
   {
     id: "featured-1",
     category: "Armado de Muebles",
@@ -96,6 +106,37 @@ const featuredServices: FeaturedServiceItem[] = [
 export function Hero() {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
+  const [realServices, setRealServices] = useState<Servicio[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    dbFetchServices().then((svcs) => {
+      if (!cancelled && svcs && svcs.length > 0) {
+        setRealServices(svcs);
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const servicesToRender: FeaturedServiceItem[] = realServices.length > 0
+    ? realServices.slice(0, 4).map((s, idx) => {
+        const info = getCategoryInfo(s.categoria);
+        return {
+          id: s.id || `real-${idx}`,
+          category: s.categoria || "Servicio",
+          tag: info.tag,
+          title: s.titulo || "Servicio disponible",
+          image: s.foto && !s.foto.startsWith("data:") ? s.foto : info.image,
+          providerName: s.nombrePrestador || "Prestador",
+          providerInitial: (s.nombrePrestador?.charAt(0) || "P").toUpperCase(),
+          location: s.sector || s.comuna || "Chile",
+          rating: s.rating,
+          reviewsCount: s.resenas,
+          hourlyRate: s.precio,
+          badgeIcon: info.icon,
+        };
+      })
+    : featuredServicesFallback;
 
   const handleBookService = (service: FeaturedServiceItem) => {
     if (typeof window !== "undefined") {
@@ -195,7 +236,7 @@ export function Hero() {
 
         {/* 4 Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredServices.map((svc) => (
+          {servicesToRender.map((svc) => (
             <div
               key={svc.id}
               className="flex flex-col justify-between rounded-2xl bg-white border border-[#EAE5DC] shadow-sm hover:shadow-xl hover:border-[#FF5A36]/40 transition-all duration-300 overflow-hidden group"
@@ -207,6 +248,7 @@ export function Hero() {
                     src={svc.image}
                     alt={svc.title}
                     fill
+                    unoptimized={svc.image.startsWith("http")}
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
                   />
                   {/* Category Pill */}

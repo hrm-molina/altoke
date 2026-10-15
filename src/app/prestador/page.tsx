@@ -214,24 +214,23 @@ export default function PrestadorPage() {
       fecha?: string;
     }
 
-    const rawList: DisplayReview[] = [
-      ...dbReviews.map((r) => ({
-        id: r.id,
-        tituloServicio: r.tituloServicio || r.titulo_servicio,
-        nombreCliente: r.nombreCliente || r.nombre_cliente,
-        calificacion: r.calificacion,
-        resena: r.resena,
-        fecha: r.fecha,
-      })),
-      ...jobs.map((j, idx) => ({
-        id: `job-${j.servicioId || idx}-${j.fecha || idx}`,
-        tituloServicio: j.tituloServicio,
-        nombreCliente: j.nombreCliente,
-        calificacion: j.calificacion,
-        resena: j.resena,
-        fecha: j.fecha,
-      })),
-    ];
+    const rawList: DisplayReview[] = dbReviews.length > 0
+      ? dbReviews.map((r) => ({
+          id: r.id,
+          tituloServicio: r.tituloServicio || r.titulo_servicio,
+          nombreCliente: r.nombreCliente || r.nombre_cliente,
+          calificacion: r.calificacion,
+          resena: r.resena,
+          fecha: r.fecha,
+        }))
+      : jobs.map((j, idx) => ({
+          id: `job-${j.servicioId || idx}-${j.fecha || idx}`,
+          tituloServicio: j.tituloServicio,
+          nombreCliente: j.nombreCliente,
+          calificacion: j.calificacion,
+          resena: j.resena,
+          fecha: j.fecha,
+        }));
 
     const seen = new Set<string>();
     const unique: DisplayReview[] = [];
