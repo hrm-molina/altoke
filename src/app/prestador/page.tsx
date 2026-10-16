@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
+import { FloatingServices } from "@/components/landing/floating-services";
+import { useTheme } from "@/context/theme-context";
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { categorias, saveCustomService, getServiceById } from "@/lib/mock-services";
 import { compressImage } from "@/lib/validators";
@@ -193,6 +195,8 @@ function getInitialJobs(): PrestadorJob[] {
 
 export default function PrestadorPage() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [user, setUser] = useState<UserData | null>(null);
   const [profileForm, setProfileForm] = useState(getInitialProfileForm);
   const [foto, setFoto] = useState(getInitialFoto);
@@ -579,23 +583,30 @@ export default function PrestadorPage() {
   const comunasDisponibles = profileForm.region ? comunasPorRegion[profileForm.region] || [] : [];
 
   const inputClass = (field: string) =>
-    `w-full rounded-xl border px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors bg-[#0A0F1A] ${
+    `w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${
+      isDark
+        ? "bg-[#0A0F1A] text-[#F1F5F9] placeholder-[#475569]"
+        : "bg-[#F7F3EE] text-[#1E2022] placeholder-[#94A3B8]"
+    } ${
       errors[field]
         ? "border-red-500/50 focus:border-red-500"
-        : "border-[#1E293B] focus:border-blue-500"
+        : isDark
+        ? "border-[#1E293B] focus:border-[#FF5A36]"
+        : "border-[#E2D9CC] focus:border-[#FF5A36]"
     }`;
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#FAF7F2] text-[#1E2022] dark:bg-[#06080F] dark:text-[#F1F5F9] transition-colors duration-300 relative">
+      <FloatingServices />
       <Navbar />
-      <main className="flex-1 pt-24 pb-16">
+      <main className="flex-1 pt-28 pb-16 relative z-10">
         <div className="mx-auto w-full max-w-2xl px-6 sm:px-10">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-extrabold text-[#F1F5F9]">
+            <h1 className="text-2xl font-extrabold text-[#1E2022] dark:text-[#F1F5F9]">
               Mi perfil de prestador
             </h1>
-            <p className="text-sm text-[#94A3B8]">
+            <p className="text-sm text-[#64748B] dark:text-[#94A3B8]">
               Gestiona tu servicio y datos personales
             </p>
           </div>
@@ -605,26 +616,26 @@ export default function PrestadorPage() {
             <div className="card-surface flex flex-col items-center justify-center p-5">
               <div className="flex items-center gap-1.5 mb-1">
                 <Star size={20} className="text-amber-400" fill="currentColor" />
-                <span className="text-2xl font-extrabold text-[#F1F5F9]">
+                <span className="text-2xl font-extrabold text-[#1E2022] dark:text-[#F1F5F9]">
                   {(() => {
                     if (reviewsToShow.length === 0) return "5.0";
                     return (reviewsToShow.reduce((a, b) => a + b.calificacion, 0) / reviewsToShow.length).toFixed(1);
                   })()}
                 </span>
               </div>
-              <p className="text-xs text-[#64748B]">Promedio</p>
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">Promedio</p>
             </div>
             <div className="card-surface flex flex-col items-center justify-center p-5">
-              <span className="text-2xl font-extrabold text-[#F1F5F9] mb-1">
+              <span className="text-2xl font-extrabold text-[#1E2022] dark:text-[#F1F5F9] mb-1">
                 {reviewsToShow.length}
               </span>
-              <p className="text-xs text-[#64748B]">Trabajos</p>
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">Trabajos</p>
             </div>
             <div className="card-surface flex flex-col items-center justify-center p-5">
-              <span className="text-2xl font-extrabold text-[#F1F5F9] mb-1">
+              <span className="text-2xl font-extrabold text-[#1E2022] dark:text-[#F1F5F9] mb-1">
                 {reviewsToShow.filter((r) => r.resena).length}
               </span>
-              <p className="text-xs text-[#64748B]">Reseñas</p>
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">Reseñas</p>
             </div>
           </div>
 
@@ -633,12 +644,12 @@ export default function PrestadorPage() {
             {/* Avatar */}
             <div className="mb-8 flex items-center gap-5">
               <label className="relative group cursor-pointer">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1E293B] overflow-hidden">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#EAE4DC] dark:bg-[#1E293B] overflow-hidden">
                   {foto ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={foto} alt="Perfil" className="h-full w-full object-cover" />
                   ) : (
-                    <User size={32} className="text-[#64748B]" />
+                    <User size={32} className="text-[#64748B] dark:text-[#94A3B8]" />
                   )}
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -662,11 +673,11 @@ export default function PrestadorPage() {
                 />
               </label>
               <div>
-                <h2 className="text-lg font-bold text-[#F1F5F9]">
+                <h2 className="text-lg font-bold text-[#1E2022] dark:text-[#F1F5F9]">
                   {user.nombre || "Sin nombre"}
                 </h2>
-                <p className="text-sm text-[#64748B]">{user.email}</p>
-                <span className="mt-1 inline-flex items-center rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400">
+                <p className="text-sm text-[#64748B] dark:text-[#94A3B8]">{user.email}</p>
+                <span className="mt-1 inline-flex items-center rounded-lg border border-[#FF5A36]/25 bg-[#FF5A36]/10 px-2.5 py-0.5 text-xs font-semibold text-[#FF5A36]">
                   Prestador de servicios
                 </span>
               </div>
@@ -675,7 +686,7 @@ export default function PrestadorPage() {
             {/* Profile form */}
             <div className="space-y-5">
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <User size={14} />
                   Nombre completo
                 </label>
@@ -806,7 +817,7 @@ export default function PrestadorPage() {
               <button
                 onClick={handleSaveProfile}
                 disabled={fotoUploading}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] px-8 py-3 text-sm font-bold text-white hover:opacity-90 shadow-md shadow-[#FF5A36]/25 transition-all btn-glow disabled:opacity-50"
               >
                 {fotoUploading ? (
                   <>
@@ -821,7 +832,7 @@ export default function PrestadorPage() {
                 )}
               </button>
               {saved && (
-                <div className="flex items-center gap-2 text-sm text-green-400">
+                <div className="flex items-center gap-2 text-sm text-green-500 font-semibold">
                   <Check size={16} />
                   Guardado correctamente
                 </div>
@@ -831,16 +842,16 @@ export default function PrestadorPage() {
 
           {/* Service card */}
           <div className="card-surface p-6 sm:p-8 mb-6">
-            <h3 className="mb-2 text-lg font-bold text-[#F1F5F9]">
+            <h3 className="mb-2 text-lg font-bold text-[#1E2022] dark:text-[#F1F5F9]">
               Mi servicio
             </h3>
-            <p className="text-sm text-[#94A3B8] mb-6">
+            <p className="text-sm text-[#64748B] dark:text-[#94A3B8] mb-6">
               Edita la información del servicio que ofreces
             </p>
 
             <div className="space-y-5">
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <Briefcase size={14} />
                   Titulo del servicio
                 </label>
@@ -851,7 +862,7 @@ export default function PrestadorPage() {
                   placeholder="Ej: Hago fila en cualquier lugar"
                   className={inputClass("titulo")}
                 />
-                <p className="mt-1 text-[11px] text-[#64748B]">
+                <p className="mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
                   No uses palabras relacionadas con: contenido sexual, menores de edad, venta de productos, actividades ilegales.
                 </p>
                 {errors.titulo && (
@@ -863,7 +874,7 @@ export default function PrestadorPage() {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <Briefcase size={14} />
                   Descripcion
                 </label>
@@ -874,7 +885,7 @@ export default function PrestadorPage() {
                   rows={4}
                   className={`${inputClass("descripcion")} resize-none`}
                 />
-                <p className="mt-1 text-[11px] text-[#64748B]">
+                <p className="mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
                   No uses palabras relacionadas con: contenido sexual, menores de edad, venta de productos, actividades ilegales.
                 </p>
                 {errors.descripcion && (
@@ -886,7 +897,7 @@ export default function PrestadorPage() {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <Briefcase size={14} />
                   Categoria
                 </label>
@@ -902,7 +913,7 @@ export default function PrestadorPage() {
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-[#64748B]">
+                <p className="mt-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
                   Solo servicios lícitos. No se permiten: servicios sexuales, cuidado de menores, venta de productos.
                 </p>
                 {errors.categoria && (
@@ -914,7 +925,7 @@ export default function PrestadorPage() {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <DollarSign size={14} />
                   Valor por hora ($)
                 </label>
@@ -936,13 +947,13 @@ export default function PrestadorPage() {
 
               {/* Foto del servicio */}
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <ImageIcon size={14} />
                   Foto del servicio
                 </label>
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                   {servicioForm.foto ? (
-                    <div className="relative h-28 w-44 rounded-xl overflow-hidden border border-[#1E293B] group shrink-0 bg-[#0A0F1A]">
+                    <div className="relative h-28 w-44 rounded-xl overflow-hidden border border-[#E2D9CC] dark:border-[#1E293B] group shrink-0 bg-[#F7F3EE] dark:bg-[#0A0F1A]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={servicioForm.foto}
@@ -963,17 +974,17 @@ export default function PrestadorPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex h-28 w-44 shrink-0 items-center justify-center rounded-xl border border-dashed border-[#1E293B] bg-[#0A0F1A] text-[#64748B]">
+                    <div className="flex h-28 w-44 shrink-0 items-center justify-center rounded-xl border border-dashed border-[#E2D9CC] dark:border-[#1E293B] bg-[#F7F3EE] dark:bg-[#0A0F1A] text-[#64748B]">
                       <ImageIcon size={28} />
                     </div>
                   )}
 
-                  <label className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#1E293B] bg-[#0A0F1A] p-4 text-center hover:border-blue-500/40 hover:text-[#94A3B8] transition-colors cursor-pointer w-full">
-                    <Upload size={18} className="text-blue-400" />
-                    <span className="text-xs font-semibold text-[#F1F5F9]">
+                  <label className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#E2D9CC] dark:border-[#1E293B] bg-[#F7F3EE] dark:bg-[#0A0F1A] p-4 text-center hover:border-[#FF5A36]/40 transition-colors cursor-pointer w-full">
+                    <Upload size={18} className="text-[#FF5A36]" />
+                    <span className="text-xs font-bold text-[#1E2022] dark:text-[#F1F5F9]">
                       {servicioForm.foto ? "Cambiar foto del servicio" : "Subir foto del servicio"}
                     </span>
-                    <span className="text-[11px] text-[#64748B]">
+                    <span className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
                       PNG, JPG o WebP que muestre tu trabajo o implementos
                     </span>
                     <input
@@ -1001,7 +1012,7 @@ export default function PrestadorPage() {
               <button
                 onClick={handleSaveServicio}
                 disabled={fotoUploading}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] px-8 py-3 text-sm font-bold text-white hover:opacity-90 shadow-md shadow-[#FF5A36]/25 transition-all btn-glow disabled:opacity-50"
               >
                 {fotoUploading ? (
                   <>
@@ -1016,7 +1027,7 @@ export default function PrestadorPage() {
                 )}
               </button>
               {servicioSaved && (
-                <div className="flex items-center gap-2 text-sm text-green-400">
+                <div className="flex items-center gap-2 text-sm text-green-500 font-semibold">
                   <Check size={16} />
                   Guardado exitosamente Mi servicio
                 </div>
@@ -1026,19 +1037,19 @@ export default function PrestadorPage() {
 
           {/* Work history */}
           <div className="card-surface p-6 sm:p-8">
-            <h3 className="mb-2 text-lg font-bold text-[#F1F5F9]">
+            <h3 className="mb-2 text-lg font-bold text-[#1E2022] dark:text-[#F1F5F9]">
               Historial de trabajos
             </h3>
-            <p className="text-sm text-[#94A3B8] mb-6">
+            <p className="text-sm text-[#64748B] dark:text-[#94A3B8] mb-6">
               Trabajos calificados por clientes
             </p>
 
             {reviewsToShow.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#0A0F1A] border border-[#1E293B]">
-                  <Clock size={28} className="text-[#475569]" />
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#F7F3EE] dark:bg-[#0A0F1A] border border-[#E2D9CC] dark:border-[#1E293B]">
+                  <Clock size={28} className="text-[#64748B] dark:text-[#475569]" />
                 </div>
-                <p className="text-sm text-[#94A3B8] text-center">
+                <p className="text-sm font-semibold text-[#1E2022] dark:text-[#94A3B8] text-center">
                   Aún no tienes trabajos completados
                 </p>
                 <p className="text-xs text-[#64748B] text-center mt-1">
@@ -1050,14 +1061,14 @@ export default function PrestadorPage() {
                 {reviewsToShow.map((review, idx) => (
                   <div
                     key={`prestador-review-${review.id || `${idx}-${review.fecha || ""}-${review.calificacion}`}`}
-                    className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] p-5"
+                    className="rounded-xl border border-[#E2D9CC] dark:border-[#1E293B] bg-[#F7F3EE] dark:bg-[#0A0F1A] p-5"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-[#F1F5F9] mb-1 truncate">
+                        <h4 className="text-sm font-bold text-[#1E2022] dark:text-[#F1F5F9] mb-1 truncate">
                           {review.tituloServicio || "Servicio"}
                         </h4>
-                        <p className="text-xs text-[#64748B] mb-2">
+                        <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mb-2">
                           {review.nombreCliente || "Cliente"}
                         </p>
                         <div className="flex items-center gap-1 mb-2">
@@ -1066,15 +1077,15 @@ export default function PrestadorPage() {
                               key={s}
                               size={14}
                               fill={s <= review.calificacion ? "currentColor" : "none"}
-                              className={s <= review.calificacion ? "text-amber-400" : "text-[#334155]"}
+                              className={s <= review.calificacion ? "text-amber-400" : "text-[#CBD5E1] dark:text-[#334155]"}
                             />
                           ))}
-                          <span className="text-xs font-semibold text-[#F1F5F9] ml-1">
+                          <span className="text-xs font-semibold text-[#1E2022] dark:text-[#F1F5F9] ml-1">
                             {review.calificacion}/5
                           </span>
                         </div>
                         {review.resena && (
-                          <p className="text-sm text-[#94A3B8] italic mb-2">
+                          <p className="text-sm text-[#475569] dark:text-[#94A3B8] italic mb-2">
                             &ldquo;{review.resena}&rdquo;
                           </p>
                         )}
@@ -1098,15 +1109,15 @@ export default function PrestadorPage() {
 
           {/* Account info */}
           <div className="card-surface mt-6 p-6">
-            <h3 className="mb-3 text-sm font-bold text-[#F1F5F9]">
+            <h3 className="mb-3 text-sm font-bold text-[#1E2022] dark:text-[#F1F5F9]">
               Información de cuenta
             </h3>
-            <div className="space-y-2 text-sm text-[#64748B]">
+            <div className="space-y-2 text-sm text-[#64748B] dark:text-[#94A3B8]">
               <p>
-                <span className="text-[#94A3B8]">Tipo:</span> Prestador de servicios
+                <span className="text-[#1E2022] dark:text-[#F1F5F9] font-medium">Tipo:</span> Prestador de servicios
               </p>
               <p>
-                <span className="text-[#94A3B8]">Miembro desde:</span>{" "}
+                <span className="text-[#1E2022] dark:text-[#F1F5F9] font-medium">Miembro desde:</span>{" "}
                 {new Date(user.fechaRegistro).toLocaleDateString("es-CL", {
                   year: "numeric",
                   month: "long",
@@ -1115,7 +1126,7 @@ export default function PrestadorPage() {
               </p>
               {user.rut && (
                 <p>
-                  <span className="text-[#94A3B8]">RUT:</span> {user.rut}
+                  <span className="text-[#1E2022] dark:text-[#F1F5F9] font-medium">RUT:</span> {user.rut}
                 </p>
               )}
             </div>

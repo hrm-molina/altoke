@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { signInWithEmail, getUserProfiles, ensureProfileForSession, supabaseAuth } from "@/lib/supabase-auth";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useModalBackHandler } from "@/hooks/use-modal-back-handler";
+import { useTheme } from "@/context/theme-context";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -169,19 +170,30 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
     if (e.target === e.currentTarget) resetAndClose();
   };
 
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="login-title"
     >
-      <div className="relative w-full max-w-md rounded-2xl bg-[#0F1420] border border-[#1E293B] shadow-2xl p-6 sm:p-8">
+      <div
+        className={`relative w-full max-w-md rounded-2xl border shadow-2xl p-6 sm:p-8 transition-colors ${
+          !isDark
+            ? "border-[#E2D9CC] bg-[#FFFFFF] text-[#1E2022] shadow-[#1E2022]/15"
+            : "border-[#1E293B] bg-[#0D111D] text-[#F1F5F9] shadow-black/60"
+        }`}
+      >
         {/* Close */}
         <button
           onClick={resetAndClose}
-          className="absolute top-4 right-4 text-[#64748B] hover:text-[#F1F5F9] transition-colors"
+          className={`absolute top-4 right-4 transition-colors ${
+            !isDark ? "text-[#64748B] hover:text-[#1E2022]" : "text-[#64748B] hover:text-[#F1F5F9]"
+          }`}
           aria-label="Cerrar modal"
         >
           <X size={20} />
@@ -189,19 +201,25 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
 
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FF5A36] to-[#FF8A65] text-white shadow-lg shadow-[#FF5A36]/25">
             <Zap size={24} fill="currentColor" />
           </div>
         </div>
 
         {/* Role Toggle Selector */}
-        <div className="flex rounded-xl bg-[#0A0F1A] border border-[#1E293B] p-1 mb-5">
+        <div
+          className={`flex rounded-xl border p-1 mb-5 ${
+            !isDark ? "border-[#E2D9CC] bg-[#F7F3EE]" : "border-[#1E293B] bg-[#0A0F1A]"
+          }`}
+        >
           <button
             type="button"
             onClick={() => setTipo("usuario")}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               tipo === "usuario"
-                ? "bg-blue-600 text-white shadow"
+                ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] text-white shadow-xs"
+                : !isDark
+                ? "text-[#64748B] hover:text-[#1E2022]"
                 : "text-[#94A3B8] hover:text-[#F1F5F9]"
             }`}
           >
@@ -210,9 +228,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
           <button
             type="button"
             onClick={() => setTipo("prestador")}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               tipo === "prestador"
-                ? "bg-blue-600 text-white shadow"
+                ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] text-white shadow-xs"
+                : !isDark
+                ? "text-[#64748B] hover:text-[#1E2022]"
                 : "text-[#94A3B8] hover:text-[#F1F5F9]"
             }`}
           >
@@ -220,35 +240,35 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
           </button>
         </div>
 
-        <h2 id="login-title" className="text-xl font-bold text-[#F1F5F9] text-center mb-1">
+        <h2 id="login-title" className={`text-xl font-bold text-center mb-1 ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
           {tipo === "prestador"
             ? "Iniciar sesión como prestador"
             : "Iniciar sesión como usuario"}
         </h2>
-        <p className="text-sm text-[#94A3B8] text-center mb-6">
+        <p className={`text-sm text-center mb-6 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
           {tipo === "prestador"
             ? "Ingresa para gestionar y ofrecer tus servicios"
             : "Ingresa para buscar y contratar servicios"}
         </p>
 
         {error && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400" role="alert">
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-500" role="alert">
             <AlertCircle size={16} />
             {error}
           </div>
         )}
 
         {emailNotConfirmed && (
-          <div className="mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-xs text-blue-300 space-y-2">
-            <p className="font-semibold text-blue-200">¿No recibiste el email de confirmación?</p>
-            <p className="text-[#94A3B8] leading-relaxed">
-              Revisa la carpeta de <strong>Correo no deseado (Spam)</strong> o la pestaña <strong>Otros</strong> en tu correo (común en Hotmail/Outlook). Si no aparece, puedes reenviarlo a continuación:
+          <div className="mb-4 rounded-xl border border-[#FF5A36]/30 bg-[#FF5A36]/10 p-4 text-xs text-[#FF5A36] space-y-2">
+            <p className="font-semibold">¿No recibiste el email de confirmación?</p>
+            <p className={`leading-relaxed ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
+              Revisa la carpeta de <strong>Correo no deseado (Spam)</strong> o la pestaña <strong>Otros</strong> en tu correo. Si no aparece, puedes reenviarlo a continuación:
             </p>
             <button
               type="button"
               onClick={handleResendConfirmation}
               disabled={loading}
-              className="w-full rounded-xl border border-blue-500/50 bg-blue-500/20 py-2.5 text-xs font-semibold text-blue-300 hover:bg-blue-500/30 transition-all disabled:opacity-50"
+              className="w-full rounded-xl border border-[#FF5A36]/40 bg-[#FF5A36]/20 py-2.5 text-xs font-semibold text-[#FF5A36] hover:bg-[#FF5A36]/30 transition-all disabled:opacity-50 cursor-pointer"
             >
               {loading ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Reenviar email de confirmación"}
             </button>
@@ -257,13 +277,13 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
 
         <div className="space-y-4">
           <div>
-            <label htmlFor="login-email" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+            <label htmlFor="login-email" className={`block text-xs font-medium mb-1.5 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
               Email
             </label>
             <div className="relative">
               <Mail
                 size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569]"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
                 aria-hidden="true"
               />
               <input
@@ -273,19 +293,23 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
                 autoComplete="email"
-                className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 pl-10 pr-4 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500"
+                className={`w-full rounded-xl border py-3 pl-10 pr-4 text-sm outline-none transition-colors ${
+                  !isDark
+                    ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] placeholder-[#A8A29E] focus:border-[#FF5A36]"
+                    : "border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] placeholder-[#475569] focus:border-[#FF5A36]"
+                }`}
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="login-password" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+            <label htmlFor="login-password" className={`block text-xs font-medium mb-1.5 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
               Contraseña
             </label>
             <div className="relative">
               <Lock
                 size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#475569]"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]"
                 aria-hidden="true"
               />
               <PasswordInput
@@ -295,7 +319,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
                 placeholder="Tu contraseña"
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                 autoComplete="current-password"
-                className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 pl-10 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500"
+                className={`w-full rounded-xl border py-3 pl-10 text-sm outline-none transition-colors ${
+                  !isDark
+                    ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] placeholder-[#A8A29E] focus:border-[#FF5A36]"
+                    : "border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] placeholder-[#475569] focus:border-[#FF5A36]"
+                }`}
               />
             </div>
           </div>
@@ -304,7 +332,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
         <button
           onClick={handleLogin}
           disabled={loading}
-          className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow flex items-center justify-center gap-2 disabled:opacity-50"
+          className="mt-6 w-full rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] py-3 text-sm font-bold text-white transition-all shadow-md shadow-[#FF5A36]/25 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
         >
           {loading ? (
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -316,7 +344,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
           )}
         </button>
 
-        <p className="mt-6 text-center text-xs text-[#64748B]">
+        <p className={`mt-6 text-center text-xs ${!isDark ? "text-[#64748B]" : "text-[#64748B]"}`}>
           ¿No tienes cuenta?{" "}
           <button
             type="button"
@@ -324,14 +352,14 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
               resetAndClose();
               onSwitchToRegister?.(tipo);
             }}
-            className="text-blue-400 hover:underline font-semibold"
+            className="text-[#FF5A36] hover:text-[#FF7A59] hover:underline font-bold cursor-pointer"
           >
             Regístrate como {tipo === "prestador" ? "prestador" : "usuario"}
           </button>
         </p>
 
         <p className="mt-4 text-center text-xs text-[#64748B]">
-          <a href="/auth/reset-password" className="text-blue-400 hover:underline">
+          <a href="/auth/reset-password" className="text-[#FF5A36] hover:underline font-semibold">
             ¿Olvidaste tu contraseña?
           </a>
         </p>

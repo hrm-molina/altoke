@@ -207,20 +207,20 @@ export function AlertsList({ onRated }: { onRated?: () => void } = {}) {
                       </button>
                     </div>
                   ) : !isConfirmed ? (
-                    <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-3">
-                      <p className="text-sm text-[#94A3B8] mb-3">
-                        ¿Contrataste a <span className="font-semibold text-[#F1F5F9]">{alert.nombrePrestador}</span>?
+                    <div className="rounded-xl border border-[#FF5A36]/25 bg-[#FF5A36]/10 p-3">
+                      <p className="text-sm text-[#1E2022] dark:text-[#94A3B8] mb-3">
+                        ¿Contrataste a <span className="font-semibold text-[#FF5A36]">{alert.nombrePrestador}</span>?
                       </p>
                       <div className="flex justify-center gap-3">
                         <button
                           onClick={() => handleConfirmYes(alert.servicioId)}
-                          className="rounded-lg bg-gradient-to-r from-green-600 to-green-500 px-8 py-2 text-sm font-bold text-white hover:from-green-500 hover:to-green-400 transition-all"
+                          className="rounded-lg bg-emerald-600 px-8 py-2 text-sm font-bold text-white hover:bg-emerald-500 transition-all shadow-sm"
                         >
                           Si
                         </button>
                         <button
                           onClick={() => handleConfirmNo(alert.servicioId)}
-                          className="rounded-lg border border-red-500/30 bg-red-500/10 px-8 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all"
+                          className="rounded-lg border border-red-500/30 bg-red-500/10 px-8 py-2 text-sm font-medium text-red-500 dark:text-red-400 hover:bg-red-500/20 transition-all"
                         >
                           No
                         </button>
@@ -230,14 +230,14 @@ export function AlertsList({ onRated }: { onRated?: () => void } = {}) {
                     <div className="flex justify-center gap-3">
                       <button
                         onClick={() => handleRate(alert)}
-                        className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition-all"
+                        className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] px-4 py-2 text-xs font-bold text-white hover:opacity-90 shadow-sm transition-all"
                       >
-                        <Star size={12} />
+                        <Star size={12} fill="currentColor" />
                         Calificar
                       </button>
                       <button
                         onClick={() => handleRemove(alert.servicioId)}
-                        className="flex items-center gap-1.5 rounded-lg border border-[#1E293B] bg-[#0A0F1A] px-4 py-2 text-xs font-medium text-[#64748B] hover:text-red-400 hover:border-red-500/30 transition-all"
+                        className="flex items-center gap-1.5 rounded-lg border border-[#E2D9CC] dark:border-[#1E293B] bg-[#F7F3EE] dark:bg-[#0A0F1A] px-4 py-2 text-xs font-medium text-[#64748B] hover:text-red-500 dark:hover:text-red-400 transition-all"
                       >
                         <Trash2 size={12} />
                         Descartar

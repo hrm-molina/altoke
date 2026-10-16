@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
+import { FloatingServices } from "@/components/landing/floating-services";
+import { useTheme } from "@/context/theme-context";
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { compressImage } from "@/lib/validators";
 import { supabaseAuth, signOut, sanitizeAuthMetadata, type AuthUser, type PerfilUsuario } from "@/lib/supabase-auth";
@@ -71,6 +73,8 @@ function getInitialUserData(user: AuthUser, perfil: PerfilUsuario | null): UserD
 
 export default function PerfilPage() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
@@ -262,30 +266,37 @@ export default function PerfilPage() {
   const comunasDisponibles = form.region ? comunasPorRegion[form.region] || [] : [];
 
   const inputClass = (field: string) =>
-    `w-full rounded-xl border px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors bg-[#0A0F1A] ${
+    `w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${
+      isDark
+        ? "bg-[#0A0F1A] text-[#F1F5F9] placeholder-[#475569]"
+        : "bg-[#F7F3EE] text-[#1E2022] placeholder-[#94A3B8]"
+    } ${
       errors[field]
         ? "border-red-500/50 focus:border-red-500"
-        : "border-[#1E293B] focus:border-blue-500"
+        : isDark
+        ? "border-[#1E293B] focus:border-[#FF5A36]"
+        : "border-[#E2D9CC] focus:border-[#FF5A36]"
     }`;
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#FAF7F2] text-[#1E2022] dark:bg-[#06080F] dark:text-[#F1F5F9] transition-colors duration-300 relative">
+      <FloatingServices />
       <Navbar />
-      <main className="flex-1 pt-24 pb-16">
+      <main className="flex-1 pt-28 pb-16 relative z-10">
         <div className="mx-auto w-full max-w-2xl px-6 sm:px-10">
           {/* Header */}
           <div className="mb-8 flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+              className="card-surface flex h-10 w-10 items-center justify-center rounded-xl text-[#64748B] hover:text-[#FF5A36] transition-all"
             >
               <ArrowLeft size={18} />
             </button>
             <div>
-              <h1 className="text-2xl font-extrabold text-[#F1F5F9]">
+              <h1 className="text-2xl font-extrabold text-[#1E2022] dark:text-[#F1F5F9]">
                 Mi perfil
               </h1>
-              <p className="text-sm text-[#94A3B8]">
+              <p className="text-sm text-[#64748B] dark:text-[#94A3B8]">
                 Configura tu cuenta y datos personales
               </p>
             </div>
@@ -296,12 +307,12 @@ export default function PerfilPage() {
             {/* Avatar */}
             <div className="mb-8 flex items-center gap-5">
               <label className="relative group cursor-pointer">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1E293B] overflow-hidden">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#EAE4DC] dark:bg-[#1E293B] overflow-hidden">
                   {foto ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={foto} alt="Perfil" className="h-full w-full object-cover" />
                   ) : (
-                    <User size={32} className="text-[#64748B]" />
+                    <User size={32} className="text-[#64748B] dark:text-[#94A3B8]" />
                   )}
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -325,11 +336,11 @@ export default function PerfilPage() {
                 />
               </label>
               <div>
-                <h2 className="text-lg font-bold text-[#F1F5F9]">
+                <h2 className="text-lg font-bold text-[#1E2022] dark:text-[#F1F5F9]">
                   {user.nombre || "Sin nombre"}
                 </h2>
-                <p className="text-sm text-[#64748B]">{user.email}</p>
-                <span className="mt-1 inline-flex items-center rounded-lg border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-400">
+                <p className="text-sm text-[#64748B] dark:text-[#94A3B8]">{user.email}</p>
+                <span className="mt-1 inline-flex items-center rounded-lg border border-[#FF5A36]/25 bg-[#FF5A36]/10 px-2.5 py-0.5 text-xs font-semibold text-[#FF5A36]">
                   Usuario
                 </span>
               </div>
@@ -339,7 +350,7 @@ export default function PerfilPage() {
             <div className="space-y-5">
               {/* Nombre */}
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <User size={14} />
                   Nombre completo
                 </label>
@@ -360,7 +371,7 @@ export default function PerfilPage() {
 
               {/* Email (read only) */}
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <Mail size={14} />
                   Email
                 </label>
@@ -368,13 +379,13 @@ export default function PerfilPage() {
                   type="email"
                   value={user.email}
                   disabled
-                  className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A]/50 px-4 py-3 text-sm text-[#64748B] cursor-not-allowed"
+                  className={`w-full rounded-xl border ${isDark ? "border-[#1E293B] bg-[#0A0F1A]/50" : "border-[#E2D9CC] bg-[#F7F3EE]/60"} px-4 py-3 text-sm text-[#64748B] cursor-not-allowed`}
                 />
               </div>
 
               {/* Telefono */}
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <Phone size={14} />
                   Teléfono
                 </label>
@@ -395,7 +406,7 @@ export default function PerfilPage() {
 
               {/* Region */}
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <MapPin size={14} />
                   Región
                 </label>
@@ -421,7 +432,7 @@ export default function PerfilPage() {
 
               {/* Comuna */}
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <MapPin size={14} />
                   Comuna
                 </label>
@@ -450,7 +461,7 @@ export default function PerfilPage() {
 
               {/* Ciudad o sector */}
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-[#94A3B8] mb-1.5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
                   <MapPin size={14} />
                   Ciudad o sector
                 </label>
@@ -469,7 +480,7 @@ export default function PerfilPage() {
               <button
                 onClick={handleSave}
                 disabled={fotoUploading}
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] px-8 py-3 text-sm font-bold text-white hover:opacity-90 shadow-md shadow-[#FF5A36]/25 transition-all btn-glow disabled:opacity-50"
               >
                 {fotoUploading ? (
                   <>
@@ -485,7 +496,7 @@ export default function PerfilPage() {
               </button>
 
               {saved && (
-                <div className="flex items-center gap-2 text-sm text-green-400">
+                <div className="flex items-center gap-2 text-sm text-green-500 font-semibold">
                   <Check size={16} />
                   Guardado correctamente
                 </div>
@@ -502,15 +513,15 @@ export default function PerfilPage() {
 
           {/* Account info */}
           <div className="card-surface mt-6 p-6">
-            <h3 className="mb-3 text-sm font-bold text-[#F1F5F9]">
+            <h3 className="mb-3 text-sm font-bold text-[#1E2022] dark:text-[#F1F5F9]">
               Información de cuenta
             </h3>
-            <div className="space-y-2 text-sm text-[#64748B]">
+            <div className="space-y-2 text-sm text-[#64748B] dark:text-[#94A3B8]">
               <p>
-                <span className="text-[#94A3B8]">Tipo:</span> Usuario
+                <span className="text-[#1E2022] dark:text-[#F1F5F9] font-medium">Tipo:</span> Usuario
               </p>
               <p>
-                <span className="text-[#94A3B8]">Miembro desde:</span>{" "}
+                <span className="text-[#1E2022] dark:text-[#F1F5F9] font-medium">Miembro desde:</span>{" "}
                 {new Date(user.fechaRegistro).toLocaleDateString("es-CL", {
                   year: "numeric",
                   month: "long",
@@ -522,40 +533,40 @@ export default function PerfilPage() {
 
           {/* Derechos ARCO y Eliminación de Cuenta (Ley 19.628) */}
           <div className="card-surface mt-6 p-6 border-l-4 border-amber-500/50 bg-amber-500/5">
-            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-amber-400">
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-amber-500 dark:text-amber-400">
               <ShieldAlert size={16} />
               Derechos ARCO y Eliminación de Cuenta (Ley N° 19.628)
             </h3>
-            <div className="space-y-3 text-sm text-[#94A3B8]">
-              <p className="text-[#CBD5E1]">
+            <div className="space-y-3 text-sm text-[#64748B] dark:text-[#94A3B8]">
+              <p className="text-[#1E2022] dark:text-[#CBD5E1]">
                 Como titular de datos personales, tienes derecho a ejercer tus derechos <strong>ARCO</strong>
                 (Acceso, Rectificación, Cancelación y Oposición) en cualquier momento.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   onClick={() => router.push("/contacto?asunto=arco")}
-                  className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-400 hover:bg-amber-500/20 transition-all text-left"
+                  className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all text-left"
                 >
                   <FileText size={16} />
                   <span>Ejercer derechos ARCO</span>
                 </button>
                 <button
                   onClick={() => router.push("/contacto?asunto=reclamo")}
-                  className="flex items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-400 hover:bg-blue-500/20 transition-all text-left"
+                  className="flex items-center gap-2 rounded-xl border border-[#FF5A36]/30 bg-[#FF5A36]/10 px-4 py-3 text-sm font-semibold text-[#FF5A36] hover:bg-[#FF5A36]/20 transition-all text-left"
                 >
                   <ShieldAlert size={16} />
                   <span>Reclamo formal (SERNAC)</span>
                 </button>
               </div>
-              <div className="pt-4 border-t border-[#1E293B]/50">
-                <p className="mb-3 text-xs text-[#64748B]">
-                  La eliminación de tu cuenta es <strong className="text-red-400">irreversible</strong>.
+              <div className="pt-4 border-t border-[#E2D9CC] dark:border-[#1E293B]/50">
+                <p className="mb-3 text-xs text-[#64748B] dark:text-[#94A3B8]">
+                  La eliminación de tu cuenta es <strong className="text-red-500 dark:text-red-400">irreversible</strong>.
                   Se borrarán permanentemente: tu perfil, reseñas, alertas y datos personales.
                   Esta acción cumple con el derecho a la <strong>Cancelación</strong> (Ley 19.628 Art. 11).
                 </p>
                 <button
                   onClick={() => setShowDeleteModal(true)}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-3 text-sm font-semibold text-red-500 dark:text-red-400 hover:bg-red-500/20 transition-all"
                 >
                   <Trash2 size={16} />
                   Eliminar mi cuenta permanentemente
@@ -579,14 +590,14 @@ export default function PerfilPage() {
               aria-modal="true"
               aria-labelledby="delete-modal-title"
             >
-              <div className="relative w-full max-w-md rounded-2xl bg-[#0F1420] border border-[#1E293B] shadow-2xl p-6 sm:p-8">
+              <div className="card-surface relative w-full max-w-md shadow-2xl p-6 sm:p-8 rounded-2xl">
                 <button
                   onClick={() => {
                     setShowDeleteModal(false);
                     setDeleteConfirmText("");
                     setDeleteError("");
                   }}
-                  className="absolute top-4 right-4 text-[#64748B] hover:text-[#F1F5F9] transition-colors"
+                  className="absolute top-4 right-4 text-[#64748B] hover:text-[#FF5A36] transition-colors"
                   aria-label="Cerrar modal"
                 >
                   <X size={20} />
@@ -594,18 +605,18 @@ export default function PerfilPage() {
 
                 <div className="flex justify-center mb-6">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20">
-                    <Trash2 size={28} className="text-red-400" />
+                    <Trash2 size={28} className="text-red-500 dark:text-red-400" />
                   </div>
                 </div>
 
-                <h2 id="delete-modal-title" className="text-xl font-bold text-[#F1F5F9] text-center mb-2">
+                <h2 id="delete-modal-title" className="text-xl font-bold text-[#1E2022] dark:text-[#F1F5F9] text-center mb-2">
                   Eliminar cuenta permanentemente
                 </h2>
-                <p className="text-sm text-[#94A3B8] text-center mb-6">
+                <p className="text-sm text-[#64748B] dark:text-[#94A3B8] text-center mb-6">
                   Esta acción no se puede deshacer. Se perderán todos tus datos.
                 </p>
 
-                <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 text-sm text-red-400" role="alert">
+                <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-4 text-sm text-red-500 dark:text-red-400" role="alert">
                   <div className="flex items-start gap-2">
                     <AlertCircle size={16} className="mt-0.5 shrink-0" />
                     <ul className="space-y-1 list-disc list-inside">
@@ -617,8 +628,8 @@ export default function PerfilPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label htmlFor="delete-confirm" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
-                    Escribe <strong className="text-red-400">ELIMINAR MI CUENTA</strong> para confirmar
+                  <label htmlFor="delete-confirm" className="block text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
+                    Escribe <strong className="text-red-500 dark:text-red-400">ELIMINAR MI CUENTA</strong> para confirmar
                   </label>
                   <input
                     id="delete-confirm"
@@ -626,14 +637,20 @@ export default function PerfilPage() {
                     value={deleteConfirmText}
                     onChange={(e) => setDeleteConfirmText(e.target.value)}
                     placeholder="ELIMINAR MI CUENTA"
-                    className={`w-full rounded-xl border px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors bg-[#0A0F1A] ${
+                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${
+                      isDark
+                        ? "bg-[#0A0F1A] text-[#F1F5F9] placeholder-[#475569]"
+                        : "bg-[#F7F3EE] text-[#1E2022] placeholder-[#94A3B8]"
+                    } ${
                       deleteError
                         ? "border-red-500/50 focus:border-red-500"
-                        : "border-[#1E293B] focus:border-blue-500"
+                        : isDark
+                        ? "border-[#1E293B] focus:border-red-500"
+                        : "border-[#E2D9CC] focus:border-red-500"
                     }`}
                   />
                   {deleteError && (
-                    <p className="mt-1 flex items-center gap-1 text-xs text-red-400" role="alert">
+                    <p className="mt-1 flex items-center gap-1 text-xs text-red-500 dark:text-red-400" role="alert">
                       <AlertCircle size={12} />
                       {deleteError}
                     </p>
@@ -648,7 +665,7 @@ export default function PerfilPage() {
                       setDeleteError("");
                     }}
                     disabled={deleting}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-5 py-3 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[#E2D9CC] dark:border-[#1E293B] bg-[#F7F3EE] dark:bg-[#0A0F1A] px-5 py-3 text-sm font-semibold text-[#64748B] dark:text-[#94A3B8] hover:text-[#1E2022] dark:hover:text-[#F1F5F9] transition-all disabled:opacity-50"
                   >
                     <LogOut size={16} />
                     Cancelar

@@ -2,6 +2,7 @@
 
 import { Star, MapPin } from "lucide-react";
 import type { Servicio } from "@/lib/mock-services";
+import { useTheme } from "@/context/theme-context";
 
 interface ServiceCardProps {
   servicio: Servicio;
@@ -16,7 +17,7 @@ const categoryColors: Record<string, string> = {
   Compañia: "bg-pink-500/10 text-pink-400 border-pink-500/20",
   Reparaciones: "bg-red-500/10 text-red-400 border-red-500/20",
   Encomiendas: "bg-violet-500/10 text-violet-400 border-violet-500/20",
-  "Armar muebles": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  "Armar muebles": "bg-[#FF5A36]/10 text-[#FF5A36] border-[#FF5A36]/20",
   Jardineria: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   "Cuidado de niños": "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
   Mascotas: "bg-lime-500/10 text-lime-400 border-lime-500/20",
@@ -67,11 +68,15 @@ function renderStars(rating: number) {
 export function ServiceCard({ servicio, onClick }: ServiceCardProps) {
   const colorClass = categoryColors[servicio.categoria] || categoryColors.Otros;
   const emoji = categoryEmojis[servicio.categoria] || "⚡";
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
     <div onClick={onClick} className="card-surface flex flex-col p-5 cursor-pointer group">
       {/* Image / Photo */}
-      <div className="mb-4 flex h-40 items-center justify-center rounded-xl bg-[#0A0F1A] border border-[#1E293B] overflow-hidden">
+      <div className={`mb-4 flex h-40 items-center justify-center rounded-xl border overflow-hidden transition-colors ${
+        !isDark ? "bg-[#FAF7F2] border-[#EAE4DC]" : "bg-[#0A0F1A] border-[#1E293B]"
+      }`}>
         {servicio.foto ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -80,7 +85,7 @@ export function ServiceCard({ servicio, onClick }: ServiceCardProps) {
             className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <span className="text-5xl opacity-60 group-hover:opacity-100 transition-opacity">
+          <span className="text-5xl opacity-75 group-hover:opacity-100 transition-opacity">
             {emoji}
           </span>
         )}
@@ -89,19 +94,21 @@ export function ServiceCard({ servicio, onClick }: ServiceCardProps) {
       {/* Category badge */}
       <div className="mb-3 flex items-center gap-2">
         <span
-          className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-medium ${colorClass}`}
+          className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-semibold ${colorClass}`}
         >
           {servicio.categoria}
         </span>
       </div>
 
       {/* Title */}
-      <h3 className="mb-2 text-base font-bold text-[#F1F5F9] line-clamp-1 group-hover:text-blue-400 transition-colors">
+      <h3 className={`mb-2 text-base font-bold line-clamp-1 transition-colors ${
+        !isDark ? "text-[#1E2022] group-hover:text-[#FF5A36]" : "text-[#F1F5F9] group-hover:text-[#FF7A59]"
+      }`}>
         {servicio.titulo}
       </h3>
 
       {/* Description */}
-      <p className="mb-4 text-sm text-[#94A3B8] line-clamp-2 leading-relaxed">
+      <p className={`mb-4 text-sm line-clamp-2 leading-relaxed ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
         {servicio.descripcion}
       </p>
 
@@ -110,7 +117,7 @@ export function ServiceCard({ servicio, onClick }: ServiceCardProps) {
         <div className="flex items-center gap-0.5">
           {renderStars((servicio.resenas === 0 || !servicio.resenas) ? 5 : servicio.rating)}
         </div>
-        <span className="text-sm font-semibold text-[#F1F5F9]">
+        <span className={`text-sm font-semibold ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
           {(servicio.resenas === 0 || !servicio.resenas) ? 5 : servicio.rating}
         </span>
         <span className="text-xs text-[#64748B]">
@@ -119,20 +126,24 @@ export function ServiceCard({ servicio, onClick }: ServiceCardProps) {
       </div>
 
       {/* Price + Location */}
-      <div className="mt-auto flex items-center justify-between border-t border-[#1E293B] pt-3">
-        <span className="text-lg font-bold text-blue-400">
+      <div className={`mt-auto flex items-center justify-between border-t pt-3 ${
+        !isDark ? "border-[#EAE4DC]" : "border-[#1E293B]"
+      }`}>
+        <span className="text-lg font-bold text-[#FF5A36]">
           ${servicio.precio.toLocaleString("es-CL")}
           <span className="text-xs font-normal text-[#64748B]">/hora</span>
         </span>
         <div className="flex items-center gap-1 text-xs text-[#64748B]">
-          <MapPin size={12} />
+          <MapPin size={12} className="text-[#FF5A36]" />
           <span>{servicio.comuna}</span>
         </div>
       </div>
 
       {/* Provider */}
       <div className="mt-2 flex items-center gap-2">
-        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
+        <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+          !isDark ? "bg-[#F7F3EE] border border-[#E2D9CC] text-[#1E2022]" : "bg-[#1E293B] text-[#94A3B8]"
+        }`}>
           {servicio.nombrePrestador.charAt(0)}
         </div>
         <span className="text-xs text-[#64748B]">{servicio.nombrePrestador}</span>

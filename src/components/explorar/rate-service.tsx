@@ -179,11 +179,11 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative w-full max-w-md rounded-2xl bg-[#0F1420] border border-[#1E293B] shadow-2xl p-6 sm:p-8">
+      <div className="card-surface relative w-full max-w-md shadow-2xl p-6 sm:p-8">
         {/* Back */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 text-[#64748B] hover:text-[#F1F5F9] transition-colors"
+          className="absolute top-4 left-4 text-[#64748B] hover:text-[#FF5A36] transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
@@ -194,17 +194,17 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
             <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20">
               <ShieldX size={36} className="text-red-400" />
             </div>
-            <h2 className="text-lg font-bold text-[#F1F5F9] mb-2">
+            <h2 className="text-lg font-bold text-[#1E2022] dark:text-[#F1F5F9] mb-2">
               No puedes calificarte a ti mismo
             </h2>
-            <p className="text-sm text-[#94A3B8] leading-relaxed mb-6">
+            <p className="text-sm text-[#64748B] dark:text-[#94A3B8] leading-relaxed mb-6">
               Este servicio está registrado con tu mismo correo{" "}
-              <span className="font-medium text-blue-400">({servicio.emailPrestador || sessionEmail})</span>.
+              <span className="font-semibold text-[#FF5A36]">({servicio.emailPrestador || sessionEmail})</span>.
               Las reseñas deben venir de otros usuarios.
             </p>
             <button
               onClick={onClose}
-              className="rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-6 py-2.5 text-sm text-[#94A3B8] hover:text-[#F1F5F9] transition-colors"
+              className="rounded-xl border border-[#E2D9CC] dark:border-[#1E293B] bg-[#F7F3EE] dark:bg-[#0A0F1A] px-6 py-2.5 text-sm font-semibold text-[#1E2022] dark:text-[#94A3B8] hover:text-[#FF5A36] transition-colors"
             >
               Cerrar
             </button>
@@ -216,8 +216,8 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
             <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
               <Check size={40} className="text-green-500" />
             </div>
-            <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">Calificación guardada</h2>
-            <p className="text-sm text-[#94A3B8] text-center">
+            <h2 className="text-xl font-bold text-[#1E2022] dark:text-[#F1F5F9] mb-2">Calificación guardada</h2>
+            <p className="text-sm text-[#64748B] dark:text-[#94A3B8] text-center">
               Gracias por calificar a {servicio.nombrePrestador}
             </p>
           </div>
@@ -225,10 +225,10 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
         ) : (
           /* ——— Formulario de calificación ——— */
           <div className="flex flex-col items-center">
-            <h2 className="text-xl font-bold text-[#F1F5F9] mb-2 text-center">
+            <h2 className="text-xl font-bold text-[#1E2022] dark:text-[#F1F5F9] mb-2 text-center">
               Califica a {servicio.nombrePrestador}
             </h2>
-            <p className="text-sm text-[#94A3B8] text-center mb-8">
+            <p className="text-sm text-[#64748B] dark:text-[#94A3B8] text-center mb-8">
               Tu reseña ayudará a otras personas a conocer este servicio
             </p>
 
@@ -248,7 +248,7 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
                     className={
                       star <= displayRating
                         ? "text-amber-400"
-                        : "text-[#334155] hover:text-amber-400/50"
+                        : "text-[#CBD5E1] dark:text-[#334155] hover:text-amber-400/50"
                     }
                   />
                 </button>
@@ -256,7 +256,7 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
             </div>
 
             {rating > 0 && (
-              <p className="text-sm text-[#94A3B8] mb-6">
+              <p className="text-sm font-semibold text-[#FF5A36] mb-6">
                 {rating === 1 && "Muy mal"}
                 {rating === 2 && "Mal"}
                 {rating === 3 && "Regular"}
@@ -267,7 +267,7 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
 
             {/* Textarea */}
             <div className="w-full mb-6">
-              <label className="block text-xs font-medium text-[#94A3B8] mb-2">
+              <label className="block text-xs font-medium text-[#64748B] dark:text-[#94A3B8] mb-2">
                 Escribe una reseña (opcional)
               </label>
               <textarea
@@ -276,7 +276,7 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
                 placeholder="¿Qué te pareció el servicio? Cuenta tu experiencia..."
                 rows={4}
                 maxLength={300}
-                className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500 resize-none"
+                className="w-full rounded-xl border border-[#E2D9CC] dark:border-[#1E293B] bg-[#F7F3EE] dark:bg-[#0A0F1A] px-4 py-3 text-sm text-[#1E2022] dark:text-[#F1F5F9] placeholder-[#94A3B8] dark:placeholder-[#475569] outline-none transition-colors focus:border-[#FF5A36] resize-none"
               />
               <p className="mt-1 text-xs text-[#64748B] text-right">{resena.length}/300</p>
             </div>
@@ -284,7 +284,7 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
             <button
               onClick={handleSave}
               disabled={rating === 0}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] py-3 text-sm font-bold text-white hover:opacity-90 shadow-md shadow-[#FF5A36]/25 transition-all btn-glow disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Save size={16} />
               Guardar calificación

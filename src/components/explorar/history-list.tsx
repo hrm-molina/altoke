@@ -163,13 +163,13 @@ export function HistoryList() {
   if (history.length === 0 && !loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#0A0F1A] border border-[#1E293B]">
-          <History size={36} className="text-[#475569]" />
+        <div className="card-surface mb-6 flex h-20 w-20 items-center justify-center rounded-full text-[#64748B] dark:text-[#475569]">
+          <History size={36} />
         </div>
-        <h3 className="mb-2 text-lg font-bold text-[#F1F5F9]">
+        <h3 className="mb-2 text-lg font-bold text-[#1E2022] dark:text-[#F1F5F9]">
           Historial vacío
         </h3>
-        <p className="text-sm text-[#94A3B8] text-center max-w-md">
+        <p className="text-sm text-[#64748B] dark:text-[#94A3B8] text-center max-w-md">
           Aún no calificaste ningún servicio. Cuando califiques uno, aparecerá aquí.
         </p>
       </div>
@@ -184,8 +184,8 @@ export function HistoryList() {
   return (
     <div className="space-y-4">
       {loading && history.length === 0 && (
-        <div className="flex items-center justify-center py-12 text-[#94A3B8] gap-2">
-          <Loader2 size={18} className="animate-spin text-blue-400" />
+        <div className="flex items-center justify-center py-12 text-[#64748B] dark:text-[#94A3B8] gap-2">
+          <Loader2 size={18} className="animate-spin text-[#FF5A36]" />
           <span className="text-sm">Cargando historial...</span>
         </div>
       )}
@@ -197,30 +197,30 @@ export function HistoryList() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4 flex-1">
               {/* Emoji */}
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0A0F1A] border border-[#1E293B] text-2xl">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#F7F3EE] dark:bg-[#0A0F1A] border border-[#E2D9CC] dark:border-[#1E293B] text-2xl">
                 {categoryEmojis[entry.categoria] || "⚡"}
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-[#F1F5F9] mb-1 truncate">
+                <h4 className="text-sm font-bold text-[#1E2022] dark:text-[#F1F5F9] mb-1 truncate">
                   {entry.tituloServicio}
                 </h4>
-                <p className="text-xs text-[#64748B] mb-2">
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mb-2">
                   {entry.nombrePrestador} · {entry.comuna}
                 </p>
 
                 {/* Stars */}
                 <div className="flex items-center gap-1 mb-2">
                   {renderStars(entry.calificacion)}
-                  <span className="text-xs font-semibold text-[#F1F5F9] ml-1">
+                  <span className="text-xs font-semibold text-[#1E2022] dark:text-[#F1F5F9] ml-1">
                     {entry.calificacion}/5
                   </span>
                 </div>
 
                 {/* Review */}
                 {entry.resena && (
-                  <p className="text-sm text-[#94A3B8] italic mb-2">
+                  <p className="text-sm text-[#475569] dark:text-[#94A3B8] italic mb-2">
                     &ldquo;{entry.resena}&rdquo;
                   </p>
                 )}

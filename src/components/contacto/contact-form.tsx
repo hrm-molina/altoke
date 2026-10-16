@@ -85,21 +85,22 @@ export function ContactForm() {
   };
 
   return (
-    <div className="rounded-2xl bg-[#0D1117] border border-[#1E293B]/60 p-6">
-      <h2 className="text-lg font-semibold text-[#F1F5F9] mb-2">Envíanos tu requerimiento</h2>
-      <p className="text-xs text-[#64748B] mb-5">
+  return (
+    <div className="card-surface p-6 sm:p-8 rounded-2xl">
+      <h2 className="text-lg font-bold text-[#1E2022] dark:text-[#F1F5F9] mb-2">Envíanos tu requerimiento</h2>
+      <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mb-5">
         Completa el formulario para abrir un caso de atención con nuestro equipo.
       </p>
 
       {submitStatus === "success" && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400" role="alert">
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-500 dark:text-emerald-400" role="alert">
           <Check size={16} className="shrink-0" />
           <span>{submitMessage}</span>
         </div>
       )}
 
       {submitStatus === "error" && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400" role="alert">
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-500 dark:text-red-400" role="alert">
           <AlertCircle size={16} className="shrink-0" />
           <span>{submitMessage}</span>
         </div>
@@ -107,7 +108,7 @@ export function ContactForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div>
-          <label htmlFor="nombre" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+          <label htmlFor="nombre" className="block text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
             Nombre completo *
           </label>
           <input
@@ -118,23 +119,23 @@ export function ContactForm() {
             value={formData.nombre}
             onChange={handleChange}
             placeholder="Ej: Juan Pérez González"
-            className={`w-full rounded-xl bg-[#06080F] border px-4 py-2.5 text-sm text-[#F1F5F9] placeholder-[#475569] focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-colors ${
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm bg-[#F7F3EE] dark:bg-[#06080F] text-[#1E2022] dark:text-[#F1F5F9] placeholder-[#94A3B8] dark:placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-[#FF5A36]/25 transition-colors ${
               errors.nombre
                 ? "border-red-500/50 focus:border-red-500"
-                : "border-[#1E293B]/80 focus:border-blue-500/50"
+                : "border-[#E2D9CC] dark:border-[#1E293B]/80 focus:border-[#FF5A36]"
             }`}
             aria-invalid={errors.nombre ? "true" : "false"}
             aria-describedby={errors.nombre ? "nombre-error" : undefined}
           />
           {errors.nombre && (
-            <p id="nombre-error" className="mt-1 flex items-center gap-1 text-xs text-red-400" role="alert">
+            <p id="nombre-error" className="mt-1 flex items-center gap-1 text-xs text-red-500 dark:text-red-400" role="alert">
               <AlertCircle size={12} />
               {errors.nombre}
             </p>
           )}
         </div>
         <div>
-          <label htmlFor="email" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+          <label htmlFor="email" className="block text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
             Correo electrónico *
           </label>
           <input
@@ -145,23 +146,23 @@ export function ContactForm() {
             value={formData.email}
             onChange={handleChange}
             placeholder="tu@correo.com"
-            className={`w-full rounded-xl bg-[#06080F] border px-4 py-2.5 text-sm text-[#F1F5F9] placeholder-[#475569] focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-colors ${
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm bg-[#F7F3EE] dark:bg-[#06080F] text-[#1E2022] dark:text-[#F1F5F9] placeholder-[#94A3B8] dark:placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-[#FF5A36]/25 transition-colors ${
               errors.email
                 ? "border-red-500/50 focus:border-red-500"
-                : "border-[#1E293B]/80 focus:border-blue-500/50"
+                : "border-[#E2D9CC] dark:border-[#1E293B]/80 focus:border-[#FF5A36]"
             }`}
             aria-invalid={errors.email ? "true" : "false"}
             aria-describedby={errors.email ? "email-error" : undefined}
           />
           {errors.email && (
-            <p id="email-error" className="mt-1 flex items-center gap-1 text-xs text-red-400" role="alert">
+            <p id="email-error" className="mt-1 flex items-center gap-1 text-xs text-red-500 dark:text-red-400" role="alert">
               <AlertCircle size={12} />
               {errors.email}
             </p>
           )}
         </div>
         <div>
-          <label htmlFor="asunto" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+          <label htmlFor="asunto" className="block text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
             Motivo o Asunto *
           </label>
           <select
@@ -169,10 +170,10 @@ export function ContactForm() {
             name="asunto"
             value={formData.asunto}
             onChange={handleChange}
-            className={`w-full rounded-xl bg-[#06080F] border px-4 py-2.5 text-sm text-[#F1F5F9] focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-colors ${
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm bg-[#F7F3EE] dark:bg-[#06080F] text-[#1E2022] dark:text-[#F1F5F9] focus:outline-none focus:ring-2 focus:ring-[#FF5A36]/25 transition-colors ${
               errors.asunto
                 ? "border-red-500/50 focus:border-red-500"
-                : "border-[#1E293B]/80 focus:border-blue-500/50"
+                : "border-[#E2D9CC] dark:border-[#1E293B]/80 focus:border-[#FF5A36]"
             }`}
             aria-invalid={errors.asunto ? "true" : "false"}
             aria-describedby={errors.asunto ? "asunto-error" : undefined}
@@ -186,14 +187,14 @@ export function ContactForm() {
             <option value="otro">Otro requerimiento</option>
           </select>
           {errors.asunto && (
-            <p id="asunto-error" className="mt-1 flex items-center gap-1 text-xs text-red-400" role="alert">
+            <p id="asunto-error" className="mt-1 flex items-center gap-1 text-xs text-red-500 dark:text-red-400" role="alert">
               <AlertCircle size={12} />
               {errors.asunto}
             </p>
           )}
         </div>
         <div>
-          <label htmlFor="mensaje" className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+          <label htmlFor="mensaje" className="block text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] mb-1.5">
             Detalle del requerimiento *
           </label>
           <textarea
@@ -204,16 +205,16 @@ export function ContactForm() {
             value={formData.mensaje}
             onChange={handleChange}
             placeholder="Describe con claridad los hechos, número de servicio (si aplica) y en qué podemos ayudarte..."
-            className={`w-full rounded-xl bg-[#06080F] border px-4 py-2.5 text-sm text-[#F1F5F9] placeholder-[#475569] focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-colors resize-none ${
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm bg-[#F7F3EE] dark:bg-[#06080F] text-[#1E2022] dark:text-[#F1F5F9] placeholder-[#94A3B8] dark:placeholder-[#475569] focus:outline-none focus:ring-2 focus:ring-[#FF5A36]/25 transition-colors resize-none ${
               errors.mensaje
                 ? "border-red-500/50 focus:border-red-500"
-                : "border-[#1E293B]/80 focus:border-blue-500/50"
+                : "border-[#E2D9CC] dark:border-[#1E293B]/80 focus:border-[#FF5A36]"
             }`}
             aria-invalid={errors.mensaje ? "true" : "false"}
             aria-describedby={errors.mensaje ? "mensaje-error" : undefined}
           />
           {errors.mensaje && (
-            <p id="mensaje-error" className="mt-1 flex items-center gap-1 text-xs text-red-400" role="alert">
+            <p id="mensaje-error" className="mt-1 flex items-center gap-1 text-xs text-red-500 dark:text-red-400" role="alert">
               <AlertCircle size={12} />
               {errors.mensaje}
             </p>
@@ -222,7 +223,7 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:opacity-90 text-white text-sm font-bold shadow-md shadow-[#FF5A36]/25 transition-all btn-glow disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <Loader2 size={16} className="animate-spin" />
@@ -233,11 +234,11 @@ export function ContactForm() {
         </button>
       </form>
 
-      <p className="mt-4 text-xs text-[#475569] text-center">
+      <p className="mt-4 text-xs text-[#64748B] dark:text-[#475569] text-center">
         O escríbenos directamente desde tu correo a{" "}
         <a
           href="mailto:altokechile.info@gmail.com"
-          className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
+          className="text-[#FF5A36] hover:opacity-80 underline underline-offset-2 transition-colors font-semibold"
         >
           altokechile.info@gmail.com
         </a>

@@ -13,6 +13,8 @@ import { ServiceDetail } from "@/components/explorar/service-detail";
 import { HistoryList } from "@/components/explorar/history-list";
 import { AlertsList } from "@/components/explorar/alerts-list";
 import { type Servicio } from "@/lib/mock-services";
+import { useTheme } from "@/context/theme-context";
+import { FloatingServices } from "@/components/landing/floating-services";
 
 function ExplorarContent() {
   const searchParams = useSearchParams();
@@ -81,18 +83,32 @@ function ExplorarContent() {
     setAlertsKey((k) => k + 1);
   };
 
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div
+      className={`min-h-screen flex flex-col overflow-x-hidden transition-colors duration-300 relative ${
+        !isDark ? "bg-[#FAF7F2] text-[#1E2022]" : "bg-[#06080F] text-[#F1F5F9]"
+      }`}
+    >
+      <FloatingServices />
       <Navbar />
-      <main className="flex-1 pt-20 pb-16">
-        <div className="mx-auto w-full px-6 sm:px-10 lg:px-16">
+      <main className="flex-1 pt-24 pb-16 relative z-10">
+        <div className="mx-auto w-full px-6 sm:px-10 lg:px-16 max-w-7xl">
           {/* Navigation Tab Pills */}
-          <div className="flex items-center gap-2 mb-8 border-b border-[#1E293B] pb-4 overflow-x-auto">
+          <div
+            className={`flex items-center gap-2 mb-8 border-b pb-4 overflow-x-auto ${
+              !isDark ? "border-[#E2D9CC]" : "border-[#1E293B]"
+            }`}
+          >
             <button
               onClick={() => router.push("/explorar")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all shrink-0 ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
                 !showHistorial && !showAlertas
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                  ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] text-white shadow-md shadow-[#FF5A36]/25"
+                  : !isDark
+                  ? "text-[#64748B] hover:text-[#1E2022] hover:bg-[#F7F3EE]"
                   : "text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#0A0F1A]"
               }`}
             >
@@ -101,24 +117,28 @@ function ExplorarContent() {
             </button>
             <button
               onClick={() => router.push("/explorar?tab=alertas")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all shrink-0 ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
                 showAlertas
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                  ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] text-white shadow-md shadow-[#FF5A36]/25"
+                  : !isDark
+                  ? "text-[#64748B] hover:text-[#1E2022] hover:bg-[#F7F3EE]"
                   : "text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#0A0F1A]"
               }`}
             >
               Alertas
               {alertCount > 0 && (
-                <span className="flex h-5 px-1.5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                <span className="flex h-5 px-1.5 items-center justify-center rounded-full bg-[#FF5A36] text-[10px] font-bold text-white">
                   {alertCount}
                 </span>
               )}
             </button>
             <button
               onClick={() => router.push("/explorar?tab=historial")}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all shrink-0 ${
+              className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shrink-0 cursor-pointer ${
                 showHistorial
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                  ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] text-white shadow-md shadow-[#FF5A36]/25"
+                  : !isDark
+                  ? "text-[#64748B] hover:text-[#1E2022] hover:bg-[#F7F3EE]"
                   : "text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#0A0F1A]"
               }`}
             >
@@ -131,15 +151,17 @@ function ExplorarContent() {
               <div className="mb-6">
                 <button
                   onClick={() => router.push("/explorar")}
-                  className="mb-4 flex items-center gap-2 text-sm text-[#94A3B8] hover:text-[#F1F5F9] transition-colors"
+                  className={`mb-4 flex items-center gap-2 text-sm transition-colors cursor-pointer ${
+                    !isDark ? "text-[#64748B] hover:text-[#1E2022]" : "text-[#94A3B8] hover:text-[#F1F5F9]"
+                  }`}
                 >
                   <ArrowLeft size={16} />
                   Volver
                 </button>
-                <h1 className="mb-2 text-3xl font-extrabold text-[#F1F5F9] sm:text-4xl">
+                <h1 className={`mb-2 text-3xl font-extrabold sm:text-4xl ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                   Mi historial
                 </h1>
-                <p className="text-base text-[#94A3B8]">
+                <p className={`text-base ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                   Servicios que calificaste
                 </p>
               </div>
@@ -150,15 +172,17 @@ function ExplorarContent() {
               <div className="mb-6">
                 <button
                   onClick={() => router.push("/explorar")}
-                  className="mb-4 flex items-center gap-2 text-sm text-[#94A3B8] hover:text-[#F1F5F9] transition-colors"
+                  className={`mb-4 flex items-center gap-2 text-sm transition-colors cursor-pointer ${
+                    !isDark ? "text-[#64748B] hover:text-[#1E2022]" : "text-[#94A3B8] hover:text-[#F1F5F9]"
+                  }`}
                 >
                   <ArrowLeft size={16} />
                   Volver
                 </button>
-                <h1 className="mb-2 text-3xl font-extrabold text-[#F1F5F9] sm:text-4xl">
+                <h1 className={`mb-2 text-3xl font-extrabold sm:text-4xl ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                   Alertas
                 </h1>
-                <p className="text-base text-[#94A3B8]">
+                <p className={`text-base ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                   Servicios que desbloqueaste y puedes calificar
                 </p>
               </div>
@@ -167,10 +191,10 @@ function ExplorarContent() {
           ) : (
             <>
               <div className="mb-6">
-                <h1 className="mb-2 text-3xl font-extrabold text-[#F1F5F9] sm:text-4xl">
+                <h1 className={`mb-2 text-3xl font-extrabold sm:text-4xl ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                   Explora servicios
                 </h1>
-                <p className="text-base text-[#94A3B8]">
+                <p className={`text-base ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                   Encuentra el servicio que necesitas en tu zona
                 </p>
               </div>

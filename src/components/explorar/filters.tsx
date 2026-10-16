@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 import { regiones, comunasPorRegion } from "@/lib/regions";
 import { categorias } from "@/lib/mock-services";
+import { useTheme } from "@/context/theme-context";
 
 interface FiltersProps {
   region: string;
@@ -37,17 +38,26 @@ export function Filters({
   onClear,
 }: FiltersProps) {
   const [expanded, setExpanded] = useState(false);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const hasFilters = region || comuna || sector || categoria || precioMin || precioMax;
-
   const comunasDisponibles = region ? comunasPorRegion[region] || [] : [];
+
+  const fieldClass = `w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
+    !isDark
+      ? "border-[#E2D9CC] bg-[#FFFFFF] text-[#1E2022] placeholder-[#A8A29E] focus:border-[#FF5A36] shadow-xs"
+      : "border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] placeholder-[#475569] focus:border-[#FF5A36]"
+  }`;
 
   return (
     <div className="w-full">
       {/* Toggle filters on mobile */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors md:hidden"
+        className={`flex items-center gap-2 text-sm font-medium transition-colors md:hidden cursor-pointer ${
+          !isDark ? "text-[#64748B] hover:text-[#1E2022]" : "text-[#94A3B8] hover:text-[#F1F5F9]"
+        }`}
       >
         Filtros
         <ChevronDown
@@ -55,7 +65,7 @@ export function Filters({
           className={`transition-transform ${expanded ? "rotate-180" : ""}`}
         />
         {hasFilters && (
-          <span className="h-2 w-2 rounded-full bg-blue-500" />
+          <span className="h-2 w-2 rounded-full bg-[#FF5A36]" />
         )}
       </button>
 
@@ -73,7 +83,7 @@ export function Filters({
               onRegionChange(e.target.value);
               onComunaChange("");
             }}
-            className="w-full appearance-none rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-3 pr-8 text-sm text-[#F1F5F9] outline-none transition-colors focus:border-blue-500"
+            className={`${fieldClass} pr-8 cursor-pointer`}
           >
             <option value="">Todas las regiones</option>
             {regiones.map((r) => (
@@ -90,7 +100,7 @@ export function Filters({
             value={comuna}
             onChange={(e) => onComunaChange(e.target.value)}
             disabled={!region}
-            className="w-full appearance-none rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-3 pr-8 text-sm text-[#F1F5F9] outline-none transition-colors focus:border-blue-500 disabled:opacity-40"
+            className={`${fieldClass} pr-8 disabled:opacity-40 cursor-pointer`}
           >
             <option value="">
               {region ? "Todas las comunas" : "Primero una región"}
@@ -110,7 +120,7 @@ export function Filters({
             value={sector}
             onChange={(e) => onSectorChange(e.target.value)}
             placeholder="Sector (opcional)"
-            className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500"
+            className={fieldClass}
           />
         </div>
 
@@ -119,7 +129,7 @@ export function Filters({
           <select
             value={categoria}
             onChange={(e) => onCategoriaChange(e.target.value)}
-            className="w-full appearance-none rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-3 pr-8 text-sm text-[#F1F5F9] outline-none transition-colors focus:border-blue-500"
+            className={`${fieldClass} pr-8 cursor-pointer`}
           >
             <option value="">Todas las categorías</option>
             {categorias.map((c) => (
@@ -138,7 +148,7 @@ export function Filters({
             onChange={(e) => onPrecioMinChange(e.target.value)}
             placeholder="Precio min"
             min="0"
-            className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500"
+            className={fieldClass}
           />
         </div>
 
@@ -150,12 +160,16 @@ export function Filters({
             onChange={(e) => onPrecioMaxChange(e.target.value)}
             placeholder="Precio max"
             min="0"
-            className="w-full rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors focus:border-blue-500"
+            className={fieldClass}
           />
           {hasFilters && (
             <button
               onClick={onClear}
-              className="flex items-center gap-1 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-3 py-3 text-xs text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-colors whitespace-nowrap"
+              className={`flex items-center gap-1 rounded-xl border px-3 py-3 text-xs transition-colors whitespace-nowrap cursor-pointer ${
+                !isDark
+                  ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#64748B] hover:text-[#1E2022] hover:bg-[#EAE4DC]"
+                  : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+              }`}
             >
               <X size={14} />
               Limpiar

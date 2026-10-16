@@ -12,6 +12,7 @@ import { dbSaveService } from "@/lib/db";
 import { signUpWithEmail, checkProfileExists, supabaseAuth } from "@/lib/supabase-auth";
 import { validateServiceContent } from "@/lib/content-moderation";
 import { useModalBackHandler } from "@/hooks/use-modal-back-handler";
+import { useTheme } from "@/context/theme-context";
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -87,15 +88,22 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     }
   };
 
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   const inputClass = useMemo(
     () =>
       (field: string) =>
-        `w-full rounded-xl border px-4 py-3 text-sm text-[#F1F5F9] placeholder-[#475569] outline-none transition-colors bg-[#0A0F1A] ${
+        `w-full rounded-xl border px-4 py-3 text-sm outline-none transition-colors ${
+          !isDark
+            ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] placeholder-[#A8A29E]"
+            : "border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] placeholder-[#475569]"
+        } ${
           errors[field]
-            ? "border-red-500/50 focus:border-red-500"
-            : "border-[#1E293B] focus:border-blue-500"
+            ? "border-red-500 focus:border-red-500"
+            : "focus:border-[#FF5A36]"
         }`,
-    [errors]
+    [errors, isDark]
   );
 
   const validateStep2 = (): boolean => {
@@ -542,11 +550,19 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={handleBackdropClick}
     >
-      <div className="register-modal relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[#0F1420] border border-[#1E293B] shadow-2xl">
+      <div
+        className={`register-modal relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border shadow-2xl transition-colors ${
+          !isDark
+            ? "border-[#E2D9CC] bg-[#FFFFFF] text-[#1E2022] shadow-[#1E2022]/15"
+            : "border-[#1E293B] bg-[#0D111D] text-[#F1F5F9] shadow-black/60"
+        }`}
+      >
         {/* Close button */}
         <button
           onClick={resetAndClose}
-          className="absolute top-4 right-4 z-10 text-[#64748B] hover:text-[#F1F5F9] transition-colors"
+          className={`absolute top-4 right-4 z-10 transition-colors ${
+            !isDark ? "text-[#64748B] hover:text-[#1E2022]" : "text-[#64748B] hover:text-[#F1F5F9]"
+          }`}
         >
           <X size={20} />
         </button>
@@ -559,7 +575,9 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors ${
                     step >= s
-                      ? "bg-blue-600 text-white"
+                      ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] text-white shadow-xs"
+                      : !isDark
+                      ? "bg-[#EAE4DC] text-[#78716C]"
                       : "bg-[#1E293B] text-[#64748B]"
                   }`}
                 >
@@ -568,7 +586,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                 {s < 3 && (
                   <div
                     className={`h-0.5 w-8 rounded ${
-                      step > s ? "bg-blue-600" : "bg-[#1E293B]"
+                      step > s ? "bg-[#FF5A36]" : !isDark ? "bg-[#EAE4DC]" : "bg-[#1E293B]"
                     }`}
                   />
                 )}
@@ -583,31 +601,33 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
             <div className="flex flex-col items-center py-8">
               {needsConfirmation ? (
                 <>
-                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-500/10 border border-blue-500/20">
-                    <Mail size={40} className="text-blue-400" />
+                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#FF5A36]/10 border border-[#FF5A36]/20">
+                    <Mail size={40} className="text-[#FF5A36]" />
                   </div>
-                  <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">
+                  <h2 className={`text-xl font-bold mb-2 ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                     Revisa tu correo
                   </h2>
-                  <p className="text-sm text-[#94A3B8] text-center mb-2 leading-relaxed">
-                    Te enviamos un email de confirmación a <strong className="text-[#F1F5F9]">{form.email}</strong>.
+                  <p className={`text-sm text-center mb-2 leading-relaxed ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
+                    Te enviamos un email de confirmación a <strong className={!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}>{form.email}</strong>.
                   </p>
                   <p className="text-xs text-[#64748B] text-center mb-5 leading-relaxed max-w-sm">
                     Haz clic en el enlace del email para activar tu cuenta.
                     Luego vuelve aquí e inicia sesión para comenzar.
                   </p>
 
-                  <div className="w-full max-w-md rounded-xl bg-[#0A0F1A] border border-[#1E293B] p-4 text-xs text-[#94A3B8] space-y-2 mb-6 text-left">
-                    <p className="font-semibold text-amber-400 flex items-center gap-1.5">
+                  <div className={`w-full max-w-md rounded-xl border p-4 text-xs space-y-2 mb-6 text-left ${
+                    !isDark ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#64748B]" : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8]"
+                  }`}>
+                    <p className="font-semibold text-amber-500 flex items-center gap-1.5">
                       <AlertCircle size={14} /> ¿No te llegó el correo?
                     </p>
-                    <ul className="list-disc list-inside space-y-1 text-[#94A3B8]">
+                    <ul className="list-disc list-inside space-y-1">
                       <li>Revisa la carpeta de <strong>Correo no deseado (Spam)</strong> o la pestaña <strong>Otros</strong> en Hotmail / Outlook.</li>
-                      <li>Verifica que tu correo esté bien escrito (<span className="text-[#F1F5F9]">{form.email}</span>).</li>
+                      <li>Verifica que tu correo esté bien escrito (<span className={!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}>{form.email}</span>).</li>
                       <li>El remitente oficial es de Supabase Auth.</li>
                     </ul>
                     {resendStatus && (
-                      <p className={`pt-2 text-xs font-medium ${resendStatus.includes("éxito") || resendStatus.includes("reenviado") ? "text-green-400" : "text-amber-400"}`}>
+                      <p className={`pt-2 text-xs font-medium ${resendStatus.includes("éxito") || resendStatus.includes("reenviado") ? "text-green-500" : "text-amber-500"}`}>
                         {resendStatus}
                       </p>
                     )}
@@ -618,14 +638,14 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                       type="button"
                       onClick={handleResendConfirmation}
                       disabled={resending}
-                      className="flex-1 rounded-xl border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-xs font-semibold text-blue-400 hover:bg-blue-500/20 transition-all disabled:opacity-50 text-center"
+                      className="flex-1 rounded-xl border border-[#FF5A36]/40 bg-[#FF5A36]/10 px-4 py-3 text-xs font-semibold text-[#FF5A36] hover:bg-[#FF5A36]/20 transition-all disabled:opacity-50 text-center cursor-pointer"
                     >
                       {resending ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Reenviar correo de confirmación"}
                     </button>
                     <button
                       type="button"
                       onClick={resetAndClose}
-                      className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 text-xs font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow text-center"
+                      className="flex-1 rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] px-4 py-3 text-xs font-bold text-white shadow-md shadow-[#FF5A36]/25 transition-all text-center cursor-pointer"
                     >
                       Entendido, ir al inicio
                     </button>
@@ -636,10 +656,10 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
                     <Check size={40} className="text-green-500" />
                   </div>
-                  <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">
+                  <h2 className={`text-xl font-bold mb-2 ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                     Cuenta creada correctamente
                   </h2>
-                  <p className="text-sm text-[#94A3B8] text-center mb-8">
+                  <p className={`text-sm text-center mb-8 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                     ¡Ya puedes usar AlTokeChile! Bienvenido/a.
                   </p>
                   <button
@@ -648,7 +668,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                       resetAndClose();
                       router.push(destino);
                     }}
-                    className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow"
+                    className="rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] px-8 py-3 text-sm font-bold text-white shadow-md shadow-[#FF5A36]/25 transition-all cursor-pointer"
                   >
                     {userType === "prestador" ? "Ir a mi panel" : "Explorar servicios"}
                   </button>
@@ -660,70 +680,78 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
           {/* PASO 1: Tipo de usuario */}
           {!success && step === 1 && (
             <div>
-              <h2 className="text-xl font-bold text-[#F1F5F9] text-center mb-2">
+              <h2 className={`text-xl font-bold text-center mb-2 ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                 ¿Quién eres?
               </h2>
-              <p className="text-sm text-[#94A3B8] text-center mb-8">
+              <p className={`text-sm text-center mb-8 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                 Elige cómo quieres usar AlTokeChile
               </p>
 
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setUserType("usuario")}
-                  className={`flex flex-col items-center gap-3 rounded-xl border p-6 transition-all ${
+                  className={`flex flex-col items-center gap-3 rounded-xl border p-6 transition-all cursor-pointer ${
                     userType === "usuario"
-                      ? "border-blue-500 bg-blue-500/10"
+                      ? "border-[#FF5A36] bg-[#FF5A36]/10 shadow-sm"
+                      : !isDark
+                      ? "border-[#E2D9CC] bg-[#F7F3EE] hover:border-[#FF5A36]/50"
                       : "border-[#1E293B] bg-[#0A0F1A] hover:border-[#334155]"
                   }`}
                 >
                   <div
-                    className={`flex h-14 w-14 items-center justify-center rounded-xl ${
+                    className={`flex h-14 w-14 items-center justify-center rounded-xl transition-colors ${
                       userType === "usuario"
-                        ? "bg-blue-600 text-white"
+                        ? "bg-gradient-to-br from-[#FF5A36] to-[#FF8A65] text-white shadow-md shadow-[#FF5A36]/25"
+                        : !isDark
+                        ? "bg-[#EAE4DC] text-[#78716C]"
                         : "bg-[#1E293B] text-[#94A3B8]"
                     }`}
                   >
                     <User size={24} />
                   </div>
-                  <span className="text-sm font-semibold text-[#F1F5F9]">Usuario</span>
-                  <span className="text-xs text-[#64748B] text-center">
+                  <span className={`text-sm font-semibold ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>Usuario</span>
+                  <span className={`text-xs text-center ${!isDark ? "text-[#78716C]" : "text-[#64748B]"}`}>
                     Busco ayuda para mis tareas
                   </span>
                 </button>
 
                 <button
                   onClick={() => setUserType("prestador")}
-                  className={`flex flex-col items-center gap-3 rounded-xl border p-6 transition-all ${
+                  className={`flex flex-col items-center gap-3 rounded-xl border p-6 transition-all cursor-pointer ${
                     userType === "prestador"
-                      ? "border-blue-500 bg-blue-500/10"
+                      ? "border-[#FF5A36] bg-[#FF5A36]/10 shadow-sm"
+                      : !isDark
+                      ? "border-[#E2D9CC] bg-[#F7F3EE] hover:border-[#FF5A36]/50"
                       : "border-[#1E293B] bg-[#0A0F1A] hover:border-[#334155]"
                   }`}
                 >
                   <div
-                    className={`flex h-14 w-14 items-center justify-center rounded-xl ${
+                    className={`flex h-14 w-14 items-center justify-center rounded-xl transition-colors ${
                       userType === "prestador"
-                        ? "bg-blue-600 text-white"
+                        ? "bg-gradient-to-br from-[#FF5A36] to-[#FF8A65] text-white shadow-md shadow-[#FF5A36]/25"
+                        : !isDark
+                        ? "bg-[#EAE4DC] text-[#78716C]"
                         : "bg-[#1E293B] text-[#94A3B8]"
                     }`}
                   >
                     <Briefcase size={24} />
                   </div>
-                  <span className="text-sm font-semibold text-[#F1F5F9]">Prestador</span>
-                  <span className="text-xs text-[#64748B] text-center">
+                  <span className={`text-sm font-semibold ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>Prestador</span>
+                  <span className={`text-xs text-center ${!isDark ? "text-[#78716C]" : "text-[#64748B]"}`}>
                     Quiero ofrecer mis servicios
                   </span>
                 </button>
               </div>
 
-              <div className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-300">
-                <ShieldAlert size={16} className="shrink-0 text-amber-400" />
+              <div className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2.5 text-xs text-amber-500">
+                <ShieldAlert size={16} className="shrink-0 text-amber-500" />
                 <span>Plataforma exclusiva para mayores de 18 años</span>
               </div>
 
               <button
                 onClick={() => userType && setStep(2)}
                 disabled={!userType}
-                className="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="mt-6 w-full rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] py-3 text-sm font-bold text-white transition-all shadow-md shadow-[#FF5A36]/25 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
                 Siguiente
                 <ArrowRight size={16} />
@@ -734,24 +762,26 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
           {/* PASO 2: Email y contraseña */}
           {!success && step === 2 && (
             <div>
-              <h2 className="text-xl font-bold text-[#F1F5F9] text-center mb-1">
+              <h2 className={`text-xl font-bold text-center mb-1 ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                 Crear cuenta
               </h2>
-              <p className="text-sm text-[#94A3B8] text-center mb-6">
+              <p className={`text-sm text-center mb-6 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                 {userType === "prestador"
                   ? "Regístrate para ofrecer tus servicios en AlTokeChile"
                   : "Regístrate para buscar y contratar servicios"}
               </p>
 
               {/* Role Indicator and Toggle */}
-              <div className="flex items-center justify-between mb-6 px-4 py-3 rounded-xl bg-[#0A0F1A] border border-[#1E293B]">
+              <div className={`flex items-center justify-between mb-6 px-4 py-3 rounded-xl border ${
+                !isDark ? "border-[#E2D9CC] bg-[#F7F3EE]" : "border-[#1E293B] bg-[#0A0F1A]"
+              }`}>
                 <div className="flex items-center gap-2.5">
-                  <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${userType === "prestador" ? "bg-blue-600/20 text-blue-400" : "bg-cyan-500/20 text-cyan-400"}`}>
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FF5A36]/15 text-[#FF5A36]">
                     {userType === "prestador" ? <Briefcase size={14} /> : <User size={14} />}
                   </div>
                   <div>
-                    <span className="text-[11px] text-[#64748B] block">Rol seleccionado</span>
-                    <span className="text-xs font-bold text-[#F1F5F9]">
+                    <span className="text-[11px] text-[#78716C] block">Rol seleccionado</span>
+                    <span className={`text-xs font-bold ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                       {userType === "prestador" ? "Prestador de servicios" : "Usuario (contratar servicios)"}
                     </span>
                   </div>
@@ -759,7 +789,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                 <button
                   type="button"
                   onClick={() => setUserType((prev) => (prev === "prestador" ? "usuario" : "prestador"))}
-                  className="text-xs font-semibold text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                  className="text-xs font-semibold text-[#FF5A36] hover:text-[#FF7A59] hover:underline transition-colors cursor-pointer"
                 >
                   Cambiar a {userType === "prestador" ? "Usuario" : "Prestador"}
                 </button>
@@ -767,7 +797,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+                  <label className={`block text-xs font-medium mb-1.5 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                     Email *
                   </label>
                   <input
@@ -780,20 +810,20 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                   <FieldError field="email" errors={errors} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+                  <label className={`block text-xs font-medium mb-1.5 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                     Contraseña *
                   </label>
                   <PasswordInput
                     value={form.password}
                     onChange={(v) => updateForm("password", v)}
-                    placeholder="Minimo 8 caracteres"
+                    placeholder="Mínimo 8 caracteres"
                     className={inputClass("password")}
                     invalid={!!errors.password}
                   />
                   <FieldError field="password" errors={errors} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+                  <label className={`block text-xs font-medium mb-1.5 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                     Confirmar contraseña *
                   </label>
                   <PasswordInput
@@ -810,7 +840,11 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
               <div className="flex gap-3 mt-8">
                 <button
                   onClick={() => { setErrors({}); setStep(1); }}
-                  className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-5 py-3 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                  className={`flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium transition-all cursor-pointer ${
+                    !isDark
+                      ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#64748B] hover:text-[#1E2022] hover:bg-[#EAE4DC]"
+                      : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                  }`}
                 >
                   <ArrowLeft size={16} />
                   Atrás
@@ -819,7 +853,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                   type="button"
                   onClick={handleProceedToStep3}
                   disabled={checkingEmail}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] py-3 text-sm font-bold text-white transition-all shadow-md shadow-[#FF5A36]/25 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
                 >
                   {checkingEmail ? (
                     <>
@@ -1078,12 +1112,16 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
 
                     {/* Foto del servicio */}
                     <div>
-                      <label className="block text-xs font-medium text-[#94A3B8] mb-1.5">
+                      <label className={`block text-xs font-medium mb-1.5 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                         Foto del servicio (opcional)
                       </label>
-                      <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#1E293B] bg-[#0A0F1A] px-4 py-3.5 text-sm text-[#64748B] hover:border-blue-500/40 hover:text-[#94A3B8] transition-colors cursor-pointer">
-                        <Upload size={18} className="text-blue-400" />
-                        <span className="text-[#F1F5F9] font-medium">
+                      <label className={`flex items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-3.5 text-sm transition-colors cursor-pointer ${
+                        !isDark
+                          ? "border-[#E2D9CC] bg-[#F7F3EE] hover:border-[#FF5A36]/60 text-[#64748B]"
+                          : "border-[#1E293B] bg-[#0A0F1A] hover:border-[#FF5A36]/40 text-[#94A3B8]"
+                      }`}>
+                        <Upload size={18} className="text-[#FF5A36]" />
+                        <span className={`font-medium ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                           {fotoServicio ? "Foto del servicio cargada ✓" : "Subir foto del servicio"}
                         </span>
                         <input
@@ -1114,15 +1152,15 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                       type="checkbox"
                       checked={form.aceptaTerminos}
                       onChange={(e) => updateForm("aceptaTerminos", e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-[#1E293B] bg-[#0A0F1A] text-blue-600 focus:ring-blue-500"
+                      className="mt-0.5 h-4 w-4 rounded accent-[#FF5A36] cursor-pointer"
                     />
-                    <span className="text-xs text-[#64748B] leading-relaxed">
-                      Declaro que soy <strong className="text-[#F1F5F9] font-semibold">mayor de 18 años</strong>, acepto los{" "}
-                      <a href="/terminos" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                    <span className={`text-xs leading-relaxed ${!isDark ? "text-[#64748B]" : "text-[#64748B]"}`}>
+                      Declaro que soy <strong className={!isDark ? "text-[#1E2022] font-semibold" : "text-[#F1F5F9] font-semibold"}>mayor de 18 años</strong>, acepto los{" "}
+                      <a href="/terminos" target="_blank" rel="noopener noreferrer" className="text-[#FF5A36] hover:text-[#FF7A59] hover:underline font-medium">
                         términos y condiciones
                       </a>{" "}
                       y autorizo expresamente el tratamiento de mis datos conforme a la{" "}
-                      <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                      <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-[#FF5A36] hover:text-[#FF7A59] hover:underline font-medium">
                         política de privacidad
                       </a>{" "}
                       (Ley N° 19.628 de Chile) *
@@ -1135,7 +1173,11 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
               <div className="flex gap-3 mt-6 pb-2">
                 <button
                   onClick={() => { setErrors({}); setStep(2); }}
-                  className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-5 py-3 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                  className={`flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium transition-all cursor-pointer ${
+                    !isDark
+                      ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#64748B] hover:text-[#1E2022] hover:bg-[#EAE4DC]"
+                      : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                  }`}
                 >
                   <ArrowLeft size={16} />
                   Atrás
@@ -1143,7 +1185,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                 <button
                   onClick={handleCreateAccount}
                   disabled={submitting}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 py-3 text-sm font-bold text-white hover:from-blue-500 hover:to-blue-400 transition-all btn-glow flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] py-3 text-sm font-bold text-white transition-all shadow-md shadow-[#FF5A36]/25 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95"
                 >
                   {submitting ? (
                     <>

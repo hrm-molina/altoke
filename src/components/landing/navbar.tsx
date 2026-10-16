@@ -166,7 +166,7 @@ export function Navbar() {
 
   const isHome = pathname === "/";
   const { theme, toggleTheme } = useTheme();
-  const isDark = theme === "dark" || !isHome;
+  const isDark = theme === "dark";
 
   return (
     <>
@@ -201,10 +201,10 @@ export function Navbar() {
             {/* Botón visible para poner la página oscura y volver al estado original */}
             <button
               onClick={toggleTheme}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-xs border cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-sm border cursor-pointer ${
                 !isDark
-                  ? "border-[#E2D9CC] bg-[#F7F3EE] hover:bg-[#EAE4DC] text-[#1E2022]"
-                  : "border-[#334155] bg-[#1E293B] hover:bg-[#283548] text-amber-300 shadow-sm"
+                  ? "border-[#1E2022] bg-[#1E2022] hover:bg-black text-white"
+                  : "border-amber-400/40 bg-amber-400/10 hover:bg-amber-400/20 text-amber-300"
               }`}
               title={theme === "dark" ? "Volver al estado original (claro)" : "Poner página en modo oscuro"}
               aria-label="Cambiar a modo oscuro o estado original"
@@ -212,11 +212,11 @@ export function Navbar() {
               {theme === "dark" ? (
                 <>
                   <Sun size={14} className="text-amber-400 shrink-0" />
-                  <span>Modo claro</span>
+                  <span>Modo original</span>
                 </>
               ) : (
                 <>
-                  <Moon size={14} className="text-[#FF5A36] shrink-0" />
+                  <Moon size={14} className="text-amber-300 shrink-0" />
                   <span>Modo oscuro</span>
                 </>
               )}
@@ -238,17 +238,21 @@ export function Navbar() {
                       href="/prestador"
                       className="flex items-center gap-2.5 hover:opacity-85 transition-opacity"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-xs font-bold text-white shadow-sm">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#FF5A36] to-[#FF8A65] text-xs font-bold text-white shadow-sm">
                         {session.nombre?.charAt(0) || "P"}
                       </div>
-                      <span className="text-sm font-semibold text-[#F1F5F9]">
-                        <span className="text-[#94A3B8] font-normal">Bienvenido(a) </span>
+                      <span className={`text-sm font-semibold ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
+                        <span className={`${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"} font-normal`}>Bienvenido(a) </span>
                         {session.nombre || session.email}
                       </span>
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
+                        !isDark
+                          ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#64748B] hover:text-red-600 hover:border-red-300 hover:bg-red-50"
+                          : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10"
+                      }`}
                     >
                       <LogOut size={15} />
                       Cerrar sesión
@@ -258,44 +262,60 @@ export function Navbar() {
                   <>
                     <Link
                       href="/explorar"
-                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
+                        !isDark
+                          ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] hover:bg-[#EAE4DC] hover:border-[#FF5A36]/40"
+                          : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                      }`}
                     >
                       <Compass size={15} />
                       Explorar
                     </Link>
                     <Link
                       href="/explorar?tab=alertas"
-                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all relative"
+                      className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all relative ${
+                        !isDark
+                          ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] hover:bg-[#EAE4DC] hover:border-[#FF5A36]/40"
+                          : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                      }`}
                     >
                       <Bell size={15} />
                       Alertas
                       {alertCount > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                        <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF5A36] text-[10px] font-bold text-white">
                           {alertCount}
                         </span>
                       )}
                     </Link>
                     <Link
                       href="/explorar?tab=historial"
-                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
+                        !isDark
+                          ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] hover:bg-[#EAE4DC] hover:border-[#FF5A36]/40"
+                          : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                      }`}
                     >
                       <History size={15} />
                       Historial
                     </Link>
                     <Link
-                      href="/explorar"
+                      href="/perfil"
                       className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1E293B] text-xs font-bold text-[#94A3B8]">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#FF5A36] to-[#FF8A65] text-xs font-bold text-white shadow-xs">
                         {session.nombre?.charAt(0) || "U"}
                       </div>
-                      <span className="text-sm text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">
-                        Bienvenido(a) {session.nombre || session.email}
+                      <span className={`text-sm ${!isDark ? "text-[#1E2022]" : "text-[#94A3B8] hover:text-[#F1F5F9]"} transition-colors`}>
+                        {session.nombre || session.email}
                       </span>
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] px-4 py-2.5 text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                      className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all ${
+                        !isDark
+                          ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#64748B] hover:text-red-600 hover:border-red-300 hover:bg-red-50"
+                          : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10"
+                      }`}
                     >
                       <LogOut size={15} />
                       Cerrar sesión
@@ -307,11 +327,7 @@ export function Navbar() {
               <div className="flex items-center gap-3 ml-4">
                 <button
                   onClick={() => { setLoginTipo("usuario"); setRegisterTipo("usuario"); setLoginOpen(true); }}
-                  className={`rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-all ${
-                    isHome
-                      ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] shadow-md shadow-[#FF5A36]/25"
-                      : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 shadow-lg shadow-blue-500/20 btn-glow"
-                  }`}
+                  className="rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-all bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] shadow-md shadow-[#FF5A36]/25 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   Iniciar sesión
                 </button>
@@ -325,17 +341,15 @@ export function Navbar() {
               <Link
                 href={session.tipo === "prestador" ? "/prestador" : "/explorar"}
                 className={`flex items-center gap-1.5 rounded-full pl-1.5 pr-3 py-1 text-xs font-semibold active:scale-95 transition-all ${
-                  isHome
+                  !isDark
                     ? "border border-[#FF5A36]/30 bg-[#FF5A36]/10 text-[#1E2022]"
-                    : "border border-blue-500/30 bg-blue-500/10 text-[#F1F5F9]"
+                    : "border border-[#FF5A36]/40 bg-[#FF5A36]/15 text-[#F1F5F9]"
                 }`}
               >
                 <div
                   className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ${
                     session.tipo === "prestador"
-                      ? isHome
-                        ? "bg-gradient-to-br from-[#FF5A36] to-[#FF8A65]"
-                        : "bg-gradient-to-br from-blue-600 to-blue-500"
+                      ? "bg-gradient-to-br from-[#FF5A36] to-[#FF8A65]"
                       : "bg-emerald-600"
                   }`}
                 >
@@ -352,11 +366,7 @@ export function Navbar() {
                   setRegisterTipo("usuario");
                   setLoginOpen(true);
                 }}
-                className={`flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold text-white active:scale-95 transition-all ${
-                  isHome
-                    ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] shadow-md shadow-[#FF5A36]/25"
-                    : "bg-gradient-to-r from-blue-600 to-blue-500 shadow-md shadow-blue-500/25 btn-glow"
-                }`}
+                className="flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold text-white active:scale-95 transition-all bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] shadow-md shadow-[#FF5A36]/25"
               >
                 <User size={13} />
                 <span>Ingresar</span>
@@ -367,14 +377,14 @@ export function Navbar() {
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? "Cerrar menú principal" : "Abrir menú principal"}
               className={`relative p-2 focus:outline-none focus:ring-2 focus:ring-[#FF5A36] rounded-lg transition-colors ${
-                isHome
+                !isDark
                   ? "text-[#475569] hover:text-[#1E2022] active:bg-[#F0ECE4]/60"
                   : "text-[#94A3B8] hover:text-[#F1F5F9] active:bg-[#1E293B]/50"
               }`}
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
               {alertCount > 0 && !mobileOpen && (
-                <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#06080F]" />
+                <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5 rounded-full bg-[#FF5A36] ring-2 ring-white dark:ring-[#06080F]" />
               )}
             </button>
           </div>
@@ -384,7 +394,7 @@ export function Navbar() {
         {mobileOpen && (
           <div
             className={`border-b px-6 py-5 md:hidden backdrop-blur-xl ${
-              isHome
+              !isDark
                 ? "border-[#F0ECE4] bg-[#FFFFFF]/98 text-[#1E2022]"
                 : "border-[#1E293B]/60 bg-[#06080F]/95 text-[#F1F5F9]"
             }`}
@@ -396,18 +406,22 @@ export function Navbar() {
                   <Link
                     href={session.tipo === "prestador" ? "/prestador" : "/explorar"}
                     onClick={() => setMobileOpen(false)}
-                    className="rounded-2xl border border-[#1E293B] bg-[#0A0F1A] p-4 mb-1 hover:border-blue-500/40 transition-colors block"
+                    className={`rounded-2xl border p-4 mb-1 transition-colors block ${
+                      !isDark
+                        ? "border-[#E2D9CC] bg-[#F7F3EE] hover:border-[#FF5A36]/40"
+                        : "border-[#1E293B] bg-[#0A0F1A] hover:border-[#334155]"
+                    }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-bold text-white shadow-md ${session.tipo === "prestador" ? "bg-gradient-to-br from-blue-600 to-blue-500" : "bg-emerald-600"}`}>
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-bold text-white shadow-md ${session.tipo === "prestador" ? "bg-gradient-to-br from-[#FF5A36] to-[#FF8A65]" : "bg-emerald-600"}`}>
                         {session.nombre?.charAt(0).toUpperCase() || (session.tipo === "prestador" ? "P" : "U")}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-[#F1F5F9] truncate">
+                        <p className={`text-sm font-bold truncate ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                           Bienvenido(a) {session.nombre || (session.tipo === "prestador" ? "Prestador" : "Usuario")}
                         </p>
-                        <p className="text-xs text-[#64748B] truncate">{session.email}</p>
-                        <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        <p className={`text-xs truncate ${!isDark ? "text-[#64748B]" : "text-[#64748B]"}`}>{session.email}</p>
+                        <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold bg-[#FF5A36]/10 text-[#FF5A36] border border-[#FF5A36]/20">
                           {session.tipo === "prestador" ? "⭐ Prestador activo" : "👤 Usuario cliente"}
                         </div>
                       </div>
@@ -419,10 +433,12 @@ export function Navbar() {
                       <Link
                         href="/prestador"
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-center text-sm font-semibold transition-all ${
+                        className={`flex items-center justify-center gap-2 rounded-xl py-3 text-center text-sm font-semibold transition-all ${
                           pathname === "/prestador"
-                            ? "bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/20"
-                            : "border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] hover:border-[#334155]"
+                            ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] text-white shadow-md shadow-[#FF5A36]/25"
+                            : !isDark
+                            ? "border border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] hover:bg-[#EAE4DC]"
+                            : "border border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] hover:border-[#334155]"
                         }`}
                       >
                         <Briefcase size={16} />
@@ -431,14 +447,18 @@ export function Navbar() {
                       <Link
                         href="/explorar"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                        className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-center text-sm font-medium transition-all ${
+                          !isDark
+                            ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] hover:bg-[#EAE4DC]"
+                            : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                        }`}
                       >
                         <Compass size={16} />
                         Explorar servicios
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all mt-1"
+                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-500 hover:bg-red-500/20 transition-all mt-1"
                       >
                         <LogOut size={16} />
                         Cerrar sesión
@@ -449,10 +469,12 @@ export function Navbar() {
                       <Link
                         href="/perfil"
                         onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-center text-sm font-semibold transition-all ${
+                        className={`flex items-center justify-center gap-2 rounded-xl py-3 text-center text-sm font-semibold transition-all ${
                           pathname === "/perfil"
-                            ? "bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-600/20"
-                            : "border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] hover:border-[#334155]"
+                            ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] text-white shadow-md shadow-[#FF5A36]/25"
+                            : !isDark
+                            ? "border border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] hover:bg-[#EAE4DC]"
+                            : "border border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] hover:border-[#334155]"
                         }`}
                       >
                         <User size={16} />
@@ -461,7 +483,11 @@ export function Navbar() {
                       <Link
                         href="/explorar"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                        className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-center text-sm font-medium transition-all ${
+                          !isDark
+                            ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] hover:bg-[#EAE4DC]"
+                            : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                        }`}
                       >
                         <Compass size={16} />
                         Explorar servicios
@@ -469,12 +495,16 @@ export function Navbar() {
                       <Link
                         href="/explorar?tab=alertas"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all relative"
+                        className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-center text-sm font-medium transition-all relative ${
+                          !isDark
+                            ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] hover:bg-[#EAE4DC]"
+                            : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                        }`}
                       >
                         <Bell size={16} />
                         Alertas
                         {alertCount > 0 && (
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ml-1">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FF5A36] text-[10px] font-bold text-white ml-1">
                             {alertCount}
                           </span>
                         )}
@@ -482,14 +512,18 @@ export function Navbar() {
                       <Link
                         href="/explorar?tab=historial"
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-[#1E293B] bg-[#0A0F1A] py-3 text-center text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155] transition-all"
+                        className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-center text-sm font-medium transition-all ${
+                          !isDark
+                            ? "border-[#E2D9CC] bg-[#F7F3EE] text-[#1E2022] hover:bg-[#EAE4DC]"
+                            : "border-[#1E293B] bg-[#0A0F1A] text-[#94A3B8] hover:text-[#F1F5F9] hover:border-[#334155]"
+                        }`}
                       >
                         <History size={16} />
                         Historial
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-400 hover:bg-red-500/20 transition-all mt-1"
+                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 py-3 text-sm font-medium text-red-500 hover:bg-red-500/20 transition-all mt-1"
                       >
                         <LogOut size={16} />
                         Cerrar sesión
@@ -501,19 +535,15 @@ export function Navbar() {
                 <>
                   <div
                     className={`rounded-2xl p-4 text-center mb-1 ${
-                      isHome
+                      !isDark
                         ? "border border-[#FF5A36]/20 bg-[#FF5A36]/5"
-                        : "border border-blue-500/20 bg-blue-500/5"
+                        : "border border-[#FF5A36]/30 bg-[#FF5A36]/10"
                     }`}
                   >
-                    <p
-                      className={`text-sm font-semibold mb-1 ${
-                        isHome ? "text-[#1E2022]" : "text-[#F1F5F9]"
-                      }`}
-                    >
+                    <p className={`text-sm font-semibold mb-1 ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                       Accede a tu cuenta en AlToke
                     </p>
-                    <p className={`text-xs ${isHome ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
+                    <p className={`text-xs ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                       Inicia sesión para contratar servicios o gestionar tus trabajos
                     </p>
                   </div>
@@ -524,11 +554,7 @@ export function Navbar() {
                       setRegisterTipo("usuario");
                       setLoginOpen(true);
                     }}
-                    className={`flex items-center justify-center gap-2 rounded-xl py-3.5 text-center text-sm font-bold text-white shadow-lg active:scale-95 transition-all ${
-                      isHome
-                        ? "bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] shadow-[#FF5A36]/25"
-                        : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 shadow-blue-500/25 btn-glow"
-                    }`}
+                    className="flex items-center justify-center gap-2 rounded-xl py-3.5 text-center text-sm font-bold text-white shadow-lg active:scale-95 transition-all bg-gradient-to-r from-[#FF5A36] to-[#FF7A59] hover:from-[#FF4820] hover:to-[#FF6845] shadow-[#FF5A36]/25"
                   >
                     <User size={16} />
                     Iniciar sesión
@@ -540,9 +566,9 @@ export function Navbar() {
                       setRegisterOpen(true);
                     }}
                     className={`flex items-center justify-center gap-2 rounded-xl py-3 text-center text-sm font-medium transition-all ${
-                      isHome
+                      !isDark
                         ? "border border-[#E2DDD5] bg-[#FAF7F2] text-[#1E2022] hover:bg-[#F5F0E8] hover:border-[#D1C9BE]"
-                        : "border border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] hover:border-blue-500/50 hover:bg-blue-500/10"
+                        : "border border-[#1E293B] bg-[#0A0F1A] text-[#F1F5F9] hover:border-[#FF5A36]/40 hover:bg-[#FF5A36]/5"
                     }`}
                   >
                     <UserPlus size={16} />
