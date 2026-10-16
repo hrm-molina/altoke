@@ -4,15 +4,15 @@ import { LeftOfferingCharacter, RightNeedingCharacter } from "./hero-characters"
 
 export function Hero() {
   return (
-    <section className="relative pt-16 sm:pt-20 pb-4 sm:pb-6 overflow-hidden">
+    <section className="relative pt-16 sm:pt-20 pb-6 sm:pb-8 overflow-hidden">
       {/* Contenedor amplio para aprovechar el espacio a ambos lados */}
       <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         
         {/* Layout Desktop (3 Columnas): Persona Izquierda | Banner Central | Persona Derecha */}
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-5 lg:gap-6 xl:gap-8">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-7 xl:gap-10">
           
-          {/* LADO IZQUIERDO (Desktop): Persona joven ofreciendo sus servicios */}
-          <div className="hidden lg:flex shrink-0">
+          {/* LADO IZQUIERDO (Desktop): Persona joven ofreciendo sus servicios - Centrada y un poco más abajo */}
+          <div className="hidden lg:flex shrink-0 lg:translate-y-3 xl:translate-y-4">
             <LeftOfferingCharacter />
           </div>
 
@@ -87,15 +87,15 @@ export function Hero() {
             </div>
           </div>
 
-          {/* LADO DERECHO (Desktop): Persona joven pensando en lo que necesita */}
-          <div className="hidden lg:flex shrink-0">
+          {/* LADO DERECHO (Desktop): Persona joven pensando en lo que necesita - Centrada y un poco más abajo */}
+          <div className="hidden lg:flex shrink-0 lg:translate-y-3 xl:translate-y-4">
             <RightNeedingCharacter />
           </div>
 
         </div>
 
         {/* Versión Mobile/Tablet (Visible en pantallas < lg) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 max-w-xl mx-auto lg:hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-xl mx-auto lg:hidden">
           <div className="flex justify-center">
             <LeftOfferingCharacter />
           </div>

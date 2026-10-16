@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, ArrowRight, CheckCircle2, HelpCircle } from "lucide-react";
+import { Sparkles, Star, Zap, Clock } from "lucide-react";
 
 interface OfferItem {
   id: string;
@@ -45,7 +45,7 @@ const OFFERS: OfferItem[] = [
   {
     id: "pets",
     icon: "🐕",
-    role: "Paseador Pet Friendly",
+    role: "Paseadora Pet Friendly",
     title: "Paseo Seguro de Mascotas",
     detail: "Paseo a tu perrito y te mando fotos en vivo",
     tag: "$10.000 / paseo",
@@ -55,7 +55,7 @@ const OFFERS: OfferItem[] = [
     id: "gamer",
     icon: "🔧",
     role: "Técnico & Armador",
-    title: "Armado de Setups & Muebles",
+    title: "Armado de Setups Gamer",
     detail: "Te armo tu escritorio, repisas o silla gamer",
     tag: "$18.000",
     tagColor: "#3B82F6",
@@ -137,7 +137,9 @@ const NEEDS: NeedItem[] = [
   },
 ];
 
-// PERSONA IZQUIERDA: OFRECIENDO SERVICIOS (PRESTADOR)
+// ==========================================
+// PERSONAJE IZQUIERDO: OFRECIENDO SERVICIOS
+// ==========================================
 export function LeftOfferingCharacter() {
   const [index, setIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
@@ -157,23 +159,26 @@ export function LeftOfferingCharacter() {
   const offer = OFFERS[index];
 
   return (
-    <div className="flex flex-col items-center lg:items-end w-full max-w-[280px] xl:max-w-[310px] select-none">
+    <div className="flex flex-col items-center lg:items-end w-full max-w-[290px] xl:max-w-[320px] select-none">
       {/* Globo de diálogo: Ofrece servicios */}
       <div
-        className={`relative w-full rounded-2xl bg-white/95 backdrop-blur-md p-3.5 shadow-lg border border-[#EAE5DC] transition-all duration-300 hover:shadow-xl ${
+        className={`relative w-full rounded-2xl bg-white/95 backdrop-blur-md p-3.5 sm:p-4 shadow-xl border border-[#EAE5DC] transition-all duration-300 hover:shadow-2xl ${
           isFading ? "opacity-0 translate-y-1 scale-95" : "opacity-100 translate-y-0 scale-100"
         }`}
       >
         {/* Cabecera del globo */}
-        <div className="flex items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#FF5A36]">
+            <span className="flex h-2.5 w-2.5 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            </span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#FF5A36]">
               Ofrece sus servicios
             </span>
           </div>
           <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shadow-xs"
+            className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white shadow-xs"
             style={{ backgroundColor: offer.tagColor }}
           >
             {offer.tag}
@@ -181,66 +186,120 @@ export function LeftOfferingCharacter() {
         </div>
 
         {/* Título y detalle */}
-        <div className="flex items-start gap-2.5">
-          <span className="text-2xl shrink-0 mt-0.5">{offer.icon}</span>
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 border border-orange-100 text-2xl shadow-xs">
+            {offer.icon}
+          </div>
           <div className="min-w-0">
             <h4 className="text-xs sm:text-sm font-extrabold text-[#1E2022] leading-tight truncate">
               {offer.title}
             </h4>
-            <p className="text-[11px] text-[#64748B] mt-0.5 leading-snug line-clamp-2">
+            <p className="text-[11px] text-[#64748B] mt-1 leading-snug line-clamp-2">
               «{offer.detail}»
             </p>
           </div>
         </div>
 
         {/* Flecha del globo apuntando hacia el avatar */}
-        <div className="absolute -bottom-2 right-8 w-4 h-4 bg-white rotate-45 border-r border-b border-[#EAE5DC]" />
+        <div className="absolute -bottom-2 right-10 w-4 h-4 bg-white rotate-45 border-r border-b border-[#EAE5DC]" />
       </div>
 
-      {/* Avatar Persona Joven Ofreciendo (Estilo Gen-Z con hoodie y actitud) */}
-      <div className="flex items-center gap-2.5 mt-3 pr-4">
-        {/* Ilustración de personaje SVG */}
-        <div className="relative w-12 h-14 shrink-0 transition-transform hover:scale-105 duration-200">
-          <svg viewBox="0 0 60 70" className="w-full h-full filter drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
-            {/* Cuerpo con hoodie */}
-            <rect x="16" y="28" width="28" height="28" rx="8" fill="#FF5A36" />
-            {/* Bolsillo */}
-            <path d="M 22 46 Q 30 49 38 46 L 36 52 Q 30 53 24 52 Z" fill="#FFFFFF" fillOpacity="0.25" />
-            {/* Cuello */}
-            <rect x="27" y="22" width="6" height="7" fill="#FBCFE8" />
-            {/* Cabeza */}
-            <circle cx="30" cy="17" r="10.5" fill="#FBCFE8" />
-            {/* Cabello castaño moderno */}
-            <path d="M 18 16 C 18 7, 42 7, 42 16 C 42 18, 40 10, 30 10 C 20 10, 18 18, 18 16 Z" fill="#3E2723" />
-            <path d="M 18 16 Q 16 26 21 27 M 42 16 Q 44 26 39 27" stroke="#3E2723" strokeWidth="2.5" strokeLinecap="round" />
-            {/* Ojos y sonrisa */}
-            <circle cx="26" cy="17" r="1.3" fill="#1E2022" />
-            <circle cx="34" cy="17" r="1.3" fill="#1E2022" />
-            <path d="M 27 21 Q 30 24 33 21" fill="none" stroke="#E11D48" strokeWidth="1.5" strokeLinecap="round" />
-            {/* Auriculares de diadema */}
-            <path d="M 17 17 Q 30 5 43 17" fill="none" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" />
-            <rect x="15" y="15" width="4" height="6" rx="2" fill="#3B82F6" />
-            <rect x="41" y="15" width="4" height="6" rx="2" fill="#3B82F6" />
-          </svg>
-          <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-bold text-white shadow-xs border-2 border-white">
-            ✓
-          </span>
-        </div>
-
-        <div className="text-left">
-          <p className="text-xs font-bold text-[#1E2022] leading-tight">
+      {/* Avatar Persona Joven Ofreciendo (Ilustración detallada) */}
+      <div className="flex items-center gap-3 mt-3 pr-2">
+        <div className="text-right">
+          <p className="text-xs sm:text-sm font-black text-[#1E2022] leading-tight">
             {offer.role}
           </p>
-          <p className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 mt-0.5">
-            <span>●</span> Disponible para salvarte
-          </p>
+          <div className="flex items-center justify-end gap-1 mt-0.5 text-[11px] font-bold text-emerald-600">
+            <Star size={11} className="fill-amber-400 text-amber-400" />
+            <span>4.9 • Lista al toke</span>
+          </div>
+        </div>
+
+        {/* AVATAR VECTORIAL DETALLADO */}
+        <div className="relative w-14 h-16 sm:w-16 sm:h-18 shrink-0 transition-transform hover:scale-105 duration-200">
+          <svg viewBox="0 0 70 80" className="w-full h-full filter drop-shadow-md overflow-visible" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="hoodieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FF6B4A" />
+                <stop offset="100%" stopColor="#FF4118" />
+              </linearGradient>
+              <linearGradient id="skinGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#FED7AA" />
+                <stop offset="100%" stopColor="#FDBA74" />
+              </linearGradient>
+              <linearGradient id="hairGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#451A03" />
+                <stop offset="100%" stopColor="#291203" />
+              </linearGradient>
+            </defs>
+
+            {/* CUERPO - Polerón Hoodie */}
+            <path
+              d="M 16 38 C 16 32, 54 32, 54 38 L 56 68 C 56 72, 14 72, 14 68 Z"
+              fill="url(#hoodieGrad)"
+            />
+            {/* Cordones del hoodie */}
+            <path d="M 31 38 Q 30 48 30 52" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M 39 38 Q 40 48 40 52" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" />
+            {/* Bolsillo delantero */}
+            <path d="M 23 54 Q 35 57 47 54 L 45 64 Q 35 66 25 64 Z" fill="#FFFFFF" fillOpacity="0.2" />
+
+            {/* CUELLO */}
+            <rect x="30" y="27" width="10" height="9" rx="2" fill="url(#skinGrad1)" />
+
+            {/* CABEZA */}
+            <circle cx="35" cy="22" r="13" fill="url(#skinGrad1)" />
+            {/* Mejillas sonrojadas */}
+            <circle cx="27" cy="25" r="2.5" fill="#F43F5E" opacity="0.35" />
+            <circle cx="43" cy="25" r="2.5" fill="#F43F5E" opacity="0.35" />
+
+            {/* OJOS FELICES Y EXPRESIVOS */}
+            <circle cx="29" cy="21" r="2" fill="#1E2022" />
+            <circle cx="28.5" cy="20.3" r="0.7" fill="#FFFFFF" />
+            <circle cx="41" cy="21" r="2" fill="#1E2022" />
+            <circle cx="40.5" cy="20.3" r="0.7" fill="#FFFFFF" />
+
+            {/* CEJAS */}
+            <path d="M 26 17 Q 29 16 31 17.5" stroke="#451A03" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M 39 17.5 Q 41 16 44 17" stroke="#451A03" strokeWidth="1.2" strokeLinecap="round" />
+
+            {/* SONRISA CÁLIDA */}
+            <path d="M 31 27 Q 35 31 39 27" fill="none" stroke="#BE123C" strokeWidth="1.8" strokeLinecap="round" />
+
+            {/* CABELLO MODERNO Y ONDULADO */}
+            <path
+              d="M 22 20 C 20 8, 50 8, 48 20 C 51 14, 46 9, 35 9 C 24 9, 19 14, 22 20 Z"
+              fill="url(#hairGrad1)"
+            />
+            {/* Mechones laterales */}
+            <path d="M 22 18 Q 18 30 22 34" fill="none" stroke="url(#hairGrad1)" strokeWidth="4" strokeLinecap="round" />
+            <path d="M 48 18 Q 52 30 48 34" fill="none" stroke="url(#hairGrad1)" strokeWidth="4" strokeLinecap="round" />
+
+            {/* AUDÍFONOS BLUETOOTH EN EL CUELLO */}
+            <path d="M 22 28 Q 35 35 48 28" fill="none" stroke="#0F172A" strokeWidth="3" strokeLinecap="round" />
+            <rect x="18" y="26" width="6" height="8" rx="2.5" fill="#3B82F6" />
+            <rect x="46" y="26" width="6" height="8" rx="2.5" fill="#3B82F6" />
+
+            {/* MANO HACIENDO SEÑAL DE PAZ / OK ✌️ */}
+            <g transform="translate(10, 48)">
+              <circle cx="6" cy="6" r="4.5" fill="url(#skinGrad1)" />
+              <rect x="3" y="-2" width="2.5" height="6" rx="1.2" fill="url(#skinGrad1)" />
+              <rect x="6.5" y="-3" width="2.5" height="7" rx="1.2" fill="url(#skinGrad1)" />
+            </g>
+          </svg>
+          <span className="absolute bottom-1 right-0 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-black text-white shadow-md border-2 border-white">
+            ✓
+          </span>
         </div>
       </div>
     </div>
   );
 }
 
-// PERSONA DERECHA: PENSANDO EN LO QUE NECESITA (CLIENTE / USUARIO)
+// ==========================================
+// PERSONAJE DERECHO: PENSANDO EN LO QUE NECESITA
+// ==========================================
 export function RightNeedingCharacter() {
   const [index, setIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
@@ -260,22 +319,22 @@ export function RightNeedingCharacter() {
   const need = NEEDS[index];
 
   return (
-    <div className="flex flex-col items-center lg:items-start w-full max-w-[280px] xl:max-w-[310px] select-none">
+    <div className="flex flex-col items-center lg:items-start w-full max-w-[290px] xl:max-w-[320px] select-none">
       {/* Globo de pensamiento: Necesita un servicio */}
       <div
-        className={`relative w-full rounded-2xl bg-white/95 backdrop-blur-md p-3.5 shadow-lg border border-[#EAE5DC] transition-all duration-300 hover:shadow-xl ${
+        className={`relative w-full rounded-2xl bg-white/95 backdrop-blur-md p-3.5 sm:p-4 shadow-xl border border-[#EAE5DC] transition-all duration-300 hover:shadow-2xl ${
           isFading ? "opacity-0 translate-y-1 scale-95" : "opacity-100 translate-y-0 scale-100"
         }`}
       >
         {/* Cabecera del globo */}
-        <div className="flex items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600">
-              💭 Necesita al toke
+            <span className="text-[11px] font-black uppercase tracking-wider text-amber-600 flex items-center gap-1">
+              <span>💭</span> Necesita al toke
             </span>
           </div>
           <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shadow-xs"
+            className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white shadow-xs"
             style={{ backgroundColor: need.urgencyColor }}
           >
             {need.urgency}
@@ -283,61 +342,103 @@ export function RightNeedingCharacter() {
         </div>
 
         {/* Título y detalle de la necesidad */}
-        <div className="flex items-start gap-2.5">
-          <span className="text-2xl shrink-0 mt-0.5">{need.icon}</span>
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 border border-amber-100 text-2xl shadow-xs">
+            {need.icon}
+          </div>
           <div className="min-w-0">
             <h4 className="text-xs sm:text-sm font-extrabold text-[#1E2022] leading-tight truncate">
               {need.title}
             </h4>
-            <p className="text-[11px] text-[#64748B] mt-0.5 leading-snug line-clamp-2">
+            <p className="text-[11px] text-[#64748B] mt-1 leading-snug line-clamp-2">
               «{need.detail}»
             </p>
           </div>
         </div>
 
         {/* Burbujitas de pensamiento apuntando al avatar */}
-        <div className="absolute -bottom-2 left-8 w-3 h-3 bg-white rounded-full border border-[#EAE5DC]" />
-        <div className="absolute -bottom-4 left-10 w-2 h-2 bg-white rounded-full border border-[#EAE5DC]" />
+        <div className="absolute -bottom-2 left-10 w-3.5 h-3.5 bg-white rounded-full border border-[#EAE5DC]" />
+        <div className="absolute -bottom-4.5 left-13 w-2.5 h-2.5 bg-white rounded-full border border-[#EAE5DC]" />
       </div>
 
-      {/* Avatar Persona Joven Pensando (Estilo Gen-Z con jockey y celular) */}
-      <div className="flex items-center gap-2.5 mt-4 pl-4">
-        {/* Ilustración de personaje SVG */}
-        <div className="relative w-12 h-14 shrink-0 transition-transform hover:scale-105 duration-200">
-          <svg viewBox="0 0 60 70" className="w-full h-full filter drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
-            {/* Cuerpo / Polera o campera denim */}
-            <rect x="16" y="28" width="28" height="28" rx="8" fill="#3B82F6" />
-            {/* Detalle campera abierta con remera blanca */}
-            <path d="M 26 28 L 30 38 L 34 28 Z" fill="#FFFFFF" />
-            {/* Cuello */}
-            <rect x="27" y="22" width="6" height="7" fill="#FBCFE8" />
-            {/* Cabeza */}
-            <circle cx="30" cy="17" r="10.5" fill="#FBCFE8" />
-            {/* Gorro Jockey al revés negro */}
-            <path d="M 18 17 C 18 8, 42 8, 42 17 Z" fill="#0F172A" />
-            <ellipse cx="17" cy="17" rx="4.5" ry="1.5" fill="#0F172A" />
-            {/* Pelo saliendo del gorro */}
-            <path d="M 22 18 Q 21 24 23 25 M 36 18 Q 38 24 36 25" stroke="#1E2022" strokeWidth="2.5" strokeLinecap="round" />
-            {/* Ojos pensando hacia arriba a la izquierda */}
-            <circle cx="28" cy="15" r="1.3" fill="#1E2022" />
-            <circle cx="36" cy="15" r="1.3" fill="#1E2022" />
-            {/* Boca con duda / sorpresa tierna */}
-            <ellipse cx="32" cy="22" rx="2" ry="1.5" fill="#E11D48" />
-            {/* Celular en la mano */}
-            <rect x="38" y="38" width="9" height="15" rx="2" fill="#0F172A" />
-            <rect x="39" y="39" width="7" height="12" rx="1" fill="#38BDF8" />
+      {/* Avatar Persona Joven Pensando (Ilustración detallada) */}
+      <div className="flex items-center gap-3 mt-4 pl-2">
+        {/* AVATAR VECTORIAL DETALLADO */}
+        <div className="relative w-14 h-16 sm:w-16 sm:h-18 shrink-0 transition-transform hover:scale-105 duration-200">
+          <svg viewBox="0 0 70 80" className="w-full h-full filter drop-shadow-md overflow-visible" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="jacketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#3B82F6" />
+                <stop offset="100%" stopColor="#1D4ED8" />
+              </linearGradient>
+              <linearGradient id="skinGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#FFDFBA" />
+                <stop offset="100%" stopColor="#F5CBA7" />
+              </linearGradient>
+            </defs>
+
+            {/* CUERPO - Campera Denim y Polera */}
+            <path
+              d="M 16 38 C 16 32, 54 32, 54 38 L 56 68 C 56 72, 14 72, 14 68 Z"
+              fill="url(#jacketGrad)"
+            />
+            {/* Polera blanca en V */}
+            <path d="M 28 35 L 35 48 L 42 35 Z" fill="#FFFFFF" />
+            {/* Cuello de la campera */}
+            <path d="M 23 35 L 29 44 L 26 46 Z" fill="#1E40AF" />
+            <path d="M 47 35 L 41 44 L 44 46 Z" fill="#1E40AF" />
+
+            {/* CUELLO */}
+            <rect x="30" y="27" width="10" height="9" rx="2" fill="url(#skinGrad2)" />
+
+            {/* CABEZA */}
+            <circle cx="35" cy="22" r="13" fill="url(#skinGrad2)" />
+
+            {/* GORRO JOCKEY / BEANIE MODERNO AL REVÉS */}
+            <path d="M 21 21 C 21 10, 49 10, 49 21 Z" fill="#0F172A" />
+            <ellipse cx="20" cy="21" rx="5" ry="2" fill="#0F172A" />
+            {/* Detalle broche del jockey */}
+            <circle cx="21" cy="21" r="1" fill="#FFFFFF" />
+
+            {/* PELO SALIENDO DEL GORRO */}
+            <path d="M 25 21 Q 23 27 26 28 M 44 21 Q 47 27 44 28" stroke="#1E2022" strokeWidth="2.5" strokeLinecap="round" />
+
+            {/* OJOS PENSATIVOS (Mirando hacia arriba) */}
+            <circle cx="31" cy="19" r="2" fill="#1E2022" />
+            <circle cx="31.8" cy="18.2" r="0.7" fill="#FFFFFF" />
+            <circle cx="43" cy="19" r="2" fill="#1E2022" />
+            <circle cx="43.8" cy="18.2" r="0.7" fill="#FFFFFF" />
+
+            {/* CEJAS CON EXPRESIÓN DE DUDA / CURIOSIDAD */}
+            <path d="M 28 15 Q 31 13 34 15.5" stroke="#0F172A" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M 40 16.5 Q 43 14 46 15" stroke="#0F172A" strokeWidth="1.4" strokeLinecap="round" />
+
+            {/* BOCA CON EXPRESIÓN PENSATIVA */}
+            <ellipse cx="37" cy="27" rx="2" ry="1.5" fill="#E11D48" />
+
+            {/* MANO EN EL MENTÓN PENSANDO */}
+            <g transform="translate(32, 28)">
+              <circle cx="3" cy="3" r="3" fill="url(#skinGrad2)" />
+              <rect x="2" y="-1" width="2" height="4" rx="1" fill="url(#skinGrad2)" />
+            </g>
+
+            {/* CELULAR EN LA OTRA MANO */}
+            <rect x="48" y="44" width="12" height="18" rx="3" fill="#0F172A" />
+            <rect x="50" y="46" width="8" height="14" rx="1.5" fill="#38BDF8" />
+            <circle cx="54" cy="48" r="0.8" fill="#FFFFFF" opacity="0.8" />
           </svg>
-          <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white shadow-xs border-2 border-white">
+          <span className="absolute bottom-1 right-0 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-amber-500 text-[11px] font-black text-white shadow-md border-2 border-white">
             ?
           </span>
         </div>
 
         <div className="text-left">
-          <p className="text-xs font-bold text-[#1E2022] leading-tight">
+          <p className="text-xs sm:text-sm font-black text-[#1E2022] leading-tight">
             {need.role}
           </p>
-          <p className="text-[10px] font-semibold text-amber-600 flex items-center gap-1 mt-0.5">
-            <span>●</span> Buscando a quién contratar
+          <p className="text-[11px] font-bold text-amber-600 flex items-center gap-1 mt-0.5">
+            <Clock size={11} />
+            <span>Respuesta en ~5 min</span>
           </p>
         </div>
       </div>
