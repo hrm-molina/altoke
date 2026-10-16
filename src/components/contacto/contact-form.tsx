@@ -85,7 +85,6 @@ export function ContactForm() {
   };
 
   return (
-  return (
     <div className="card-surface p-6 sm:p-8 rounded-2xl">
       <h2 className="text-lg font-bold text-[#1E2022] dark:text-[#F1F5F9] mb-2">Envíanos tu requerimiento</h2>
       <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mb-5">

@@ -14,12 +14,11 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const saved = localStorage.getItem("altoke_theme") as Theme | null;
     if (saved === "dark" || saved === "light") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setThemeState(saved);
       if (saved === "dark") {
         document.documentElement.classList.add("dark");

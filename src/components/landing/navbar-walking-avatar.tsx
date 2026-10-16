@@ -78,7 +78,7 @@ export function NavbarWalkingAvatar() {
     const moveInterval = setInterval(() => {
       setPosX((prev) => {
         setStepToggle((st) => !st);
-        let next = prev + direction * 0.45;
+        const next = prev + direction * 0.45;
 
         if (next >= 78) {
           setDirection(-1);

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { X, Mail, Lock, AlertCircle, Check, Zap, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { signInWithEmail, getUserProfiles, ensureProfileForSession, supabaseAuth } from "@/lib/supabase-auth";
+import { signInWithEmail, getUserProfiles, supabaseAuth } from "@/lib/supabase-auth";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useModalBackHandler } from "@/hooks/use-modal-back-handler";
 import { useTheme } from "@/context/theme-context";
@@ -17,6 +17,8 @@ interface LoginModalProps {
 
 export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }: LoginModalProps) {
   useModalBackHandler(isOpen, onClose, "login");
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const router = useRouter();
   const [tipo, setTipo] = useState<"usuario" | "prestador">(() => defaultTipo || "usuario");
   const [email, setEmail] = useState("");
@@ -169,9 +171,6 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister, defaultTipo }:
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) resetAndClose();
   };
-
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
 
   return (
     <div

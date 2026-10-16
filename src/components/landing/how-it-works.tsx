@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Briefcase, User, ArrowRight, ShieldCheck, HeartHandshake, Zap } from "lucide-react";
+import { Briefcase, User, ArrowRight } from "lucide-react";
 import { RegisterModal } from "./register-modal";
 import { useTheme } from "@/context/theme-context";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Star, Zap, Clock } from "lucide-react";
+import { Star, Clock } from "lucide-react";
 import { useTheme } from "@/context/theme-context";
 
 interface OfferItem {

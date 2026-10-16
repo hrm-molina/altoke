@@ -42,7 +42,9 @@ export function useModalBackHandler(
   modalId: string = "modal"
 ) {
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   const instanceIdRef = useRef<string | null>(null);
 

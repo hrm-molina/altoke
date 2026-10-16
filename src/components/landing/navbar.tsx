@@ -164,7 +164,6 @@ export function Navbar() {
     // Session will be updated via onAuthStateChange
   };
 
-  const isHome = pathname === "/";
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
 
