@@ -38,18 +38,33 @@ async function sendContactEmail(input: {
     replyTo: input.email,
     subject: `[AlTokeChile] ${asuntoLabel} — ${input.nombre}`,
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#0f172a">
-        <h2 style="margin:0 0 4px;font-size:18px">Nuevo requerimiento desde altokechile.cl</h2>
-        <p style="margin:0 0 16px;color:#64748b;font-size:13px">Caso <strong>${input.casoId}</strong> · ${new Date().toLocaleString("es-CL", { timeZone: "America/Santiago" })}</p>
-        <table style="width:100%;border-collapse:collapse;font-size:14px">
-          <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b;width:120px">Nombre</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0"><strong>${escapeHtml(input.nombre)}</strong></td></tr>
-          <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b">Email</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0"><a href="mailto:${escapeHtml(input.email)}">${escapeHtml(input.email)}</a></td></tr>
-          <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b">Motivo</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0">${escapeHtml(asuntoLabel)}</td></tr>
-          <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b">IP</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;color:#64748b">${escapeHtml(input.ip)}</td></tr>
-        </table>
-        <h3 style="margin:20px 0 8px;font-size:14px">Mensaje</h3>
-        <div style="padding:14px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;line-height:1.55;white-space:pre-wrap">${escapeHtml(input.mensaje)}</div>
-        <p style="margin-top:16px;font-size:12px;color:#94a3b8">Responde directamente a este correo para contestar al usuario. No respondas desde este correo si quieres abrir otro caso.</p>
+      <div style="background-color:#F4EFEB;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1E2022">
+        <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:18px;border:1px solid #EAE3D9;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.05)">
+          <div style="padding:24px 28px;background:linear-gradient(180deg,#FFF5F1 0%,#FFFFFF 100%);border-bottom:1px solid #F2ECE4;text-align:center">
+            <div style="display:inline-block;width:40px;height:40px;line-height:40px;background:linear-gradient(135deg,#FF5A36 0%,#FF7A59 100%);border-radius:12px;color:#ffffff;font-size:20px;font-weight:bold">⚡</div>
+            <div style="margin-top:8px;font-size:18px;font-weight:800;color:#1E2022">AlToke<span style="color:#FF5A36">Chile</span></div>
+            <div style="font-size:11px;font-weight:600;color:#8C7B6C;text-transform:uppercase;letter-spacing:0.5px">Mesa de Ayuda y Contacto</div>
+          </div>
+          <div style="padding:28px 28px 20px">
+            <div style="display:inline-block;padding:4px 10px;background:#FFF0ED;border:1px solid #FFD5CC;border-radius:8px;font-size:12px;font-weight:700;color:#FF5A36;margin-bottom:12px">
+              Caso ${input.casoId}
+            </div>
+            <h2 style="margin:0 0 4px;font-size:18px;font-weight:800;color:#1E2022">Nuevo requerimiento recibido</h2>
+            <p style="margin:0 0 20px;color:#64748b;font-size:12px">${new Date().toLocaleString("es-CL", { timeZone: "America/Santiago" })}</p>
+            <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px">
+              <tr><td style="padding:10px 0;border-bottom:1px solid #F2ECE4;color:#64748b;width:110px">Nombre</td><td style="padding:10px 0;border-bottom:1px solid #F2ECE4;color:#1E2022"><strong>${escapeHtml(input.nombre)}</strong></td></tr>
+              <tr><td style="padding:10px 0;border-bottom:1px solid #F2ECE4;color:#64748b">Email</td><td style="padding:10px 0;border-bottom:1px solid #F2ECE4"><a href="mailto:${escapeHtml(input.email)}" style="color:#FF5A36;text-decoration:none;font-weight:600">${escapeHtml(input.email)}</a></td></tr>
+              <tr><td style="padding:10px 0;border-bottom:1px solid #F2ECE4;color:#64748b">Motivo</td><td style="padding:10px 0;border-bottom:1px solid #F2ECE4;color:#1E2022">${escapeHtml(asuntoLabel)}</td></tr>
+              <tr><td style="padding:10px 0;border-bottom:1px solid #F2ECE4;color:#64748b">IP</td><td style="padding:10px 0;border-bottom:1px solid #F2ECE4;color:#94a3b8;font-size:12px">${escapeHtml(input.ip)}</td></tr>
+            </table>
+            <h3 style="margin:0 0 8px;font-size:13px;font-weight:700;color:#1E2022;text-transform:uppercase;letter-spacing:0.5px">Mensaje del usuario</h3>
+            <div style="padding:14px 16px;background:#FAF7F2;border:1px solid #E2D9CC;border-radius:12px;font-size:14px;line-height:1.6;color:#1E2022;white-space:pre-wrap">${escapeHtml(input.mensaje)}</div>
+            <p style="margin-top:20px;font-size:12px;color:#94a3b8;text-align:center">Puedes responder directamente a este correo para contestar al usuario.</p>
+          </div>
+          <div style="padding:16px 24px;background:#FAF7F2;border-top:1px solid #EAE3D9;text-align:center;font-size:11px;color:#8C7B6C">
+            AlToke Chile · <a href="https://altokechile.cl" style="color:#8C7B6C;text-decoration:underline">altokechile.cl</a>
+          </div>
+        </div>
       </div>`,
   });
 
