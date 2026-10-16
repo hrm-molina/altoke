@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles } from "lucide-react";
+import { useTheme } from "@/context/theme-context";
 
 interface JobTask {
   id: string;
@@ -64,6 +65,8 @@ const JOBS: JobTask[] = [
 ];
 
 export function NavbarWalkingAvatar() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isCheering, setIsCheering] = useState(false);
   const [posX, setPosX] = useState(10);
@@ -263,7 +266,9 @@ export function NavbarWalkingAvatar() {
           className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-xs border transition-all duration-300 ${
             isCheering
               ? "bg-[#1E2022] text-amber-300 border-amber-400 scale-105"
-              : "bg-white/95 text-[#1E2022] border-[#E2D9CC] backdrop-blur-sm"
+              : !isDark
+              ? "bg-white/95 text-[#1E2022] border-[#E2D9CC] backdrop-blur-sm"
+              : "bg-[#0D111D]/95 text-white border-[#1E293B] backdrop-blur-sm shadow-black/40"
           }`}
         >
           {isCheering ? (
@@ -273,7 +278,7 @@ export function NavbarWalkingAvatar() {
             </>
           ) : (
             <>
-              <span className="text-[#334155]">{currentJob.action}</span>
+              <span className={!isDark ? "text-[#334155]" : "text-[#E2E8F0]"}>{currentJob.action}</span>
               <span
                 className="rounded px-1.5 py-0.2 text-[10px] font-bold text-white shadow-xs"
                 style={{ backgroundColor: currentJob.color }}

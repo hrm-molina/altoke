@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { CookieBanner } from "@/components/cookie-banner";
+import { ThemeProvider } from "@/context/theme-context";
 
 export const metadata: Metadata = {
   title: "AlTokeChile (altokechile.cl) - Publica o Contrata Cualquier Servicio",
@@ -57,8 +58,10 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-[#06080F] text-[#F1F5F9] antialiased">
-        {children}
-        <CookieBanner />
+        <ThemeProvider>
+          {children}
+          <CookieBanner />
+        </ThemeProvider>
       </body>
     </html>
   );

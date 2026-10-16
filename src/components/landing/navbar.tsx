@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X, Zap, LogOut, History, Bell, Compass, User, Briefcase, UserPlus } from "lucide-react";
+import { Menu, X, Zap, LogOut, History, Bell, Compass, User, Briefcase, UserPlus, Sun, Moon } from "lucide-react";
 import { LoginModal } from "./login-modal";
 import { RegisterModal } from "./register-modal";
 import { supabaseAuth, onAuthStateChange, type AuthUser } from "@/lib/supabase-auth";
 import { NavbarWalkingAvatar } from "./navbar-walking-avatar";
+import { useTheme } from "@/context/theme-context";
 
 interface Session {
   id: string;
@@ -164,35 +165,53 @@ export function Navbar() {
   };
 
   const isHome = pathname === "/";
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark" || !isHome;
 
   return (
     <>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 border-b backdrop-blur-xl transition-colors ${
-          isHome
+          !isDark
             ? "border-[#F0ECE4] bg-[#FFFFFF]/92 shadow-sm"
-            : "border-[#1E293B]/60 bg-[#06080F]/80"
+            : "border-[#1E293B]/70 bg-[#06080F]/90 shadow-md shadow-black/20"
         }`}
       >
-        <div className="mx-auto flex h-16 w-full items-center justify-between px-6 sm:px-10 lg:px-16">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div
-              className={`flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-md ${
-                isHome
-                  ? "bg-gradient-to-br from-[#FF5A36] to-[#FF8A65] shadow-[#FF5A36]/25"
-                  : "bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/20"
+        <div className="mx-auto flex h-16 w-full items-center justify-between px-4 sm:px-8 lg:px-12">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div
+                className={`flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-md ${
+                  !isDark
+                    ? "bg-gradient-to-br from-[#FF5A36] to-[#FF8A65] shadow-[#FF5A36]/25"
+                    : "bg-gradient-to-br from-[#FF5A36] to-[#FF7A59] shadow-[#FF5A36]/20"
+                }`}
+              >
+                <Zap size={18} fill="currentColor" />
+              </div>
+              <span
+                className={`text-xl font-bold tracking-tight ${
+                  !isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"
+                }`}
+              >
+                AlToke<span className="text-[#FF5A36]">Chile</span>
+              </span>
+            </Link>
+
+            {/* Botón para poner la página oscura y volver al estado original */}
+            <button
+              onClick={toggleTheme}
+              className={`flex h-8 w-8 items-center justify-center rounded-xl border transition-all hover:scale-105 active:scale-95 ${
+                !isDark
+                  ? "border-[#EAE5DC] bg-white text-[#64748B] hover:text-[#FF5A36] hover:border-[#FF5A36]/40 shadow-xs"
+                  : "border-[#1E293B] bg-[#0F1420] text-amber-400 hover:text-amber-300 hover:border-amber-500/40 shadow-xs"
               }`}
+              title={theme === "dark" ? "Volver al estado original (claro)" : "Poner página en modo oscuro"}
+              aria-label="Cambiar a modo oscuro o estado original"
             >
-              <Zap size={18} fill="currentColor" />
-            </div>
-            <span
-              className={`text-xl font-bold tracking-tight ${
-                isHome ? "text-[#1E2022]" : "text-[#F1F5F9]"
-              }`}
-            >
-              AlToke<span className={isHome ? "text-[#FF5A36]" : "text-blue-400"}>Chile</span>
-            </span>
-          </Link>
+              {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
+          </div>
 
           {/* Avatar animado que recorre la barra superior realizando diversos trabajos */}
           <div className="hidden sm:flex flex-1 items-center px-4 max-w-md md:max-w-lg lg:max-w-xl mx-auto h-16 pointer-events-auto relative">

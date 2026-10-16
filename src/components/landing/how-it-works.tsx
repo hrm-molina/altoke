@@ -3,10 +3,13 @@
 import { useState } from "react";
 import { Briefcase, User, ArrowRight, ShieldCheck, HeartHandshake, Zap } from "lucide-react";
 import { RegisterModal } from "./register-modal";
+import { useTheme } from "@/context/theme-context";
 
 export function HowItWorks() {
   const [registerOpen, setRegisterOpen] = useState(false);
   const [registerTipo, setRegisterTipo] = useState<"usuario" | "prestador">("prestador");
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const openRegister = (tipo: "usuario" | "prestador") => {
     setRegisterTipo(tipo);
@@ -14,17 +17,25 @@ export function HowItWorks() {
   };
 
   return (
-    <section id="como-funciona" className="relative pt-10 sm:pt-14 pb-20 sm:pb-24 overflow-hidden">
+    <section id="como-funciona" className="relative pt-10 sm:pt-14 pb-20 sm:pb-24 overflow-hidden transition-colors duration-300">
       <div className="relative mx-auto w-full px-4 sm:px-6 lg:px-12 max-w-7xl">
         {/* Section header */}
         <div className="mb-14 text-center max-w-3xl mx-auto">
           <span className="mb-3 inline-block text-xs font-bold uppercase tracking-wider text-[#FF5A36] bg-[#FF5A36]/10 border border-[#FF5A36]/20 px-3.5 py-1 rounded-full">
             Simple, transparente y al toke
           </span>
-          <h2 className="text-3xl font-extrabold text-[#1E2022] sm:text-4xl lg:text-5xl tracking-tight">
+          <h2
+            className={`text-3xl font-extrabold sm:text-4xl lg:text-5xl tracking-tight transition-colors ${
+              !isDark ? "text-[#1E2022]" : "text-white"
+            }`}
+          >
             ¿Cómo funciona Al Toke?
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-[#64748B] leading-relaxed">
+          <p
+            className={`mt-4 text-base sm:text-lg leading-relaxed transition-colors ${
+              !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+            }`}
+          >
             Una plataforma diseñada para conectar a quienes necesitan resolver una tarea urgente con colaboradores dispuestos a brindar un servicio rápido, seguro y 100% lícito en Chile.
           </p>
         </div>
@@ -32,7 +43,13 @@ export function HowItWorks() {
         {/* Dual Path Cards */}
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Card 1: Prestador / Servicios */}
-          <div className="relative flex flex-col justify-between rounded-3xl border border-[#EAE5DC] bg-white p-8 sm:p-10 shadow-sm hover:shadow-xl hover:border-[#FF5A36]/40 transition-all duration-300 group">
+          <div
+            className={`relative flex flex-col justify-between rounded-3xl border p-8 sm:p-10 shadow-sm hover:shadow-xl hover:border-[#FF5A36]/40 transition-all duration-300 group ${
+              !isDark
+                ? "bg-white border-[#EAE5DC]"
+                : "bg-[#0D111D] border-[#1E293B] shadow-black/40"
+            }`}
+          >
             <div className="absolute -top-3 left-8 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#FF5A36] to-[#FF8A65] px-3.5 py-1 text-xs font-bold text-white shadow-md shadow-[#FF5A36]/20">
               <Briefcase size={13} />
               <span>Para Prestadores</span>
@@ -44,7 +61,11 @@ export function HowItWorks() {
                   <Briefcase size={28} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-[#1E2022]">
+                  <h3
+                    className={`text-2xl font-bold transition-colors ${
+                      !isDark ? "text-[#1E2022]" : "text-white"
+                    }`}
+                  >
                     Ofrecer mis servicios
                   </h3>
                   <p className="text-sm text-[#FF5A36] font-semibold">
@@ -53,7 +74,11 @@ export function HowItWorks() {
                 </div>
               </div>
 
-              <p className="text-sm sm:text-base text-[#64748B] leading-relaxed mb-6">
+              <p
+                className={`text-sm sm:text-base leading-relaxed mb-6 transition-colors ${
+                  !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+                }`}
+              >
                 Regístrate, completa tus datos de contacto, comuna y especialidad, y publica lo que sabes hacer para que personas cerca de ti te contacten de inmediato.
               </p>
 
@@ -64,10 +89,18 @@ export function HowItWorks() {
                     1
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-[#1E2022]">
+                    <h4
+                      className={`text-sm font-bold transition-colors ${
+                        !isDark ? "text-[#1E2022]" : "text-white"
+                      }`}
+                    >
                       Inscripción y perfil verificado
                     </h4>
-                    <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+                    <p
+                      className={`text-xs sm:text-sm mt-0.5 transition-colors ${
+                        !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+                      }`}
+                    >
                       Ingresas tus datos, teléfono y comuna para que los clientes sepan con quién tratan.
                     </p>
                   </div>
@@ -78,10 +111,18 @@ export function HowItWorks() {
                     2
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-[#1E2022]">
+                    <h4
+                      className={`text-sm font-bold transition-colors ${
+                        !isDark ? "text-[#1E2022]" : "text-white"
+                      }`}
+                    >
                       Publica lo que ofreces y tu tarifa
                     </h4>
-                    <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+                    <p
+                      className={`text-xs sm:text-sm mt-0.5 transition-colors ${
+                        !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+                      }`}
+                    >
                       Armar muebles, pasear mascotas, gasfitería, mudanzas o limpieza: tú decides tu valor por hora y disponibilidad.
                     </p>
                   </div>
@@ -92,10 +133,18 @@ export function HowItWorks() {
                     3
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-[#1E2022]">
+                    <h4
+                      className={`text-sm font-bold transition-colors ${
+                        !isDark ? "text-[#1E2022]" : "text-white"
+                      }`}
+                    >
                       Trato directo y 100% de tus ingresos
                     </h4>
-                    <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+                    <p
+                      className={`text-xs sm:text-sm mt-0.5 transition-colors ${
+                        !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+                      }`}
+                    >
                       Los interesados te escriben o llaman por WhatsApp sin intermediarios ni cobros ocultos de comisión.
                     </p>
                   </div>
@@ -113,7 +162,13 @@ export function HowItWorks() {
           </div>
 
           {/* Card 2: Usuario / Cliente */}
-          <div className="relative flex flex-col justify-between rounded-3xl border border-[#EAE5DC] bg-white p-8 sm:p-10 shadow-sm hover:shadow-xl hover:border-amber-500/40 transition-all duration-300 group">
+          <div
+            className={`relative flex flex-col justify-between rounded-3xl border p-8 sm:p-10 shadow-sm hover:shadow-xl hover:border-amber-500/40 transition-all duration-300 group ${
+              !isDark
+                ? "bg-white border-[#EAE5DC]"
+                : "bg-[#0D111D] border-[#1E293B] shadow-black/40"
+            }`}
+          >
             <div className="absolute -top-3 left-8 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3.5 py-1 text-xs font-bold text-white shadow-md">
               <User size={13} />
               <span>Para Usuarios</span>
@@ -125,59 +180,91 @@ export function HowItWorks() {
                   <User size={28} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-[#1E2022]">
+                  <h3
+                    className={`text-2xl font-bold transition-colors ${
+                      !isDark ? "text-[#1E2022]" : "text-white"
+                    }`}
+                  >
                     Solicitar un servicio
                   </h3>
-                  <p className="text-sm text-amber-600 font-semibold">
+                  <p className="text-sm text-amber-500 font-semibold">
                     Resuelve tus tareas cotidianas sin complicaciones
                   </p>
                 </div>
               </div>
 
-              <p className="text-sm sm:text-base text-[#64748B] leading-relaxed mb-6">
+              <p
+                className={`text-sm sm:text-base leading-relaxed mb-6 transition-colors ${
+                  !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+                }`}
+              >
                 Inscríbete gratis para explorar el catálogo completo con filtros por comuna, ver calificaciones reales de vecinos y contactar colaboradores de confianza.
               </p>
 
               {/* Steps list */}
               <div className="space-y-4 mb-8">
                 <div className="flex items-start gap-3.5">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs font-bold mt-0.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold mt-0.5">
                     1
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-[#1E2022]">
+                    <h4
+                      className={`text-sm font-bold transition-colors ${
+                        !isDark ? "text-[#1E2022]" : "text-white"
+                      }`}
+                    >
                       Crea tu cuenta de usuario en segundos
                     </h4>
-                    <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+                    <p
+                      className={`text-xs sm:text-sm mt-0.5 transition-colors ${
+                        !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+                      }`}
+                    >
                       El registro te habilita para explorar todo el catálogo, guardar favoritos y recibir notificaciones.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3.5">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs font-bold mt-0.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold mt-0.5">
                     2
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-[#1E2022]">
+                    <h4
+                      className={`text-sm font-bold transition-colors ${
+                        !isDark ? "text-[#1E2022]" : "text-white"
+                      }`}
+                    >
                       Encuentra colaboradores en tu comuna
                     </h4>
-                    <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+                    <p
+                      className={`text-xs sm:text-sm mt-0.5 transition-colors ${
+                        !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+                      }`}
+                    >
                       Filtra por cercanía, tarifa y calificaciones de otros vecinos para elegir con total tranquilidad.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3.5">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs font-bold mt-0.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-bold mt-0.5">
                     3
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-[#1E2022]">
-                      Contacta al instante y califica
+                    <h4
+                      className={`text-sm font-bold transition-colors ${
+                        !isDark ? "text-[#1E2022]" : "text-white"
+                      }`}
+                    >
+                      Acuerda directo y califica
                     </h4>
-                    <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-                      Comunícate directamente por teléfono o WhatsApp para coordinar los detalles y evalúa el trabajo recibido.
+                    <p
+                      className={`text-xs sm:text-sm mt-0.5 transition-colors ${
+                        !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+                      }`}
+                    >
+                      Pactas el servicio directamente con el prestador y al finalizar dejas tu reseña para ayudar a la comunidad.
                     </p>
                   </div>
                 </div>
@@ -186,9 +273,13 @@ export function HowItWorks() {
 
             <button
               onClick={() => openRegister("usuario")}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-[#1E2022] bg-[#1E2022] px-6 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-[#33373B] active:scale-95 transition-all"
+              className={`w-full inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-bold shadow-sm active:scale-95 transition-all ${
+                !isDark
+                  ? "border border-[#1E2022] bg-[#1E2022] text-white hover:bg-[#33373B]"
+                  : "border border-amber-500/30 bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-500/20"
+              }`}
             >
-              <span>Inscribirme como usuario para solicitar</span>
+              <span>Buscar y contratar ayuda</span>
               <ArrowRight size={16} />
             </button>
           </div>
@@ -196,7 +287,7 @@ export function HowItWorks() {
       </div>
 
       <RegisterModal
-        key={`${registerTipo}-${registerOpen ? "open" : "closed"}`}
+        key={registerOpen ? `open-${registerTipo}` : "closed"}
         isOpen={registerOpen}
         onClose={() => setRegisterOpen(false)}
         defaultTipo={registerTipo}

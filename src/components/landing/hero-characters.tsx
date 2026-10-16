@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles, Star, Zap, Clock } from "lucide-react";
+import { useTheme } from "@/context/theme-context";
 
 interface OfferItem {
   id: string;
@@ -143,6 +144,8 @@ const NEEDS: NeedItem[] = [
 export function LeftOfferingCharacter() {
   const [index, setIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -162,7 +165,11 @@ export function LeftOfferingCharacter() {
     <div className="flex flex-col items-center lg:items-end w-full max-w-[290px] xl:max-w-[320px] select-none">
       {/* Globo de diálogo: Ofrece servicios */}
       <div
-        className={`relative w-full rounded-2xl bg-white/95 backdrop-blur-md p-3.5 sm:p-4 shadow-xl border border-[#EAE5DC] transition-all duration-300 hover:shadow-2xl ${
+        className={`relative w-full rounded-2xl backdrop-blur-md p-3.5 sm:p-4 shadow-xl transition-all duration-300 hover:shadow-2xl ${
+          !isDark
+            ? "bg-white/95 border border-[#EAE5DC] text-[#1E2022]"
+            : "bg-[#0D111D]/95 border border-[#1E293B] text-[#F1F5F9] shadow-black/40"
+        } ${
           isFading ? "opacity-0 translate-y-1 scale-95" : "opacity-100 translate-y-0 scale-100"
         }`}
       >
@@ -187,27 +194,49 @@ export function LeftOfferingCharacter() {
 
         {/* Título y detalle */}
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 border border-orange-100 text-2xl shadow-xs">
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl shadow-xs border ${
+              !isDark
+                ? "bg-orange-50 border-orange-100"
+                : "bg-[#1E293B] border-[#334155]"
+            }`}
+          >
             {offer.icon}
           </div>
           <div className="min-w-0">
-            <h4 className="text-xs sm:text-sm font-extrabold text-[#1E2022] leading-tight truncate">
+            <h4
+              className={`text-xs sm:text-sm font-extrabold leading-tight truncate ${
+                !isDark ? "text-[#1E2022]" : "text-white"
+              }`}
+            >
               {offer.title}
             </h4>
-            <p className="text-[11px] text-[#64748B] mt-1 leading-snug line-clamp-2">
+            <p
+              className={`text-[11px] mt-1 leading-snug line-clamp-2 ${
+                !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+              }`}
+            >
               «{offer.detail}»
             </p>
           </div>
         </div>
 
         {/* Flecha del globo apuntando hacia el avatar */}
-        <div className="absolute -bottom-2 right-10 w-4 h-4 bg-white rotate-45 border-r border-b border-[#EAE5DC]" />
+        <div
+          className={`absolute -bottom-2 right-10 w-4 h-4 rotate-45 border-r border-b ${
+            !isDark ? "bg-white border-[#EAE5DC]" : "bg-[#0D111D] border-[#1E293B]"
+          }`}
+        />
       </div>
 
       {/* Avatar Persona Joven Ofreciendo (Ilustración detallada) */}
       <div className="flex items-center gap-3 mt-3 pr-2">
         <div className="text-right">
-          <p className="text-xs sm:text-sm font-black text-[#1E2022] leading-tight">
+          <p
+            className={`text-xs sm:text-sm font-black leading-tight ${
+              !isDark ? "text-[#1E2022]" : "text-white"
+            }`}
+          >
             {offer.role}
           </p>
           <div className="flex items-center justify-end gap-1 mt-0.5 text-[11px] font-bold text-emerald-600">
@@ -303,6 +332,8 @@ export function LeftOfferingCharacter() {
 export function RightNeedingCharacter() {
   const [index, setIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -310,7 +341,7 @@ export function RightNeedingCharacter() {
       setTimeout(() => {
         setIndex((prev) => (prev + 1) % NEEDS.length);
         setIsFading(false);
-      }, 4200);
+      }, 300);
     }, 4200);
 
     return () => clearInterval(timer);
@@ -322,7 +353,11 @@ export function RightNeedingCharacter() {
     <div className="flex flex-col items-center lg:items-start w-full max-w-[290px] xl:max-w-[320px] select-none">
       {/* Globo de pensamiento: Necesita un servicio */}
       <div
-        className={`relative w-full rounded-2xl bg-white/95 backdrop-blur-md p-3.5 sm:p-4 shadow-xl border border-[#EAE5DC] transition-all duration-300 hover:shadow-2xl ${
+        className={`relative w-full rounded-2xl backdrop-blur-md p-3.5 sm:p-4 shadow-xl transition-all duration-300 hover:shadow-2xl ${
+          !isDark
+            ? "bg-white/95 border border-[#EAE5DC] text-[#1E2022]"
+            : "bg-[#0D111D]/95 border border-[#1E293B] text-[#F1F5F9] shadow-black/40"
+        } ${
           isFading ? "opacity-0 translate-y-1 scale-95" : "opacity-100 translate-y-0 scale-100"
         }`}
       >
@@ -343,22 +378,44 @@ export function RightNeedingCharacter() {
 
         {/* Título y detalle de la necesidad */}
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 border border-amber-100 text-2xl shadow-xs">
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-2xl shadow-xs border ${
+              !isDark
+                ? "bg-amber-50 border-amber-100"
+                : "bg-[#1E293B] border-[#334155]"
+            }`}
+          >
             {need.icon}
           </div>
           <div className="min-w-0">
-            <h4 className="text-xs sm:text-sm font-extrabold text-[#1E2022] leading-tight truncate">
+            <h4
+              className={`text-xs sm:text-sm font-extrabold leading-tight truncate ${
+                !isDark ? "text-[#1E2022]" : "text-white"
+              }`}
+            >
               {need.title}
             </h4>
-            <p className="text-[11px] text-[#64748B] mt-1 leading-snug line-clamp-2">
+            <p
+              className={`text-[11px] mt-1 leading-snug line-clamp-2 ${
+                !isDark ? "text-[#64748B]" : "text-[#94A3B8]"
+              }`}
+            >
               «{need.detail}»
             </p>
           </div>
         </div>
 
         {/* Burbujitas de pensamiento apuntando al avatar */}
-        <div className="absolute -bottom-2 left-10 w-3.5 h-3.5 bg-white rounded-full border border-[#EAE5DC]" />
-        <div className="absolute -bottom-4.5 left-13 w-2.5 h-2.5 bg-white rounded-full border border-[#EAE5DC]" />
+        <div
+          className={`absolute -bottom-2 left-10 w-3.5 h-3.5 rounded-full border ${
+            !isDark ? "bg-white border-[#EAE5DC]" : "bg-[#0D111D] border-[#1E293B]"
+          }`}
+        />
+        <div
+          className={`absolute -bottom-4.5 left-13 w-2.5 h-2.5 rounded-full border ${
+            !isDark ? "bg-white border-[#EAE5DC]" : "bg-[#0D111D] border-[#1E293B]"
+          }`}
+        />
       </div>
 
       {/* Avatar Persona Joven Pensando (Ilustración detallada) */}
@@ -433,7 +490,11 @@ export function RightNeedingCharacter() {
         </div>
 
         <div className="text-left">
-          <p className="text-xs sm:text-sm font-black text-[#1E2022] leading-tight">
+          <p
+            className={`text-xs sm:text-sm font-black leading-tight ${
+              !isDark ? "text-[#1E2022]" : "text-white"
+            }`}
+          >
             {need.role}
           </p>
           <p className="text-[11px] font-bold text-amber-600 flex items-center gap-1 mt-0.5">
@@ -445,3 +506,4 @@ export function RightNeedingCharacter() {
     </div>
   );
 }
+
