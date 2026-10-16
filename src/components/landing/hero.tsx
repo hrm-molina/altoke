@@ -1,8 +1,10 @@
 "use client";
 
+import { WalkingAvatar } from "./walking-avatar";
+
 export function Hero() {
   return (
-    <section className="relative pt-16 sm:pt-18 pb-2 sm:pb-3 overflow-hidden">
+    <section className="relative pt-16 sm:pt-18 pb-1 sm:pb-2 overflow-hidden">
       {/* Header Banner Sunset - Compacto, Elevado y con Fondo Gráfico Juvenil */}
       <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl">
         <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl shadow-orange-500/10 border border-white/25 bg-gradient-to-br from-[#FF451D] via-[#FF6238] to-[#FF8E53] py-5 px-4 sm:py-6 sm:px-8 text-center text-white">
@@ -73,6 +75,10 @@ export function Hero() {
           </div>
         </div>
       </div>
+
+      {/* Avatar interactivo que recorre la portada realizando diversos trabajos */}
+      <WalkingAvatar />
     </section>
   );
 }
+
