@@ -198,18 +198,28 @@ export function Navbar() {
               </span>
             </Link>
 
-            {/* Botón para poner la página oscura y volver al estado original */}
+            {/* Botón visible para poner la página oscura y volver al estado original */}
             <button
               onClick={toggleTheme}
-              className={`flex h-8 w-8 items-center justify-center rounded-xl border transition-all hover:scale-105 active:scale-95 ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-xs border cursor-pointer ${
                 !isDark
-                  ? "border-[#EAE5DC] bg-white text-[#64748B] hover:text-[#FF5A36] hover:border-[#FF5A36]/40 shadow-xs"
-                  : "border-[#1E293B] bg-[#0F1420] text-amber-400 hover:text-amber-300 hover:border-amber-500/40 shadow-xs"
+                  ? "border-[#E2D9CC] bg-[#F7F3EE] hover:bg-[#EAE4DC] text-[#1E2022]"
+                  : "border-[#334155] bg-[#1E293B] hover:bg-[#283548] text-amber-300 shadow-sm"
               }`}
               title={theme === "dark" ? "Volver al estado original (claro)" : "Poner página en modo oscuro"}
               aria-label="Cambiar a modo oscuro o estado original"
             >
-              {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+              {theme === "dark" ? (
+                <>
+                  <Sun size={14} className="text-amber-400 shrink-0" />
+                  <span>Modo claro</span>
+                </>
+              ) : (
+                <>
+                  <Moon size={14} className="text-[#FF5A36] shrink-0" />
+                  <span>Modo oscuro</span>
+                </>
+              )}
             </button>
           </div>
 
