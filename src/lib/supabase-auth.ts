@@ -257,34 +257,93 @@ export async function signUpWithEmail(
   let needsEmailConfirmation = false;
   let newAuthUser = false;
 
-  const signUpUser = freshSignUp.data?.user;
-  const isBrandNewUser =
-    !freshSignUp.error &&
-    !!signUpUser &&
-    (signUpUser.identities?.length ?? 1) > 0;
+  // 1. Manejo explícito si Supabase Auth retorna error
+  if (freshSignUp.error) {
+    const errorMsg = freshSignUp.error.message || "";
+    const lowerMsg = errorMsg.toLowerCase();
+    console.error("Supabase auth.signUp error:", freshSignUp.error);
 
-  if (isBrandNewUser) {
-    authUserId = signUpUser!.id;
-    needsEmailConfirmation = !freshSignUp.data?.session;
-    newAuthUser = true;
-  } else {
-    // El email ya existe (otro rol). Probar la contraseña del dueño para obtener sesión válida,
-    // lo que permite que RLS (auth.uid() = id) acepte el INSERT del perfil del nuevo rol.
-    const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
-      email: lowerEmail,
-      password,
-    });
-
-    if (signInError || !signInData.user) {
+    if (lowerMsg.includes("rate limit") || lowerMsg.includes("over_email_send_rate_limit")) {
       return {
         user: null,
-        error: "Este email ya está registrado. Ingresa la contraseña de tu cuenta existente.",
+        error: "Límite de envíos de correo alcanzado en Supabase (máx 3-4 por hora con el servicio gratuito). Por favor espera unos minutos antes de reintentar.",
         needsEmailConfirmation: false,
       };
     }
 
-    authUserId = signInData.user.id;
-    needsEmailConfirmation = false;
+    if (lowerMsg.includes("already registered") || lowerMsg.includes("already exists")) {
+      // Intentar login para vincular
+      const { data: signInData, error: signInError } = await client.auth.signInWithPassword({
+        email: lowerEmail,
+        password,
+      });
+
+      if (!signInError && signInData.user) {
+        authUserId = signInData.user.id;
+        needsEmailConfirmation = false;
+      } else {
+        return {
+          user: null,
+          error: "Este correo ya está registrado en AlToke. Si olvidaste tu contraseña o ya tienes cuenta, inicia sesión.",
+          needsEmailConfirmation: false,
+        };
+      }
+    } else {
+      return {
+        user: null,
+        error: errorMsg || "No se pudo registrar la cuenta. Intenta nuevamente.",
+        needsEmailConfirmation: false,
+      };
+    }
+  }
+
+  const signUpUser = freshSignUp.data?.user;
+
+  // 2. Si el usuario ya existía en auth.users pero no tiene identities activas (identities: []),
+  // Supabase no reenvía el correo automáticamente en signUp. Lo reenviamos aquí:
+  if (signUpUser && signUpUser.identities && signUpUser.identities.length === 0) {
+    const { error: resendErr } = await client.auth.resend({
+      type: "signup",
+      email: lowerEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (resendErr) {
+      const msg = resendErr.message?.toLowerCase() || "";
+      if (msg.includes("rate limit") || msg.includes("over_email_send_rate_limit")) {
+        return {
+          user: null,
+          error: "Límite de envíos alcanzado en Supabase (máx 3-4 correos por hora). Espera unos minutos.",
+          needsEmailConfirmation: false,
+        };
+      }
+      return {
+        user: null,
+        error: resendErr.message || "Este correo ya está registrado en la plataforma.",
+        needsEmailConfirmation: false,
+      };
+    }
+
+    return {
+      user: {
+        id: signUpUser.id,
+        email: lowerEmail,
+        user_metadata: { tipo, ...safeMetadata },
+        app_metadata: {},
+        created_at: new Date().toISOString(),
+      } as AuthUser,
+      error: null,
+      needsEmailConfirmation: true,
+    };
+  }
+
+  // 3. Usuario nuevo registrado correctamente
+  if (signUpUser) {
+    authUserId = signUpUser.id;
+    needsEmailConfirmation = !freshSignUp.data?.session;
+    newAuthUser = true;
   }
 
   // Con "Confirm email" ON no hay sesión al registrarse, por lo que RLS

@@ -197,15 +197,34 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
     if (!form.comuna.trim()) newErrors.comuna = "Este campo es obligatorio";
     if (!form.aceptaTerminos) newErrors.terminos = "Debes aceptar los términos y declarar ser mayor de 18 años";
 
-    if (form.fechaNacimiento) {
-      const parts = form.fechaNacimiento.split("-");
-      if (parts.length === 3) {
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const day = parseInt(parts[2], 10);
+    const rawBirth = (form.fechaNacimiento || "").trim();
+    if (rawBirth) {
+      let year = 0, month = 0, day = 0;
+      if (rawBirth.includes("-")) {
+        const parts = rawBirth.split("-");
+        if (parts.length === 3) {
+          year = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10) - 1;
+          day = parseInt(parts[2], 10);
+        }
+      } else if (rawBirth.includes("/")) {
+        const parts = rawBirth.split("/");
+        if (parts.length === 3) {
+          if (parts[0].length === 4) {
+            year = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            day = parseInt(parts[2], 10);
+          } else {
+            day = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            year = parseInt(parts[2], 10);
+          }
+        }
+      }
+
+      if (year && !isNaN(month) && day) {
         const birth = new Date(year, month, day);
         const today = new Date();
-
         let age = today.getFullYear() - birth.getFullYear();
         const monthDiff = today.getMonth() - birth.getMonth();
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
@@ -255,30 +274,6 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
         setErrors({ servicios: contentValidation.errors[0] });
         return;
       }
-    }
-
-    // Regla de oro: Bloqueo estricto e infranqueable de menores de 18 años
-    const bParts = (form.fechaNacimiento || "").split("-");
-    if (bParts.length === 3) {
-      const bYear = parseInt(bParts[0], 10);
-      const bMonth = parseInt(bParts[1], 10) - 1;
-      const bDay = parseInt(bParts[2], 10);
-      const bDate = new Date(bYear, bMonth, bDay);
-      const now = new Date();
-      let calculatedAge = now.getFullYear() - bDate.getFullYear();
-      if (
-        now.getMonth() < bDate.getMonth() ||
-        (now.getMonth() === bDate.getMonth() && now.getDate() < bDate.getDate())
-      ) {
-        calculatedAge--;
-      }
-      if (isNaN(calculatedAge) || calculatedAge < 18) {
-        setErrors({ fechaNacimiento: "Regla obligatoria: No se permite el registro a menores de 18 años." });
-        return;
-      }
-    } else {
-      setErrors({ fechaNacimiento: "Debes ingresar tu fecha de nacimiento (mayor de 18 años)" });
-      return;
     }
 
     setSubmitting(true);
@@ -359,12 +354,12 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       );
 
       if (error) {
-        setErrors({ email: error });
+        setErrors({ general: error, email: error });
         return;
       }
 
       if (!user) {
-        setErrors({ email: "Error al crear la cuenta" });
+        setErrors({ general: "Error al crear la cuenta. Intenta nuevamente.", email: "Error al crear la cuenta" });
         return;
       }
 
@@ -472,7 +467,7 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
       setNeedsConfirmation(needsEmailConfirmation);
       setSuccess(true);
     } catch {
-      setErrors({ email: "Error de conexión. Intenta nuevamente." });
+      setErrors({ general: "Error de conexión. Intenta nuevamente.", email: "Error de conexión." });
     } finally {
       setSubmitting(false);
     }
@@ -874,12 +869,31 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
           {/* PASO 3: Datos personales */}
           {!success && step === 3 && (
             <div>
-              <h2 className="text-xl font-bold text-[#F1F5F9] text-center mb-2">
+              <h2 className={`text-xl font-bold text-center mb-2 ${!isDark ? "text-[#1E2022]" : "text-[#F1F5F9]"}`}>
                 Datos personales
               </h2>
-              <p className="text-sm text-[#94A3B8] text-center mb-6">
+              <p className={`text-sm text-center mb-6 ${!isDark ? "text-[#64748B]" : "text-[#94A3B8]"}`}>
                 Completa tu perfil para continuar
               </p>
+
+              {/* Error General Banner en Paso 3 */}
+              {(errors.general || errors.email) && (
+                <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-500 dark:text-red-400">
+                  <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold leading-relaxed">{errors.general || errors.email}</p>
+                    {(errors.general || errors.email)?.toLowerCase().includes("registrado") && (
+                      <button
+                        type="button"
+                        onClick={() => { setErrors({}); setStep(2); }}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#FF5A36] underline hover:text-[#FF7A59] cursor-pointer"
+                      >
+                        ← Volver al paso 2 para cambiar de correo o iniciar sesión
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-4">
                 {/* Nombre */}
@@ -1169,6 +1183,13 @@ export function RegisterModal({ isOpen, onClose, defaultTipo }: RegisterModalPro
                   <FieldError field="terminos" errors={errors} />
                 </div>
               </div>
+
+              {(errors.general || errors.email) && (
+                <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-500 dark:text-red-400">
+                  <AlertCircle size={16} className="shrink-0" />
+                  <span>{errors.general || errors.email}</span>
+                </div>
+              )}
 
               <div className="flex gap-3 mt-6 pb-2">
                 <button
