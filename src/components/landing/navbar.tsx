@@ -195,7 +195,7 @@ export function Navbar() {
           </Link>
 
           {/* Avatar animado que recorre la barra superior realizando diversos trabajos */}
-          <div className="flex flex-1 items-center px-2 sm:px-6 max-w-md md:max-w-xl mx-auto overflow-hidden h-16 pointer-events-auto">
+          <div className="hidden sm:flex flex-1 items-center px-4 max-w-md md:max-w-lg lg:max-w-xl mx-auto h-16 pointer-events-auto relative">
             <NavbarWalkingAvatar />
           </div>
 

@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles } from "lucide-react";
 
 interface JobTask {
   id: string;
   name: string;
   action: string;
-  shortAction: string;
   earn: string;
   tool: "laptop" | "dog" | "camera" | "package" | "wrench" | "book";
   color: string;
@@ -18,35 +17,31 @@ const JOBS: JobTask[] = [
     id: "design",
     name: "Diseñador",
     action: "💻 Diseñando logo",
-    shortAction: "💻 Logo Figma",
-    earn: "+$25k",
+    earn: "+$25.000",
     tool: "laptop",
     color: "#6366F1",
-  },
-  {
-    id: "dog",
-    name: "Paseador",
-    action: "🐕 Paseando a Firulais",
-    shortAction: "🐕 Paseo canino",
-    earn: "+$12k",
-    tool: "dog",
-    color: "#10B981",
   },
   {
     id: "photo",
     name: "Creador",
     action: "📸 Grabando para Reels",
-    shortAction: "📸 Fotos/Reels",
-    earn: "+$35k",
+    earn: "+$35.000",
     tool: "camera",
     color: "#EC4899",
   },
   {
+    id: "dog",
+    name: "Paseador",
+    action: "🐕 Paseando a Firulais",
+    earn: "+$12.000",
+    tool: "dog",
+    color: "#10B981",
+  },
+  {
     id: "delivery",
-    name: "Delivery",
-    action: "📦 Entrega express al toke",
-    shortAction: "📦 Reparto express",
-    earn: "+$9k",
+    name: "Repartidor",
+    action: "📦 Encargo express al toke",
+    earn: "+$9.000",
     tool: "package",
     color: "#F59E0B",
   },
@@ -54,8 +49,7 @@ const JOBS: JobTask[] = [
     id: "repair",
     name: "Técnico",
     action: "🔧 Armando mueble gamer",
-    shortAction: "🔧 Armado mueble",
-    earn: "+$22k",
+    earn: "+$22.000",
     tool: "wrench",
     color: "#3B82F6",
   },
@@ -63,142 +57,76 @@ const JOBS: JobTask[] = [
     id: "tutor",
     name: "Tutor",
     action: "📚 Salvando el certamen",
-    shortAction: "📚 Clase cálculo",
-    earn: "+$18k",
+    earn: "+$18.000",
     tool: "book",
     color: "#8B5CF6",
   },
 ];
 
 export function NavbarWalkingAvatar() {
-  const [posX, setPosX] = useState(15); // percentage 10% to 85%
-  const [direction, setDirection] = useState<1 | -1>(1); // 1 = right, -1 = left
-  const [currentJobIdx, setCurrentJobIdx] = useState(0);
-  const [isWorking, setIsWorking] = useState(false);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [isCheering, setIsCheering] = useState(false);
+  const [posX, setPosX] = useState(10);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const [stepToggle, setStepToggle] = useState(false);
 
-  const currentJob = JOBS[currentJobIdx];
-  const targetXRef = useRef<number>(50);
-
-  // Ciclo de movimiento
+  // Ciclo continuo de movimiento: NUNCA se queda pegado
   useEffect(() => {
-    if (isWorking || isCheering) return;
-
-    const interval = setInterval(() => {
+    const moveInterval = setInterval(() => {
       setPosX((prev) => {
-        const next = prev + direction * 1.5;
         setStepToggle((st) => !st);
+        let next = prev + direction * 0.45;
 
-        // Si llega a la parada de trabajo
-        if (
-          (direction === 1 && next >= targetXRef.current) ||
-          (direction === -1 && next <= targetXRef.current)
-        ) {
-          setIsWorking(true);
-          return next;
-        }
-
-        // Rebotes en los bordes
-        if (next >= 85) {
+        if (next >= 78) {
           setDirection(-1);
-          targetXRef.current = Math.floor(Math.random() * 25) + 35;
-          return 85;
+          return 78;
         }
-        if (next <= 12) {
+        if (next <= 5) {
           setDirection(1);
-          targetXRef.current = Math.floor(Math.random() * 25) + 35;
-          return 12;
+          return 5;
         }
-
         return next;
       });
-    }, 95);
+    }, 40);
 
-    return () => clearInterval(interval);
-  }, [direction, isWorking, isCheering]);
+    return () => clearInterval(moveInterval);
+  }, [direction]);
 
-  // Duración del trabajo en la parada
+  // Rotación continua de trabajos cada 3.5 segundos
   useEffect(() => {
-    if (!isWorking) return;
+    const jobInterval = setInterval(() => {
+      setCurrentIdx((prev) => (prev + 1) % JOBS.length);
+    }, 3500);
 
-    const timer = setTimeout(() => {
-      setIsWorking(false);
-      setCurrentJobIdx((prev) => (prev + 1) % JOBS.length);
-      if (direction === 1) {
-        targetXRef.current = Math.min(85, posX + Math.floor(Math.random() * 25) + 20);
-      } else {
-        targetXRef.current = Math.max(12, posX - (Math.floor(Math.random() * 25) + 20));
-      }
-    }, 3200);
+    return () => clearInterval(jobInterval);
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [isWorking, direction, posX]);
+  const currentJob = JOBS[currentIdx];
 
   const handleAvatarClick = () => {
     setIsCheering(true);
     setTimeout(() => {
       setIsCheering(false);
-    }, 2600);
+    }, 2400);
   };
 
   return (
-    <div className="relative w-full h-14 select-none overflow-hidden flex items-end pb-1 pointer-events-none">
-      {/* Pista sutil en el navbar */}
-      <div className="absolute bottom-1.5 left-2 right-2 h-[1px] bg-gradient-to-r from-transparent via-[#EAE5DC]/80 to-transparent" />
+    <div className="relative w-full h-12 select-none flex items-center pointer-events-none">
+      {/* Pista sutil en la barra */}
+      <div className="absolute bottom-1 left-2 right-2 h-[1px] bg-gradient-to-r from-transparent via-[#EAE5DC] to-transparent opacity-60" />
 
-      {/* Contenedor del Avatar en movimiento */}
+      {/* Contenedor del Avatar en movimiento continuo */}
       <div
-        className="absolute bottom-1 transition-[left] duration-100 ease-linear cursor-pointer pointer-events-auto flex items-center gap-2"
+        className="absolute top-1/2 -translate-y-1/2 transition-[left] duration-75 ease-linear cursor-pointer pointer-events-auto flex items-center gap-2 whitespace-nowrap"
         style={{
           left: `${posX}%`,
-          transform: "translateX(-50%)",
         }}
         onClick={handleAvatarClick}
-        title="¡Haz clic en mí!"
+        title="¡Haz clic en el avatar!"
       >
-        {/* Globo / Pill con el trabajo y ganancias */}
+        {/* Personaje SVG compacto */}
         <div
-          className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold shadow-sm border transition-all duration-200 ${
-            isCheering
-              ? "bg-[#1E2022] text-amber-300 border-amber-400 scale-105"
-              : "bg-white/95 text-[#1E2022] border-[#E2D9CC] backdrop-blur-sm"
-          }`}
-        >
-          {isCheering ? (
-            <>
-              <Sparkles size={11} className="text-amber-400 animate-spin" />
-              <span>¡Al toke! ⚡</span>
-            </>
-          ) : (
-            <>
-              <span className="hidden sm:inline">{currentJob.action}</span>
-              <span className="inline sm:hidden">{currentJob.shortAction}</span>
-              <span
-                className="rounded px-1 text-[9px] font-bold text-white shadow-xs"
-                style={{ backgroundColor: currentJob.color }}
-              >
-                {currentJob.earn}
-              </span>
-              {isWorking && (
-                <span className="relative flex h-1.5 w-1.5">
-                  <span
-                    className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
-                    style={{ backgroundColor: currentJob.color }}
-                  />
-                  <span
-                    className="relative inline-flex rounded-full h-1.5 w-1.5"
-                    style={{ backgroundColor: currentJob.color }}
-                  />
-                </span>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Personaje SVG compacto adaptado para la barra superior */}
-        <div
-          className={`relative w-8 h-10 transition-transform duration-200 ${
+          className={`relative w-8 h-9 shrink-0 transition-transform duration-200 ${
             direction === -1 ? "scale-x-[-1]" : "scale-x-100"
           } ${isCheering ? "animate-bounce" : ""}`}
         >
@@ -215,16 +143,10 @@ export function NavbarWalkingAvatar() {
               height="16"
               rx="2"
               fill="#1E293B"
-              transform={
-                !isWorking && !isCheering
-                  ? stepToggle
-                    ? "rotate(16 24 48)"
-                    : "rotate(-16 24 48)"
-                  : "rotate(0 24 48)"
-              }
+              transform={stepToggle ? "rotate(18 24 48)" : "rotate(-18 24 48)"}
             />
             <ellipse
-              cx={!isWorking && !isCheering ? (stepToggle ? 27 : 21) : 25}
+              cx={stepToggle ? 27 : 21}
               cy="64"
               rx="4"
               ry="2"
@@ -240,16 +162,10 @@ export function NavbarWalkingAvatar() {
               height="16"
               rx="2"
               fill="#334155"
-              transform={
-                !isWorking && !isCheering
-                  ? stepToggle
-                    ? "rotate(-16 31 48)"
-                    : "rotate(16 31 48)"
-                  : "rotate(0 31 48)"
-              }
+              transform={stepToggle ? "rotate(-18 31 48)" : "rotate(18 31 48)"}
             />
             <ellipse
-              cx={!isWorking && !isCheering ? (stepToggle ? 29 : 35) : 32}
+              cx={stepToggle ? 29 : 35}
               cy="64"
               rx="4.5"
               ry="2"
@@ -266,10 +182,10 @@ export function NavbarWalkingAvatar() {
               height="23"
               rx="5"
               fill={currentJob.color}
-              className="transition-colors duration-300"
+              className="transition-colors duration-500"
             />
 
-            {/* HERRAMIENTA / PROPS */}
+            {/* HERRAMIENTA / PROPS SEGÚN EL TRABAJO */}
             {currentJob.tool === "laptop" && (
               <g>
                 <rect x="33" y="32" width="14" height="9" rx="1" fill="#E2E8F0" stroke="#64748B" strokeWidth="0.7" />
@@ -295,6 +211,7 @@ export function NavbarWalkingAvatar() {
               <g>
                 <rect x="32" y="31" width="12" height="8" rx="1.5" fill="#1E293B" />
                 <circle cx="38" cy="35" r="2.8" fill="#38BDF8" stroke="#FFFFFF" strokeWidth="0.6" />
+                <circle cx="38" cy="35" r="5" fill="#FDE047" opacity="0.4" className="animate-ping" />
               </g>
             )}
 
@@ -328,17 +245,43 @@ export function NavbarWalkingAvatar() {
               height="12"
               rx="2"
               fill={currentJob.color}
-              transform={isWorking ? "rotate(-30 26 29)" : "rotate(-15 26 29)"}
+              transform="rotate(-20 26 29)"
             />
             <circle cx="32" cy="38" r="2" fill="#FBCFE8" />
 
-            {/* CABEZA CON GORRO / JOCKEY */}
+            {/* CABEZA CON GORRO */}
             <circle cx="30" cy="17" r="8" fill="#FBCFE8" />
             <path d="M 22 16 C 22 9, 38 9, 38 16 C 38 18, 22 18, 22 16 Z" fill="#0F172A" />
             <ellipse cx="21" cy="16" rx="3" ry="1" fill="#0F172A" />
             <circle cx="33" cy="17" r="1" fill="#1E2022" />
             <path d="M 31 20 Q 33 21 35 20" fill="none" stroke="#E11D48" strokeWidth="1" strokeLinecap="round" />
           </svg>
+        </div>
+
+        {/* Pill con información horizontal y garantizada en 1 sola línea */}
+        <div
+          className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-xs border transition-all duration-300 ${
+            isCheering
+              ? "bg-[#1E2022] text-amber-300 border-amber-400 scale-105"
+              : "bg-white/95 text-[#1E2022] border-[#E2D9CC] backdrop-blur-sm"
+          }`}
+        >
+          {isCheering ? (
+            <>
+              <Sparkles size={12} className="text-amber-400 animate-spin" />
+              <span className="font-bold">¡Al toke! ⚡</span>
+            </>
+          ) : (
+            <>
+              <span className="text-[#334155]">{currentJob.action}</span>
+              <span
+                className="rounded px-1.5 py-0.2 text-[10px] font-bold text-white shadow-xs"
+                style={{ backgroundColor: currentJob.color }}
+              >
+                {currentJob.earn}
+              </span>
+            </>
+          )}
         </div>
       </div>
     </div>
