@@ -94,7 +94,7 @@ function ExplorarContent() {
     >
       <FloatingServices />
       <Navbar />
-      <main className="flex-1 pt-24 pb-16 relative z-10">
+      <main className="flex-1 pt-24 pb-16 relative">
         <div className="mx-auto w-full px-6 sm:px-10 lg:px-16 max-w-7xl">
           {/* Navigation Tab Pills */}
           <div

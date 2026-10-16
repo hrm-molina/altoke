@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Star, ArrowLeft, Save, Check, ShieldX } from "lucide-react";
 import { type Servicio, isSelfRatingCheck, getSessionUserEmail } from "@/lib/mock-services";
 import { dbAddReview } from "@/lib/db";
@@ -62,10 +63,16 @@ function savePrestadorJob(entry: Record<string, unknown>) {
 
 export function RateService({ servicio, onClose }: RateServiceProps) {
   useModalBackHandler(true, onClose, `rate-${servicio.id}`);
+  const [mounted, setMounted] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [resena, setResena] = useState("");
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   // Regla: no puede calificarse a sí mismo
   const isSelfRating = isSelfRatingCheck(servicio);
@@ -174,12 +181,14 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
 
   const displayRating = hoverRating || rating;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="card-surface relative w-full max-w-md shadow-2xl p-6 sm:p-8">
+      <div className="card-surface relative w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 my-auto">
         {/* Back */}
         <button
           onClick={onClose}
@@ -296,6 +305,7 @@ export function RateService({ servicio, onClose }: RateServiceProps) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

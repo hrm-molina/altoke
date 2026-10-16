@@ -10,7 +10,7 @@ export function Footer() {
 
   return (
     <footer
-      className={`pt-16 pb-10 border-t transition-colors duration-300 relative z-10 ${
+      className={`pt-16 pb-10 border-t transition-colors duration-300 relative ${
         !isDark
           ? "bg-[#F4ECE1] border-[#E2D9CC] text-[#64748B]"
           : "bg-[#06080F] border-[#1E293B] text-[#94A3B8]"
