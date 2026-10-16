@@ -39,12 +39,14 @@ export function Hero() {
 
             {/* Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-white drop-shadow-md">
-              Tus trámites, mudanzas y arreglos resueltos al toque ✌️
+              Gana plata con lo que sabes hacer.
+              <br />
+              <span className="text-amber-200">O pide que te salven al toke.</span>
             </h1>
 
             {/* Subtitle */}
             <p className="mt-4 text-base sm:text-xl text-white/95 font-medium max-w-2xl mx-auto leading-relaxed drop-shadow-sm">
-              Encuentra ayuda local confiable para todo lo que necesitas. Sin comisiones sorpresa ni intermediarios.
+              El marketplace donde monetizas tus pasatiempos, talentos y tiempo libre. Desde pasear perros y armar muebles, hasta fotos pal’ Insta y trámites. Sin jefes ni horarios rígidos.
             </p>
 
             {/* Action Buttons */}
