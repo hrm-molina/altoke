@@ -1,14 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { RegisterModal } from "./register-modal";
 
 export function Hero() {
-  const [modalOpen, setModalOpen] = useState(false);
-
   return (
     <section className="relative pt-20 pb-12 sm:pb-16 overflow-hidden">
       {/* Header Banner Sunset */}
@@ -43,37 +37,9 @@ export function Hero() {
               <br />
               <span className="text-amber-200">O pide que te salven al toke.</span>
             </h1>
-
-            {/* Subtitle */}
-            <p className="mt-4 text-base sm:text-xl text-white/95 font-medium max-w-2xl mx-auto leading-relaxed drop-shadow-sm">
-              El marketplace donde monetizas tus pasatiempos, talentos y tiempo libre. Desde pasear perros y armar muebles, hasta fotos pal’ Insta y trámites. Sin jefes ni horarios rígidos.
-            </p>
-
-            {/* Action Buttons */}
-            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-              <Link
-                href="/explorar"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-8 py-3.5 text-base font-bold text-[#FF5A36] shadow-lg shadow-black/10 hover:bg-white/95 active:scale-95 transition-all"
-              >
-                <span>Explorar Servicios</span>
-                <ArrowRight size={18} />
-              </Link>
-              <button
-                onClick={() => setModalOpen(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 px-8 py-3.5 text-base font-bold text-white active:scale-95 transition-all"
-              >
-                <span>Regístrate gratis</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>
-
-      <RegisterModal
-        key={modalOpen ? "open" : "closed"}
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-      />
     </section>
   );
 }
