@@ -7,6 +7,7 @@ import { Menu, X, Zap, LogOut, History, Bell, Compass, User, Briefcase, UserPlus
 import { LoginModal } from "./login-modal";
 import { RegisterModal } from "./register-modal";
 import { supabaseAuth, onAuthStateChange, type AuthUser } from "@/lib/supabase-auth";
+import { NavbarWalkingAvatar } from "./navbar-walking-avatar";
 
 interface Session {
   id: string;
@@ -192,6 +193,11 @@ export function Navbar() {
               AlToke<span className={isHome ? "text-[#FF5A36]" : "text-blue-400"}>Chile</span>
             </span>
           </Link>
+
+          {/* Avatar animado que recorre la barra superior realizando diversos trabajos */}
+          <div className="flex flex-1 items-center px-2 sm:px-6 max-w-md md:max-w-xl mx-auto overflow-hidden h-16 pointer-events-auto">
+            <NavbarWalkingAvatar />
+          </div>
 
           {/* Desktop Nav */}
           <div className="hidden items-center gap-8 md:flex">

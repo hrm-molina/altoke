@@ -1,7 +1,5 @@
 "use client";
 
-import { WalkingAvatar } from "./walking-avatar";
-
 export function Hero() {
   return (
     <section className="relative pt-16 sm:pt-18 pb-1 sm:pb-2 overflow-hidden">
@@ -75,10 +73,8 @@ export function Hero() {
           </div>
         </div>
       </div>
-
-      {/* Avatar interactivo que recorre la portada realizando diversos trabajos */}
-      <WalkingAvatar />
     </section>
   );
 }
+
 
