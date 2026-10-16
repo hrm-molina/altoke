@@ -14,7 +14,7 @@ export function HowItWorks() {
   };
 
   return (
-    <section id="como-funciona" className="relative py-20 sm:py-24 overflow-hidden bg-[#FAF7F2]">
+    <section id="como-funciona" className="relative pt-10 sm:pt-14 pb-20 sm:pb-24 overflow-hidden bg-[#FAF7F2]">
       <div className="relative mx-auto w-full px-4 sm:px-6 lg:px-12 max-w-7xl">
         {/* Section header */}
         <div className="mb-14 text-center max-w-3xl mx-auto">

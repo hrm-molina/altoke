@@ -4,15 +4,15 @@ import { LeftOfferingCharacter, RightNeedingCharacter } from "./hero-characters"
 
 export function Hero() {
   return (
-    <section className="relative pt-16 sm:pt-20 pb-6 sm:pb-8 overflow-hidden">
+    <section className="relative pt-20 sm:pt-24 pb-8 sm:pb-12 overflow-hidden">
       {/* Contenedor amplio para aprovechar el espacio a ambos lados */}
       <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
         
         {/* Layout Desktop (3 Columnas): Persona Izquierda | Banner Central | Persona Derecha */}
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-7 xl:gap-10">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-8 xl:gap-12">
           
-          {/* LADO IZQUIERDO (Desktop): Persona joven ofreciendo sus servicios - Centrada y un poco más abajo */}
-          <div className="hidden lg:flex shrink-0 lg:translate-y-3 xl:translate-y-4">
+          {/* LADO IZQUIERDO (Desktop): Persona joven ofreciendo sus servicios - Centrada verticalmente en el blanco */}
+          <div className="hidden lg:flex shrink-0 lg:translate-y-6 xl:translate-y-8">
             <LeftOfferingCharacter />
           </div>
 
@@ -87,8 +87,8 @@ export function Hero() {
             </div>
           </div>
 
-          {/* LADO DERECHO (Desktop): Persona joven pensando en lo que necesita - Centrada y un poco más abajo */}
-          <div className="hidden lg:flex shrink-0 lg:translate-y-3 xl:translate-y-4">
+          {/* LADO DERECHO (Desktop): Persona joven pensando en lo que necesita - Centrada verticalmente en el blanco */}
+          <div className="hidden lg:flex shrink-0 lg:translate-y-6 xl:translate-y-8">
             <RightNeedingCharacter />
           </div>
 
