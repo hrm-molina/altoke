@@ -171,7 +171,7 @@ async function createProfile(
   const table = tipo === "prestador" ? "prestador" : "usuario";
   
   if (tipo === "prestador") {
-    const { error } = await client.from(table).insert({
+    const { error } = await client.from(table).upsert({
       id: userId,
       email,
       nombre: metadata.nombre || "",
@@ -188,10 +188,10 @@ async function createProfile(
       categoria: metadata.categoria || null,
       descripcion: (metadata.descripcion as string) || null,
       activo: true,
-    });
+    }, { onConflict: "id" });
     return { error: error?.message || null };
   } else {
-    const { error } = await client.from(table).insert({
+    const { error } = await client.from(table).upsert({
       id: userId,
       email,
       nombre: metadata.nombre || "",
@@ -201,7 +201,7 @@ async function createProfile(
       comuna: metadata.comuna || "",
       ciudad_sector: metadata.ciudadSector || null,
       foto: metadata.foto || null,
-    });
+    }, { onConflict: "id" });
     return { error: error?.message || null };
   }
 }
