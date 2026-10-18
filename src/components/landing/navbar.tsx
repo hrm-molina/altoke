@@ -211,12 +211,12 @@ export function Navbar() {
               {theme === "dark" ? (
                 <>
                   <Sun size={14} className="text-amber-400 shrink-0" />
-                  <span>Modo original</span>
+                  <span>Original</span>
                 </>
               ) : (
                 <>
                   <Moon size={14} className="text-amber-300 shrink-0" />
-                  <span>Modo oscuro</span>
+                  <span>Oscuro</span>
                 </>
               )}
             </button>
